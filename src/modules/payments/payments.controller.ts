@@ -1,0 +1,69 @@
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { Role } from '../../common/enums/role.enum';
+import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import { InitiatePaymentDto } from './dto/initiate-payment.dto';
+import { PaymentWebhookDto } from './dto/payment-webhook.dto';
+import { PaymentsService } from './payments.service';
+import { PaymentDocument } from './schemas/payment.schema';
+
+@ApiTags('payments')
+@Controller('payments')
+export class PaymentsController {
+  constructor(private readonly paymentsService: PaymentsService) {}
+
+  @ApiBearerAuth()
+  @Roles(Role.PILGRIM)
+  @Post('initiate')
+  initiate(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: InitiatePaymentDto,
+  ): Promise<PaymentDocument> {
+    return this.paymentsService.initiate(user.sub, dto);
+  }
+
+  @ApiBearerAuth()
+  @Roles(Role.PILGRIM)
+  @Get('mine')
+  listMine(@CurrentUser() user: JwtPayload): Promise<PaymentDocument[]> {
+    return this.paymentsService.findForPilgrim(user.sub);
+  }
+
+  @ApiBearerAuth()
+  @Roles(Role.AGENCY)
+  @Get('agency')
+  listForAgency(@CurrentUser() user: JwtPayload): Promise<PaymentDocument[]> {
+    return this.paymentsService.findForAgency(user.sub);
+  }
+
+  // Endpoint de callback serveur-à-serveur du prestataire de paiement — non
+  // protégé par JWT (le prestataire n'authentifie pas via nos tokens), une
+  // vérification de signature devra être ajoutée une fois l'agrégateur
+  // retenu (voir ADR 0006).
+  @Public()
+  @Post('webhook')
+  @HttpCode(HttpStatus.OK)
+  webhook(@Body() dto: PaymentWebhookDto): Promise<PaymentDocument> {
+    return this.paymentsService.handleWebhook(dto);
+  }
+
+  @ApiBearerAuth()
+  @Get(':id')
+  getById(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<PaymentDocument> {
+    return this.paymentsService.findAuthorizedOrFail(user.sub, user.role, id);
+  }
+}

@@ -1,0 +1,27 @@
+# compiled output
+/dist
+/node_modules
+
+# logs
+logs
+*.log
+npm-debug.log*
+
+# environnement — ne jamais committer de secrets réels (voir CLAUDE.md)
+.env
+.env.*.local
+
+# tests
+/coverage
+/.nyc_output
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+
+# mongodb-memory-server (binaires téléchargés pour les tests)
+node_modules/.cache
