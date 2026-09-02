@@ -37,3 +37,11 @@ faible ou saturée (La Mecque en période d'affluence).
   synchronisés avec le backend.
 - Toute évolution majeure de ce choix (ex. passage à Postgres/Prisma, à Next.js,
   ou à React Native) doit faire l'objet d'un nouvel ADR qui remplace celui-ci.
+
+## Note (2026-09-03)
+
+Le volet base de données de ce choix (MongoDB/Mongoose) a été remplacé par
+[0013 — Migration vers PostgreSQL/Prisma](0013-migration-postgresql-prisma.md).
+Les autres éléments de cette décision (NestJS, React/Vite, Flutter,
+TypeScript strict partagé) restent en vigueur — voir [0004](0004-base-de-donnees-orm.md),
+marqué `remplacé`, pour le détail historique du choix initial.

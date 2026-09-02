@@ -1,6 +1,6 @@
 # 0004 — Base de données et ODM
 
-- **Statut** : accepté
+- **Statut** : remplacé — voir [0013](0013-migration-postgresql-prisma.md)
 - **Date** : 2026-09-02
 
 ## Contexte
