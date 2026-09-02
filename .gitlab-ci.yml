@@ -6,7 +6,7 @@
 # Image Debian (pas -alpine) : mongodb-memory-server télécharge un binaire
 # mongod lié à glibc pour les tests e2e (ADR 0010), et bcrypt (module natif)
 # a besoin des outils de compilation présents par défaut sur cette image.
-image: node:20
+image: node:24
 
 stages:
   - quality
