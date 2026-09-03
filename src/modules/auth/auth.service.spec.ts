@@ -1,56 +1,64 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
 import { Role } from '../../common/enums/role.enum';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
 import { OTP_SENDER } from './otp/otp-sender.interface';
-import { Otp } from './schemas/otp.schema';
-import { RefreshToken } from './schemas/refresh-token.schema';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let otpModel: {
-    create: jest.Mock;
-    deleteMany: jest.Mock;
-    findOne: jest.Mock;
-    updateOne: jest.Mock;
-    deleteOne: jest.Mock;
+  let prisma: {
+    otp: {
+      create: jest.Mock;
+      deleteMany: jest.Mock;
+      findFirst: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
+    };
+    refreshToken: {
+      create: jest.Mock;
+      findMany: jest.Mock;
+      update: jest.Mock;
+    };
   };
-  let refreshTokenModel: {
+  let usersService: {
+    findByPhone: jest.Mock;
     create: jest.Mock;
-    find: jest.Mock;
-    updateOne: jest.Mock;
+    findByEmailWithPassword: jest.Mock;
+    findByIdOrFail: jest.Mock;
   };
-  let usersService: { findByPhone: jest.Mock; create: jest.Mock };
   let otpSender: { send: jest.Mock };
 
   beforeEach(async () => {
-    otpModel = {
-      create: jest.fn(),
-      deleteMany: jest.fn(),
-      findOne: jest.fn(),
-      updateOne: jest.fn(),
-      deleteOne: jest.fn(),
+    prisma = {
+      otp: {
+        create: jest.fn(),
+        deleteMany: jest.fn(),
+        findFirst: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+      refreshToken: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        update: jest.fn(),
+      },
     };
-    refreshTokenModel = {
+    usersService = {
+      findByPhone: jest.fn(),
       create: jest.fn(),
-      find: jest.fn(),
-      updateOne: jest.fn(),
+      findByEmailWithPassword: jest.fn(),
+      findByIdOrFail: jest.fn(),
     };
-    usersService = { findByPhone: jest.fn(), create: jest.fn() };
     otpSender = { send: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
-        { provide: getModelToken(Otp.name), useValue: otpModel },
-        {
-          provide: getModelToken(RefreshToken.name),
-          useValue: refreshTokenModel,
-        },
+        { provide: PrismaService, useValue: prisma },
         { provide: UsersService, useValue: usersService },
         {
           provide: JwtService,
@@ -89,11 +97,11 @@ describe('AuthService', () => {
     it("génère un code, le hashe, purge les anciens codes et l'envoie via le provider OTP", async () => {
       await service.requestOtp('+224620000000');
 
-      expect(otpModel.deleteMany).toHaveBeenCalledWith({
-        phone: '+224620000000',
+      expect(prisma.otp.deleteMany).toHaveBeenCalledWith({
+        where: { phone: '+224620000000' },
       });
-      expect(otpModel.create).toHaveBeenCalledTimes(1);
-      const createArg = otpModel.create.mock.calls[0][0];
+      expect(prisma.otp.create).toHaveBeenCalledTimes(1);
+      const createArg = prisma.otp.create.mock.calls[0][0].data;
       expect(createArg.phone).toBe('+224620000000');
       expect(createArg.codeHash).not.toBe(createArg.code);
       expect(otpSender.send).toHaveBeenCalledWith(
@@ -105,11 +113,7 @@ describe('AuthService', () => {
 
   describe('verifyOtp', () => {
     it("rejette un code lorsque aucun OTP actif n'existe pour ce numéro", async () => {
-      otpModel.findOne.mockReturnValue({
-        sort: jest
-          .fn()
-          .mockReturnValue({ exec: jest.fn().mockResolvedValue(null) }),
-      });
+      prisma.otp.findFirst.mockResolvedValue(null);
 
       await expect(
         service.verifyOtp('+224620000000', '123456'),
@@ -119,15 +123,11 @@ describe('AuthService', () => {
     it('rejette un code expiré même si le hash correspond', async () => {
       const bcrypt = await import('bcrypt');
       const codeHash = await bcrypt.hash('123456', 4);
-      otpModel.findOne.mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue({
-            _id: 'otp-1',
-            codeHash,
-            attempts: 0,
-            expiresAt: new Date(Date.now() - 1000),
-          }),
-        }),
+      prisma.otp.findFirst.mockResolvedValue({
+        id: 'otp-1',
+        codeHash,
+        attempts: 0,
+        expiresAt: new Date(Date.now() - 1000),
       });
 
       await expect(
@@ -138,25 +138,21 @@ describe('AuthService', () => {
     it('crée un nouveau pèlerin et émet des jetons lorsque le code est valide', async () => {
       const bcrypt = await import('bcrypt');
       const codeHash = await bcrypt.hash('123456', 4);
-      otpModel.findOne.mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue({
-            _id: 'otp-1',
-            codeHash,
-            attempts: 0,
-            expiresAt: new Date(Date.now() + 60_000),
-          }),
-        }),
+      prisma.otp.findFirst.mockResolvedValue({
+        id: 'otp-1',
+        codeHash,
+        attempts: 0,
+        expiresAt: new Date(Date.now() + 60_000),
       });
-      otpModel.deleteOne.mockResolvedValue(undefined);
+      prisma.otp.delete.mockResolvedValue(undefined);
       usersService.findByPhone.mockResolvedValue(null);
       usersService.create.mockResolvedValue({
-        _id: 'user-1',
+        id: 'user-1',
         role: Role.PILGRIM,
         phone: '+224620000000',
         isActive: true,
       });
-      refreshTokenModel.create.mockResolvedValue({});
+      prisma.refreshToken.create.mockResolvedValue({});
 
       const tokens = await service.verifyOtp(
         '+224620000000',

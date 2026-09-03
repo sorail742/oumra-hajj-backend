@@ -50,8 +50,9 @@ const DEFAULT_STEPS: DossierStepKey[] = [
 
 @Schema({ timestamps: true })
 export class Booking {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
-  pilgrim!: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma de users/auth (ADR 0013).
+  @Prop({ required: true, index: true })
+  pilgrim!: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Package', required: true, index: true })
   package!: Types.ObjectId;

@@ -17,8 +17,9 @@ export class ItineraryStep {
 
 @Schema({ _id: false })
 export class MemberLocation {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  user!: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma de users/auth (ADR 0013).
+  @Prop({ required: true })
+  user!: string;
 
   @Prop({ required: true })
   lat!: number;
@@ -41,11 +42,11 @@ export class Group {
   @Prop({ required: true })
   title!: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  guide?: Types.ObjectId;
+  @Prop()
+  guide?: string;
 
-  @Prop({ type: [Types.ObjectId], ref: 'User', default: [] })
-  members!: Types.ObjectId[];
+  @Prop({ type: [String], default: [] })
+  members!: string[];
 
   @Prop({ type: [ItineraryStep], default: [] })
   itinerary!: ItineraryStep[];

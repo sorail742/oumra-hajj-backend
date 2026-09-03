@@ -1,7 +1,6 @@
 import { ForbiddenException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
 import { AgenciesService } from '../agencies/agencies.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/schemas/notification.schema';
@@ -15,9 +14,9 @@ describe('GroupsService — bouton SOS', () => {
   let usersService: { findByIdOrFail: jest.Mock };
   let notificationsService: { send: jest.Mock; sendRawSms: jest.Mock };
 
-  const pilgrimId = new Types.ObjectId().toString();
-  const guideId = new Types.ObjectId().toString();
-  const groupId = new Types.ObjectId().toString();
+  const pilgrimId = 'pilgrim-1';
+  const guideId = 'guide-1';
+  const groupId = 'group-1';
 
   beforeEach(async () => {
     groupModel = { findById: jest.fn() };
@@ -56,12 +55,10 @@ describe('GroupsService — bouton SOS', () => {
   });
 
   it('alerte le guide (critique) et le contact famille par SMS quand le SOS est légitime', async () => {
-    const memberObjectId = new Types.ObjectId(pilgrimId);
-    const guideObjectId = new Types.ObjectId(guideId);
     groupModel.findById.mockReturnValue({
       exec: jest.fn().mockResolvedValue({
-        members: [memberObjectId],
-        guide: guideObjectId,
+        members: [pilgrimId],
+        guide: guideId,
         title: 'Groupe A',
       }),
     });
@@ -89,10 +86,9 @@ describe('GroupsService — bouton SOS', () => {
   });
 
   it("n'envoie pas de SMS familial si aucun contact d'urgence n'est renseigné", async () => {
-    const memberObjectId = new Types.ObjectId(pilgrimId);
     groupModel.findById.mockReturnValue({
       exec: jest.fn().mockResolvedValue({
-        members: [memberObjectId],
+        members: [pilgrimId],
         guide: undefined,
         title: 'Groupe A',
       }),

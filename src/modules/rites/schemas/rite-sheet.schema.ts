@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 export type RiteSheetDocument = RiteSheet & Document;
 
@@ -47,8 +47,9 @@ export class RiteSheet {
   @Prop({ default: false })
   isValidated!: boolean;
 
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  validatedBy?: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma de users/auth (ADR 0013).
+  @Prop()
+  validatedBy?: string;
 
   @Prop()
   validatedAt?: Date;

@@ -20,7 +20,12 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
     const adapter = new PrismaPg({
       connectionString: configService.get('databaseUrl', { infer: true }),
     });
-    super({ adapter });
+    // Équivalent Prisma du `select: false` Mongoose sur User.passwordHash :
+    // omis par défaut sur toute requête, ré-inclus explicitement uniquement
+    // là où c'est nécessaire (vérification du mot de passe au login) via
+    // `omit: { passwordHash: false }` sur la requête concernée — voir
+    // UsersService.findByEmailWithPassword. Ne jamais retirer ce défaut.
+    super({ adapter, omit: { user: { passwordHash: true } } });
   }
 
   async onModuleDestroy(): Promise<void> {

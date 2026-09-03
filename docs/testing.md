@@ -26,15 +26,34 @@ Référence : [ADR 0010](adr/0010-strategie-tests.md) (accepté).
 - Piège classique : `new Types.ObjectId(id)` (Mongoose) lève si `id` n'est
   pas un hex 24 caractères valide — dans les fixtures de test, toujours
   utiliser `new Types.ObjectId().toString()` plutôt qu'une chaîne
-  arbitraire comme `'booking-1'`.
+  arbitraire comme `'booking-1'`. **Ne s'applique plus aux ids `User`** :
+  depuis la migration Prisma de `users`/`auth` (ADR 0013), les champs qui
+  référencent un pèlerin/guide/agence-owner/admin dans les modules encore
+  Mongoose sont des `String` simples (UUID Postgres), pas des `ObjectId` —
+  une fixture comme `'pilgrim-1'` y est parfaitement valide.
 
 ## Tests e2e (`test/*.e2e-spec.ts`)
 
-- Utilisent une vraie instance de base de données **éphémère**, pas de mock
-  — actuellement `mongodb-memory-server` (MongoDB en mémoire, aucune
-  dépendance externe requise en CI). Après la migration Prisma (ADR 0013),
-  une base PostgreSQL de test dédiée sera utilisée à la place (voir
-  `devops.md`).
+- Utilisent une vraie instance de base de données **éphémère**, pas de mock.
+  Deux mécanismes coexistent pendant la migration Prisma (ADR 0013) :
+  `mongodb-memory-server` (`test/utils/mongo-memory.ts`) pour les modules pas
+  encore migrés, et un conteneur Postgres éphémère
+  (`test/utils/postgres-test-db.ts`, via `testcontainers`) pour les modules
+  déjà sur Prisma (`users`, `auth`) — un fichier e2e qui touche les deux
+  démarre les deux, voir `test/bookings/booking-journey.e2e-spec.ts`. En CI,
+  Postgres est fourni par un service GitLab CI à la place de testcontainers
+  (voir `devops.md` et `.gitlab-ci.yml`), détecté via `process.env.CI`
+  (**pas** "`DATABASE_URL` est déjà définie" : importer `AppModule`
+  déclenche `ConfigModule.forRoot()` dès l'évaluation du décorateur
+  `@Module`, qui charge `.env` immédiatement — `DATABASE_URL` est donc déjà
+  présente localement bien avant que le fichier de test ne s'exécute, même
+  hors CI) — Docker requis en local pour lancer `npm run test:e2e`.
+- `npm run test:e2e` exécute les fichiers **en série** (`--runInBand`), pas
+  en parallèle : plusieurs `mongod` réels démarrés simultanément (un par
+  fichier, via `mongodb-memory-server`) saturent facilement une machine de
+  dev, et un run parallèle en CI partagerait une seule instance Postgres
+  entre fichiers (risque de collision sur les contraintes uniques `phone`/
+  `email`).
 - `setupApp()` (`src/setup-app.ts`) applique exactement la même
   configuration (préfixe, versioning, sécurité) qu'en production — les
   tests e2e appellent les vraies routes versionnées (`/api/v1/...`).

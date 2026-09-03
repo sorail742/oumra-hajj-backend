@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { CreateRiteSheetDto } from './dto/create-rite-sheet.dto';
 import { UpdateRiteSheetDto } from './dto/update-rite-sheet.dto';
 import { RiteSheet, RiteSheetDocument } from './schemas/rite-sheet.schema';
@@ -36,7 +36,7 @@ export class RiteSheetsService {
   async validate(id: string, reviewerId: string): Promise<RiteSheetDocument> {
     const sheet = await this.findByIdOrFail(id);
     sheet.isValidated = true;
-    sheet.validatedBy = new Types.ObjectId(reviewerId);
+    sheet.validatedBy = reviewerId;
     sheet.validatedAt = new Date();
     return sheet.save();
   }

@@ -54,7 +54,20 @@ unit-tests:
 e2e-tests:
   extends: .node_job
   stage: test
+  # Service Postgres pour les modules déjà migrés sur Prisma (users, auth —
+  # ADR 0013) ; mongodb-memory-server reste utilisé en parallèle pour les
+  # modules pas encore migrés (voir test/utils/mongo-memory.ts et
+  # test/utils/postgres-test-db.ts). Ce service sera retiré une fois Mongo
+  # totalement sorti, pas l'inverse — voir docs/devops.md.
+  services:
+    - postgres:16-alpine
+  variables:
+    POSTGRES_DB: oumra_hadj_test
+    POSTGRES_USER: oumra_hadj
+    POSTGRES_PASSWORD: oumra_hadj_test
+    DATABASE_URL: 'postgresql://oumra_hadj:oumra_hadj_test@postgres:5432/oumra_hadj_test'
   script:
+    - npx prisma migrate deploy
     - npm run test:e2e
 
 build:

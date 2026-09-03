@@ -1,18 +1,15 @@
 import { INestApplication } from '@nestjs/common';
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
-import { Model } from 'mongoose';
 import request from 'supertest';
+import { Role as PrismaRole } from '@prisma/client';
 import { AppModule } from '../../src/app.module';
 import { Role } from '../../src/common/enums/role.enum';
 import { OTP_SENDER } from '../../src/modules/auth/otp/otp-sender.interface';
-import {
-  UserDocument,
-  User,
-} from '../../src/modules/users/schemas/user.schema';
+import { PrismaService } from '../../src/prisma/prisma.service';
 import { setupApp } from '../../src/setup-app';
 import { startInMemoryMongo, stopInMemoryMongo } from '../utils/mongo-memory';
+import { startTestPostgres, stopTestPostgres } from '../utils/postgres-test-db';
 
 // Parcours d'intégration complet : inscription agence -> validation admin ->
 // publication d'un forfait -> inscription pèlerin par OTP -> réservation ->
@@ -25,6 +22,7 @@ describe('Parcours réservation + paiement (e2e)', () => {
 
   beforeAll(async () => {
     process.env.MONGO_URI = await startInMemoryMongo();
+    process.env.DATABASE_URL = await startTestPostgres();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -46,6 +44,7 @@ describe('Parcours réservation + paiement (e2e)', () => {
   afterAll(async () => {
     await app.close();
     await stopInMemoryMongo();
+    await stopTestPostgres();
   });
 
   it("mène une agence, un admin et un pèlerin jusqu'à un paiement confirmé", async () => {
@@ -86,15 +85,17 @@ describe('Parcours réservation + paiement (e2e)', () => {
 
     // 3. Un admin (provisionné directement en base — aucune inscription
     // publique pour ce rôle, voir docs/auth-setup.md) valide l'agence.
-    const userModel = app.get<Model<UserDocument>>(getModelToken(User.name));
+    const prisma = app.get(PrismaService);
     const adminEmail = 'admin@e2e.local';
     const adminPassword = 'adminpass123';
-    await userModel.create({
-      fullName: 'Admin E2E',
-      email: adminEmail,
-      passwordHash: await bcrypt.hash(adminPassword, 4),
-      role: Role.ADMIN,
-      isActive: true,
+    await prisma.user.create({
+      data: {
+        fullName: 'Admin E2E',
+        email: adminEmail,
+        passwordHash: await bcrypt.hash(adminPassword, 4),
+        role: Role.ADMIN as unknown as PrismaRole,
+        isActive: true,
+      },
     });
 
     const adminLogin = await request(server)

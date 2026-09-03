@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document as MongooseDocument, Types } from 'mongoose';
+import { Document as MongooseDocument } from 'mongoose';
 
 export type AgencyDocument = Agency & MongooseDocument;
 
@@ -28,9 +28,11 @@ export class Agency {
   @Prop({ required: true })
   legalName!: string;
 
-  // Utilisateur (role=agency) propriétaire du compte agence.
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, unique: true })
-  owner!: Types.ObjectId;
+  // Utilisateur (role=agency) propriétaire du compte agence — id Postgres
+  // (UUID) depuis la migration Prisma du module users/auth (ADR 0013),
+  // stocké en string simple : plus de ref/populate Mongoose inter-base.
+  @Prop({ required: true, unique: true })
+  owner!: string;
 
   @Prop({ required: true })
   contactEmail!: string;
@@ -55,8 +57,8 @@ export class Agency {
   @Prop()
   rejectionReason?: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  validatedBy?: Types.ObjectId;
+  @Prop()
+  validatedBy?: string;
 
   @Prop()
   validatedAt?: Date;

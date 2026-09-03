@@ -1,4 +1,3 @@
-import { Types } from 'mongoose';
 import { Role } from '../../../common/enums/role.enum';
 
 // DTO interne (non exposé publiquement) utilisé par AuthService pour créer
@@ -9,5 +8,5 @@ export interface CreateUserInternalDto {
   email?: string;
   passwordHash?: string;
   role: Role;
-  agency?: Types.ObjectId;
+  agencyId?: string;
 }

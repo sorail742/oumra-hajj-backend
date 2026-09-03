@@ -22,10 +22,17 @@ pas de réécriture en un seul passage — voir `workflow.md`).
 
 Ordre retenu (dépendances d'abord) :
 
-1. Fondations Prisma (`prisma/schema.prisma` complet, `PrismaService`) +
+1. ✅ Fondations Prisma (`prisma/schema.prisma` complet, `PrismaService`) +
    `users` + `auth` (`Otp`, `RefreshToken`) — module dont dépendent tous les
-   autres
-2. `agencies`
+   autres. Les 7 autres modules encore Mongoose qui référençaient un `User`
+   par `ObjectId` (`agencies`, `bookings`, `documents`, `reviews`,
+   `notifications`, `rites`, `groups`) ont été ajustés pour stocker ces ids
+   en `String` (UUID Postgres) au lieu d'`ObjectId` — changement mécanique,
+   aucune logique métier modifiée. Infra de test Postgres mise en place
+   (`prisma/migrations/`, `test/utils/postgres-test-db.ts` via
+   `testcontainers`, service `postgres:` en CI).
+2. `agencies` — **prochaine étape** : migrer réellement le module (collection
+   `agencies` elle-même) vers Prisma, pas seulement ses références à `User`
 3. `packages`
 4. `groups`
 5. `bookings`

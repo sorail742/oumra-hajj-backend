@@ -1,6 +1,5 @@
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
 import { RiteProgressService } from './rite-progress.service';
 import { RiteProgress } from './schemas/rite-progress.schema';
 
@@ -8,7 +7,7 @@ describe('RiteProgressService — synchronisation hors-ligne (ADR 0007)', () => 
   let service: RiteProgressService;
   let riteProgressModel: { findOne: jest.Mock; findOneAndUpdate: jest.Mock };
 
-  const pilgrimId = new Types.ObjectId().toString();
+  const pilgrimId = 'pilgrim-1';
 
   beforeEach(async () => {
     riteProgressModel = { findOne: jest.fn(), findOneAndUpdate: jest.fn() };

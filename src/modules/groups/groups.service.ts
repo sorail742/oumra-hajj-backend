@@ -53,15 +53,11 @@ export class GroupsService {
   }
 
   listForGuide(guideUserId: string): Promise<GroupDocument[]> {
-    return this.groupModel
-      .find({ guide: new Types.ObjectId(guideUserId) })
-      .exec();
+    return this.groupModel.find({ guide: guideUserId }).exec();
   }
 
   listForPilgrim(pilgrimUserId: string): Promise<GroupDocument[]> {
-    return this.groupModel
-      .find({ members: new Types.ObjectId(pilgrimUserId) })
-      .exec();
+    return this.groupModel.find({ members: pilgrimUserId }).exec();
   }
 
   // Le détail d'un groupe expose la position partagée des membres (données
@@ -78,10 +74,9 @@ export class GroupsService {
       return group;
     }
 
-    const requesterObjectId = new Types.ObjectId(requesterId);
     if (
-      group.members.some((m) => m.equals(requesterObjectId)) ||
-      (group.guide?.equals(requesterObjectId) ?? false)
+      group.members.some((m) => m === requesterId) ||
+      group.guide === requesterId
     ) {
       return group;
     }
@@ -111,7 +106,7 @@ export class GroupsService {
       );
     }
 
-    group.guide = guide._id as Types.ObjectId;
+    group.guide = guide.id;
     return group.save();
   }
 
@@ -123,9 +118,8 @@ export class GroupsService {
     const group = await this.findByIdOrFail(groupId);
     await this.assertAgencyOwnership(ownerId, group);
 
-    const memberId = new Types.ObjectId(pilgrimUserId);
-    if (!group.members.some((m) => m.equals(memberId))) {
-      group.members.push(memberId);
+    if (!group.members.some((m) => m === pilgrimUserId)) {
+      group.members.push(pilgrimUserId);
       await group.save();
     }
     return group;
@@ -152,22 +146,19 @@ export class GroupsService {
     dto: UpdateLocationDto,
   ): Promise<GroupDocument> {
     const group = await this.findByIdOrFail(groupId);
-    const userObjectId = new Types.ObjectId(userId);
-    const isMember = group.members.some((m) => m.equals(userObjectId));
-    const isGuide = group.guide?.equals(userObjectId) ?? false;
+    const isMember = group.members.some((m) => m === userId);
+    const isGuide = group.guide === userId;
     if (!isMember && !isGuide) {
       throw new ForbiddenException('Vous ne faites pas partie de ce groupe');
     }
 
     const entry = {
-      user: userObjectId,
+      user: userId,
       lat: dto.lat,
       lng: dto.lng,
       updatedAt: new Date(),
     };
-    const existingIndex = group.locations.findIndex((l) =>
-      l.user.equals(userObjectId),
-    );
+    const existingIndex = group.locations.findIndex((l) => l.user === userId);
     if (existingIndex >= 0) {
       group.locations[existingIndex] = entry;
     } else {
@@ -180,8 +171,7 @@ export class GroupsService {
   // au contact famille du pèlerin (voir ADR 0009 pour le canal SMS de secours).
   async triggerSos(pilgrimUserId: string, groupId: string): Promise<void> {
     const group = await this.findByIdOrFail(groupId);
-    const userObjectId = new Types.ObjectId(pilgrimUserId);
-    if (!group.members.some((m) => m.equals(userObjectId))) {
+    if (!group.members.some((m) => m === pilgrimUserId)) {
       throw new ForbiddenException('Vous ne faites pas partie de ce groupe');
     }
 
@@ -189,7 +179,7 @@ export class GroupsService {
 
     if (group.guide) {
       await this.notificationsService.send({
-        recipientIds: [group.guide.toString()],
+        recipientIds: [group.guide],
         type: NotificationType.SOS,
         title: 'Alerte SOS',
         content: `${pilgrim.fullName} a déclenché une alerte SOS dans le groupe "${group.title}".`,

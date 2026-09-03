@@ -1,6 +1,5 @@
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
 import { RiteSheetsService } from './rite-sheets.service';
 import {
   RiteSheet,
@@ -88,7 +87,7 @@ describe('RiteSheetsService — modération du contenu religieux', () => {
         exec: jest.fn().mockResolvedValue(sheet),
       });
 
-      const reviewerId = new Types.ObjectId().toString();
+      const reviewerId = 'reviewer-1';
       const result = await service.validate('sheet-1', reviewerId);
 
       expect(result.isValidated).toBe(true);

@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { UsersService } from '../users/users.service';
 import { PushSender, PUSH_SENDER } from './senders/push-sender.interface';
 import { SmsSender, SMS_SENDER } from './senders/sms-sender.interface';
@@ -31,7 +31,7 @@ export class NotificationsService {
   async send(input: SendNotificationInput): Promise<NotificationDocument[]> {
     const docs = await this.notificationModel.insertMany(
       input.recipientIds.map((recipientId) => ({
-        recipient: new Types.ObjectId(recipientId),
+        recipient: recipientId,
         type: input.type,
         title: input.title,
         content: input.content,
@@ -84,7 +84,7 @@ export class NotificationsService {
     unreadOnly = false,
   ): Promise<NotificationDocument[]> {
     const filter: Record<string, unknown> = {
-      recipient: new Types.ObjectId(userId),
+      recipient: userId,
     };
     if (unreadOnly) {
       filter.readAt = { $exists: false };
@@ -98,7 +98,7 @@ export class NotificationsService {
   ): Promise<NotificationDocument> {
     const notification = await this.notificationModel
       .findOneAndUpdate(
-        { _id: notificationId, recipient: new Types.ObjectId(userId) },
+        { _id: notificationId, recipient: userId },
         { readAt: new Date() },
         { new: true },
       )
