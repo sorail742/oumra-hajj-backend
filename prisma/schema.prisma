@@ -1,0 +1,486 @@
+// Schéma Prisma — voir docs/adr/0013-migration-postgresql-prisma.md.
+// Migration exécutée module par module (docs/roadmap.md) ; ce fichier
+// définit l'ensemble du graphe relationnel dès le départ (les clés
+// étrangères l'exigent), mais chaque service n'est branché sur Prisma
+// qu'au moment de la migration de son module.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma 7 : l'URL de connexion ne se déclare plus ici mais dans
+// prisma.config.ts (CLI/migrations) et via un driver adapter côté
+// PrismaService (runtime) — voir https://pris.ly/d/driver-adapters.
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  pilgrim
+  agency
+  guide
+  admin
+}
+
+enum AgencyValidationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum PilgrimageType {
+  oumra
+  hadj
+}
+
+enum PackageStatus {
+  open
+  full
+  closed
+}
+
+enum BookingStatus {
+  pending_payment
+  confirmed
+  cancelled
+  completed
+}
+
+enum DossierStepKey {
+  payment
+  visa
+  flight
+  vaccination
+  documents
+}
+
+enum DossierStepStatus {
+  pending
+  in_progress
+  done
+}
+
+enum PaymentMethod {
+  mobile_money_orange
+  mobile_money_mtn
+  card
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+}
+
+enum PilgrimDocumentType {
+  passport
+  visa
+  flight_ticket
+  vaccination_certificate
+}
+
+enum PilgrimDocumentStatus {
+  pending
+  validated
+  rejected
+}
+
+enum RiteSheetPilgrimageType {
+  oumra
+  hadj
+  both
+}
+
+enum NotificationType {
+  booking_status
+  payment
+  document
+  rite_reminder
+  sos
+  group_message
+  moderation
+  other
+}
+
+// ---------------------------------------------------------------------------
+// Auth (ADR 0003)
+// ---------------------------------------------------------------------------
+
+model User {
+  id                String    @id @default(uuid())
+  fullName          String
+  phone             String?   @unique
+  email             String?   @unique
+  passwordHash      String?
+  role              Role
+  preferredLanguage String    @default("fr")
+  bloodType         String?
+  passportNumber    String?
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Contact d'urgence — colonnes plutôt qu'un sous-document (relationnel).
+  emergencyContactFullName     String?
+  emergencyContactPhone        String?
+  emergencyContactRelationship String?
+
+  // Agence de rattachement pour un utilisateur guide.
+  agencyId String?
+  agency   Agency? @relation("AgencyGuides", fields: [agencyId], references: [id])
+
+  ownedAgency        Agency?             @relation("AgencyOwner")
+  refreshTokens      RefreshToken[]
+  bookingsAsPilgrim  Booking[]           @relation("BookingPilgrim")
+  documents          PilgrimDocument[]
+  riteProgress       RiteProgress[]
+  notifications      Notification[]
+  reviews            Review[]
+  validatedAgencies  Agency[]            @relation("AgencyValidatedBy")
+  validatedRiteSheets RiteSheet[]        @relation("RiteSheetValidatedBy")
+  guidedGroups       Group[]             @relation("GroupGuide")
+  groupMemberships   GroupMember[]
+  groupLocations     GroupMemberLocation[]
+
+  @@map("users")
+}
+
+// TTL applicatif (voir ADR 0007/0003) : purge programmée à écrire côté job
+// ou cron, Postgres n'a pas d'équivalent natif à l'index TTL Mongo.
+model Otp {
+  id        String   @id @default(uuid())
+  phone     String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+  @@map("otps")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Agencies
+// ---------------------------------------------------------------------------
+
+model Agency {
+  id                 String                 @id @default(uuid())
+  legalName          String
+  ownerId            String                 @unique
+  owner              User                   @relation("AgencyOwner", fields: [ownerId], references: [id])
+  contactEmail       String
+  contactPhone       String
+  address            String?
+  validationStatus   AgencyValidationStatus @default(pending)
+  rejectionReason    String?
+  validatedById      String?
+  validatedBy        User?                  @relation("AgencyValidatedBy", fields: [validatedById], references: [id])
+  validatedAt        DateTime?
+  commissionRate     Float                  @default(0)
+  bankAccountName    String?
+  bankAccountNumber  String?
+  bankName           String?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  legalDocuments AgencyLegalDocument[]
+  guides         User[]                @relation("AgencyGuides")
+  packages       Package[]
+  groups         Group[]
+  bookings       Booking[]
+  reviews        Review[]
+
+  @@index([validationStatus])
+  @@map("agencies")
+}
+
+model AgencyLegalDocument {
+  id         String   @id @default(uuid())
+  agencyId   String
+  agency     Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  label      String
+  storageRef String
+  uploadedAt DateTime @default(now())
+
+  @@map("agency_legal_documents")
+}
+
+// ---------------------------------------------------------------------------
+// Packages (forfaits)
+// ---------------------------------------------------------------------------
+
+model Package {
+  id                     String         @id @default(uuid())
+  agencyId               String
+  agency                 Agency         @relation(fields: [agencyId], references: [id])
+  type                   PilgrimageType
+  title                  String
+  description            String?
+  startDate              DateTime
+  endDate                DateTime
+  price                  Float
+  currency               String         @default("GNF")
+  capacity               Int
+  seatsTaken             Int            @default(0)
+  hotelName              String?
+  hotelCity              String?
+  hotelDistanceToMosqueM Int?
+  inclusions             String[]
+  status                 PackageStatus  @default(open)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  bookings Booking[]
+  groups   Group[]
+
+  @@index([type])
+  @@index([status])
+  @@map("packages")
+}
+
+// ---------------------------------------------------------------------------
+// Groups
+// ---------------------------------------------------------------------------
+
+model Group {
+  id        String   @id @default(uuid())
+  packageId String
+  package   Package  @relation(fields: [packageId], references: [id])
+  agencyId  String
+  agency    Agency   @relation(fields: [agencyId], references: [id])
+  title     String
+  guideId   String?
+  guide     User?    @relation("GroupGuide", fields: [guideId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members    GroupMember[]
+  itinerary  GroupItineraryStep[]
+  locations  GroupMemberLocation[]
+  bookings   Booking[]
+
+  @@index([agencyId])
+  @@map("groups")
+}
+
+model GroupMember {
+  id      String @id @default(uuid())
+  groupId String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model GroupItineraryStep {
+  id       String   @id @default(uuid())
+  groupId  String
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  label    String
+  date     DateTime
+  location String?
+
+  @@map("group_itinerary_steps")
+}
+
+// Partage de position opt-in — cahier des charges §3.1.
+model GroupMemberLocation {
+  id        String   @id @default(uuid())
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  lat       Float
+  lng       Float
+  updatedAt DateTime @updatedAt
+
+  @@unique([groupId, userId])
+  @@map("group_member_locations")
+}
+
+// ---------------------------------------------------------------------------
+// Bookings (réservations)
+// ---------------------------------------------------------------------------
+
+model Booking {
+  id        String        @id @default(uuid())
+  pilgrimId String
+  pilgrim   User          @relation("BookingPilgrim", fields: [pilgrimId], references: [id])
+  packageId String
+  package   Package       @relation(fields: [packageId], references: [id])
+  agencyId  String
+  agency    Agency        @relation(fields: [agencyId], references: [id])
+  groupId   String?
+  group     Group?        @relation(fields: [groupId], references: [id])
+  status    BookingStatus @default(pending_payment)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  steps     BookingStep[]
+  payments  Payment[]
+  documents PilgrimDocument[]
+  review    Review?
+
+  @@index([pilgrimId])
+  @@index([packageId])
+  @@index([agencyId])
+  @@index([status])
+  @@map("bookings")
+}
+
+model BookingStep {
+  id        String             @id @default(uuid())
+  bookingId String
+  booking   Booking            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  key       DossierStepKey
+  status    DossierStepStatus  @default(pending)
+  updatedAt DateTime           @updatedAt
+
+  @@unique([bookingId, key])
+  @@map("booking_steps")
+}
+
+// ---------------------------------------------------------------------------
+// Payments (ADR 0006)
+// ---------------------------------------------------------------------------
+
+model Payment {
+  id                 String        @id @default(uuid())
+  bookingId          String
+  booking            Booking       @relation(fields: [bookingId], references: [id])
+  amount             Float
+  currency           String        @default("GNF")
+  installmentNumber  Int
+  method             PaymentMethod
+  status             PaymentStatus @default(pending)
+  providerReference  String        @unique
+  receiptRef         String?
+  confirmedAt        DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([bookingId])
+  @@index([status])
+  @@map("payments")
+}
+
+// ---------------------------------------------------------------------------
+// Documents sensibles (ADR 0008)
+// ---------------------------------------------------------------------------
+
+model PilgrimDocument {
+  id              String                @id @default(uuid())
+  bookingId       String
+  booking         Booking               @relation(fields: [bookingId], references: [id])
+  pilgrimId       String
+  pilgrim         User                  @relation(fields: [pilgrimId], references: [id])
+  type            PilgrimDocumentType
+  storageRef      String
+  status          PilgrimDocumentStatus @default(pending)
+  rejectionReason String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([bookingId])
+  @@index([pilgrimId])
+  @@map("pilgrim_documents")
+}
+
+// ---------------------------------------------------------------------------
+// Rites — contenu religieux (modération obligatoire, voir CLAUDE.md)
+// ---------------------------------------------------------------------------
+
+model RiteSheet {
+  id             String                   @id @default(uuid())
+  key            String
+  title          String
+  pilgrimageType RiteSheetPilgrimageType
+  order          Int                      @default(0)
+  content        String
+  audioRef       String?
+  language       String                   @default("fr")
+  version        Int                      @default(1)
+  isValidated    Boolean                  @default(false)
+  validatedById  String?
+  validatedBy    User?                    @relation("RiteSheetValidatedBy", fields: [validatedById], references: [id])
+  validatedAt    DateTime?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  @@index([key])
+  @@map("rite_sheets")
+}
+
+model RiteProgress {
+  id              String   @id @default(uuid())
+  pilgrimId       String
+  pilgrim         User     @relation(fields: [pilgrimId], references: [id])
+  riteKey         String
+  completed       Boolean  @default(false)
+  tawafCount      Int      @default(0)
+  saiCount        Int      @default(0)
+  clientUpdatedAt DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([pilgrimId, riteKey])
+  @@map("rite_progress")
+}
+
+// ---------------------------------------------------------------------------
+// Notifications (ADR 0009)
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id          String           @id @default(uuid())
+  recipientId String
+  recipient   User             @relation(fields: [recipientId], references: [id])
+  type        NotificationType
+  title       String
+  content     String
+  isCritical  Boolean          @default(false)
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+
+  @@index([recipientId])
+  @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Reviews
+// ---------------------------------------------------------------------------
+
+model Review {
+  id        String   @id @default(uuid())
+  pilgrimId String
+  pilgrim   User     @relation(fields: [pilgrimId], references: [id])
+  agencyId  String
+  agency    Agency   @relation(fields: [agencyId], references: [id])
+  bookingId String   @unique
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@index([agencyId])
+  @@map("reviews")
+}

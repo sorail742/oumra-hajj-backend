@@ -20,6 +20,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { RitesModule } from './modules/rites/rites.module';
 import { UsersModule } from './modules/users/users.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { UsersModule } from './modules/users/users.module';
         return { throttlers: [{ ttl: ttlMs, limit }] };
       },
     }),
+    PrismaModule,
     HealthModule,
     AuthModule,
     UsersModule,
