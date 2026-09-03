@@ -4,8 +4,8 @@ Plateforme Numérique de Gestion de la Oumra et du Hadj
 (Nom de projet à définir — ex. « Rihla », « Safar », « Al-Amine »)
 Accompagner chaque pèlerin, du premier paiement jusqu'au retour à la maison.
 
-Préparé par : Bonjour Keita — Club des Jeunes Programmeurs (CJP) / ELNEX
-Version 1.0 — Document de cadrage à valider avec le chef de département
+Préparé par : Sory KEITA
+Version 1.0 — Document de cadrage
 
 Sommaire
 1. Présentation générale du projet
@@ -245,7 +245,7 @@ Découpage proposé en 6 phases, cohérent avec la méthode déjà utilisée sur
 Phase
 Contenu & durée estimée
 Phase 1 — Cadrage & UX
-Ateliers de cadrage, personas, maquettes basse puis haute fidélité (Figma), validation avec le chef de département. ~2 semaines
+Ateliers de cadrage, personas, maquettes basse puis haute fidélité (Figma), validation du cadrage. ~2 semaines
 Phase 2 — Backend & données
 Modélisation MongoDB/Mongoose, API Node.js/Express (auth, forfaits, réservations), documentation API. ~3 semaines
 Phase 3 — App mobile pèlerin
@@ -268,6 +268,6 @@ Test avec une agence pilote et un petit groupe réel, corrections, formation des
     • API backend Node.js/MongoDB documentée.
     • Maquettes UX/UI validées (Figma).
     • Documentation technique et guide d'utilisation pour les agences.
-    • Présentation de synthèse pour validation par le chef de département.
+    • Présentation de synthèse pour validation finale.
 
-Ce document est une base de cadrage : il doit être discuté et validé avec le chef de département avant le démarrage du développement, notamment sur le choix du nom du produit, le périmètre de la première version (MVP) et la ou les agences pilotes.
+Ce document est une base de cadrage : il doit être discuté et validé avant le démarrage du développement, notamment sur le choix du nom du produit, le périmètre de la première version (MVP) et la ou les agences pilotes.

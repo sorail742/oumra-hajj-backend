@@ -33,8 +33,8 @@ Ne pas créer d'ADR pour : le choix d'une librairie utilitaire mineure, une
 correction de bug, un refactor local sans impact d'architecture.
 
 Procédure : dupliquer un ADR existant comme gabarit, numéroter séquentiellement
-après le dernier ADR de `docs/adr/`, statut `proposé` tant que non validé par
-le chef de département, puis mettre à jour `docs/adr/README.md`.
+après le dernier ADR de `docs/adr/`, statut `proposé` tant que non validé,
+puis mettre à jour `docs/adr/README.md`.
 
 ## Contenu religieux
 

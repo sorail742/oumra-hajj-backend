@@ -30,7 +30,7 @@ convention déjà en place sur le projet SmartSMS.
 
 ## Conséquences
 
-- Cohérence avec le reste des projets de la structure (CJP/ELNEX), ce qui
-  facilite le passage d'un projet à l'autre pour les contributeurs.
+- Cohérence avec le reste des projets de la structure, ce qui facilite le
+  passage d'un projet à l'autre pour les contributeurs.
 - Impose une petite discipline (créer l'ADR avant/pendant la décision, pas
   après coup) — à rappeler dans `CONTRIBUTING.md`.
