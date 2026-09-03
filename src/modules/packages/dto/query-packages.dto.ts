@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsMongoId, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { PilgrimageType } from '../schemas/package.schema';
 
 export class QueryPackagesDto {
@@ -10,6 +10,6 @@ export class QueryPackagesDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsMongoId()
+  @IsUUID()
   agencyId?: string;
 }

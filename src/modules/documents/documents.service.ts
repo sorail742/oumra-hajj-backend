@@ -69,7 +69,7 @@ export class DocumentsService {
     }
     if (requesterRole === 'agency') {
       const agency = await this.agenciesService.findByOwnerOrFail(requesterId);
-      if (!booking.agency.equals(agency._id as Types.ObjectId)) {
+      if (booking.agency !== agency.id) {
         throw new ForbiddenException(
           "Cette réservation n'appartient pas à votre agence",
         );
@@ -130,7 +130,7 @@ export class DocumentsService {
       doc.booking.toString(),
     );
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
-    if (!booking.agency.equals(agency._id as Types.ObjectId)) {
+    if (booking.agency !== agency.id) {
       throw new ForbiddenException(
         "Ce document n'appartient pas à votre agence",
       );

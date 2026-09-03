@@ -9,8 +9,9 @@ export class Review {
   @Prop({ required: true, index: true })
   pilgrim!: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Agency', required: true, index: true })
-  agency!: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma du module agencies (ADR 0013).
+  @Prop({ required: true, index: true })
+  agency!: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Booking', required: true, unique: true })
   booking!: Types.ObjectId;

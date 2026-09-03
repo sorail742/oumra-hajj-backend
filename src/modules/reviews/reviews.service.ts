@@ -4,7 +4,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { BookingsService } from '../bookings/bookings.service';
 import { BookingStatus } from '../bookings/schemas/booking.schema';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -52,7 +52,7 @@ export class ReviewsService {
 
   listByAgency(agencyId: string): Promise<ReviewDocument[]> {
     return this.reviewModel
-      .find({ agency: new Types.ObjectId(agencyId) })
+      .find({ agency: agencyId })
       .sort({ createdAt: -1 })
       .exec();
   }

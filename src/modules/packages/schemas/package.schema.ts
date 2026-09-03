@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 export type PackageDocument = Package & Document;
 
@@ -28,8 +28,9 @@ export class HotelInfo {
 
 @Schema({ timestamps: true })
 export class Package {
-  @Prop({ type: Types.ObjectId, ref: 'Agency', required: true, index: true })
-  agency!: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma du module agencies (ADR 0013).
+  @Prop({ required: true, index: true })
+  agency!: string;
 
   @Prop({ type: String, enum: PilgrimageType, required: true, index: true })
   type!: PilgrimageType;

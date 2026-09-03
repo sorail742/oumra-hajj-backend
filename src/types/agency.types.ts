@@ -1,4 +1,4 @@
-import { AgencyValidationStatus } from '../modules/agencies/schemas/agency.schema';
+import { AgencyValidationStatus } from '../common/enums/agency-validation-status.enum';
 
 export interface LegalDocumentShape {
   label: string;

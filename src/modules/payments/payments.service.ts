@@ -91,7 +91,7 @@ export class PaymentsService {
 
     if (requesterRole === Role.AGENCY) {
       const agency = await this.agenciesService.findByOwnerOrFail(requesterId);
-      if (booking.agency.equals(agency._id as Types.ObjectId)) {
+      if (booking.agency === agency.id) {
         return payment;
       }
     }
@@ -109,7 +109,7 @@ export class PaymentsService {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
     const bookings = await this.bookingsService.findByAgency(ownerId);
     const bookingIds = bookings
-      .filter((b) => b.agency.equals(agency._id as Types.ObjectId))
+      .filter((b) => b.agency === agency.id)
       .map((b) => b._id as Types.ObjectId);
     return this.paymentModel.find({ booking: { $in: bookingIds } }).exec();
   }

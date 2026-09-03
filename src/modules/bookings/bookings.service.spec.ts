@@ -26,7 +26,7 @@ describe('BookingsService', () => {
   let groupsService: { addMember: jest.Mock };
 
   const pilgrimId = new Types.ObjectId().toString();
-  const agencyId = new Types.ObjectId();
+  const agencyId = 'agency-1';
   const packageId = new Types.ObjectId().toString();
   const bookingId = new Types.ObjectId().toString();
 
@@ -258,7 +258,7 @@ describe('BookingsService', () => {
         exec: jest.fn().mockResolvedValue(makeBooking()),
       });
       agenciesService.findByOwnerOrFail.mockResolvedValue({
-        _id: new Types.ObjectId(),
+        id: 'other-agency',
       });
 
       await expect(

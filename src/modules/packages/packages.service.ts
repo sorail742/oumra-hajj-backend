@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { AgenciesService } from '../agencies/agencies.service';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { QueryPackagesDto } from './dto/query-packages.dto';
@@ -29,11 +29,9 @@ export class PackagesService {
     dto: CreatePackageDto,
   ): Promise<PackageDocument> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
-    await this.agenciesService.assertApproved(
-      (agency._id as Types.ObjectId).toString(),
-    );
+    await this.agenciesService.assertApproved(agency.id);
 
-    return this.packageModel.create({ ...dto, agency: agency._id });
+    return this.packageModel.create({ ...dto, agency: agency.id });
   }
 
   async update(
@@ -72,14 +70,14 @@ export class PackagesService {
       filter.type = query.type;
     }
     if (query.agencyId) {
-      filter.agency = new Types.ObjectId(query.agencyId);
+      filter.agency = query.agencyId;
     }
     return this.packageModel.find(filter).sort({ startDate: 1 }).exec();
   }
 
   async listMine(ownerId: string): Promise<PackageDocument[]> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
-    return this.packageModel.find({ agency: agency._id }).exec();
+    return this.packageModel.find({ agency: agency.id }).exec();
   }
 
   // Appelé par le module bookings à la confirmation d'une réservation.
@@ -116,7 +114,7 @@ export class PackagesService {
     pkg: PackageDocument,
   ): Promise<void> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
-    if (!pkg.agency.equals(agency._id as Types.ObjectId)) {
+    if (pkg.agency !== agency.id) {
       throw new ForbiddenException(
         "Ce forfait n'appartient pas à votre agence",
       );
