@@ -1,11 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { setupApp } from '../src/setup-app';
-import { startInMemoryMongo, stopInMemoryMongo } from './utils/mongo-memory';
+import { AppModule } from '../../src/app.module';
+import { setupApp } from '../../src/setup-app';
+import { startInMemoryMongo, stopInMemoryMongo } from '../utils/mongo-memory';
 
-describe('App (e2e)', () => {
+describe('Auth (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -25,15 +25,6 @@ describe('App (e2e)', () => {
     await stopInMemoryMongo();
   });
 
-  it('/api/v1/health (GET) répond ok', () => {
-    return request(app.getHttpServer())
-      .get('/api/v1/health')
-      .expect(200)
-      .expect((res: { body: { status: string } }) => {
-        expect(res.body.status).toBe('ok');
-      });
-  });
-
   it("parcours d'inscription pèlerin par OTP (cahier des charges §4.1)", async () => {
     const phone = '+224620000001';
 
@@ -42,10 +33,9 @@ describe('App (e2e)', () => {
       .send({ phone })
       .expect(200);
 
-    // En environnement de dev/test, le code OTP est journalisé (voir
-    // ConsoleOtpSender) plutôt qu'envoyé par SMS réel — on ne peut donc pas
-    // le récupérer ici. On vérifie seulement qu'un code invalide est rejeté,
-    // ce qui exerce le chemin de validation critique de l'auth.
+    // Le code OTP est journalisé par ConsoleOtpSender (dev), pas récupérable
+    // ici sans espionner le provider — on exerce donc le chemin de rejet
+    // d'un code invalide, qui couvre déjà la validation critique de l'auth.
     await request(app.getHttpServer())
       .post('/api/v1/auth/otp/verify')
       .send({ phone, code: '000000' })
@@ -54,5 +44,19 @@ describe('App (e2e)', () => {
 
   it('rejette un accès sans jeton sur une route protégée', () => {
     return request(app.getHttpServer()).get('/api/v1/users/me').expect(401);
+  });
+
+  it('rejette un login agence avec des identifiants inconnus', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/auth/agency/login')
+      .send({ email: 'inconnu@agence.gn', password: 'password123' })
+      .expect(401);
+  });
+
+  it('rejette un refresh token invalide', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: 'jeton-invalide' })
+      .expect(401);
   });
 });
