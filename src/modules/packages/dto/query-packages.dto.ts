@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
-import { PilgrimageType } from '../schemas/package.schema';
+import { PilgrimageType } from '../../../common/enums/pilgrimage-type.enum';
 
 export class QueryPackagesDto {
   @ApiPropertyOptional({ enum: PilgrimageType })

@@ -1,7 +1,5 @@
-import {
-  PackageStatus,
-  PilgrimageType,
-} from '../modules/packages/schemas/package.schema';
+import { PackageStatus } from '../common/enums/package-status.enum';
+import { PilgrimageType } from '../common/enums/pilgrimage-type.enum';
 
 export interface HotelInfoShape {
   name: string;

@@ -38,8 +38,14 @@ Ordre retenu (dépendances d'abord) :
    changement mécanique qu'à l'étape précédente. Tables Postgres déjà
    présentes depuis la migration initiale, aucune nouvelle migration SQL
    nécessaire pour cette étape.
-3. `packages` — **prochaine étape**
-4. `groups`
+3. ✅ `packages` — `PilgrimageType`/`PackageStatus` déplacés vers
+   `common/enums` (même raison qu'`AgencyValidationStatus`). Les 2 modules
+   Mongoose qui référençaient un `Package` par `ObjectId` (`bookings`,
+   `groups`) ajustés en `String`. `hotel` (Mongoose) aplati en colonnes
+   `hotelName`/`hotelCity`/`hotelDistanceToMosqueM` côté Postgres,
+   reconstruit en objet imbriqué dans `PackageShape` (même pattern que
+   `bankDetails` pour `agencies`).
+4. `groups` — **prochaine étape**
 5. `bookings`
 6. `payments`, `documents`
 7. `rites`, `notifications`, `reviews`, `admin`

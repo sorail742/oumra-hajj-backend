@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 export type GroupDocument = Group & Document;
 
@@ -33,8 +33,9 @@ export class MemberLocation {
 
 @Schema({ timestamps: true })
 export class Group {
-  @Prop({ type: Types.ObjectId, ref: 'Package', required: true, index: true })
-  package!: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma du module packages (ADR 0013).
+  @Prop({ required: true, index: true })
+  package!: string;
 
   // Id Postgres (UUID) depuis la migration Prisma du module agencies (ADR 0013).
   @Prop({ required: true, index: true })

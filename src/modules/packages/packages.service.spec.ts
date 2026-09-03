@@ -1,37 +1,51 @@
 import { ConflictException } from '@nestjs/common';
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaService } from '../../prisma/prisma.service';
+import { PackageStatus } from '../../common/enums/package-status.enum';
 import { AgenciesService } from '../agencies/agencies.service';
 import { PackagesService } from './packages.service';
-import { Package, PackageStatus } from './schemas/package.schema';
 
 describe('PackagesService — gestion des places (capacité forfait)', () => {
   let service: PackagesService;
-  let packageModel: { findById: jest.Mock };
+  let prisma: {
+    package: { findUnique: jest.Mock; update: jest.Mock };
+  };
 
   const buildPkg = (
     overrides: Partial<{
       capacity: number;
       seatsTaken: number;
-      status: PackageStatus;
+      status: string;
     }>,
   ) => ({
+    id: 'pkg-1',
+    agencyId: 'agency-1',
+    type: 'oumra',
+    title: 'Oumra Ramadan',
+    description: null,
+    startDate: new Date('2027-03-01'),
+    endDate: new Date('2027-03-15'),
+    price: 500,
+    currency: 'GNF',
     capacity: 10,
     seatsTaken: 0,
-    status: PackageStatus.OPEN,
-    save: jest.fn().mockImplementation(function (this: unknown) {
-      return Promise.resolve(this);
-    }),
+    hotelName: null,
+    hotelCity: null,
+    hotelDistanceToMosqueM: null,
+    inclusions: [],
+    status: 'open',
     ...overrides,
   });
 
   beforeEach(async () => {
-    packageModel = { findById: jest.fn() };
+    prisma = {
+      package: { findUnique: jest.fn(), update: jest.fn() },
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PackagesService,
-        { provide: getModelToken(Package.name), useValue: packageModel },
+        { provide: PrismaService, useValue: prisma },
         { provide: AgenciesService, useValue: {} },
       ],
     }).compile();
@@ -41,10 +55,12 @@ describe('PackagesService — gestion des places (capacité forfait)', () => {
 
   describe('reserveSeat', () => {
     it('incrémente le nombre de places prises quand il reste de la place', async () => {
-      const pkg = buildPkg({ capacity: 10, seatsTaken: 3 });
-      packageModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(pkg),
-      });
+      prisma.package.findUnique.mockResolvedValue(
+        buildPkg({ capacity: 10, seatsTaken: 3 }),
+      );
+      prisma.package.update.mockResolvedValue(
+        buildPkg({ capacity: 10, seatsTaken: 4 }),
+      );
 
       const result = await service.reserveSeat('pkg-1');
 
@@ -53,10 +69,12 @@ describe('PackagesService — gestion des places (capacité forfait)', () => {
     });
 
     it('passe le forfait à FULL dès que la dernière place est prise', async () => {
-      const pkg = buildPkg({ capacity: 10, seatsTaken: 9 });
-      packageModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(pkg),
-      });
+      prisma.package.findUnique.mockResolvedValue(
+        buildPkg({ capacity: 10, seatsTaken: 9 }),
+      );
+      prisma.package.update.mockResolvedValue(
+        buildPkg({ capacity: 10, seatsTaken: 10, status: 'full' }),
+      );
 
       const result = await service.reserveSeat('pkg-1');
 
@@ -65,40 +83,43 @@ describe('PackagesService — gestion des places (capacité forfait)', () => {
     });
 
     it('refuse une réservation quand le forfait est déjà complet', async () => {
-      const pkg = buildPkg({
-        capacity: 10,
-        seatsTaken: 10,
-        status: PackageStatus.OPEN,
-      });
-      packageModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(pkg),
-      });
+      prisma.package.findUnique.mockResolvedValue(
+        buildPkg({ capacity: 10, seatsTaken: 10, status: 'open' }),
+      );
+      prisma.package.update.mockResolvedValue(
+        buildPkg({ capacity: 10, seatsTaken: 10, status: 'full' }),
+      );
 
       await expect(service.reserveSeat('pkg-1')).rejects.toBeInstanceOf(
         ConflictException,
       );
-      expect(pkg.status).toBe(PackageStatus.FULL);
+      expect(prisma.package.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: PackageStatus.FULL }),
+        }),
+      );
     });
 
     it('refuse une réservation sur un forfait fermé ou déjà complet (statut non OPEN)', async () => {
-      const pkg = buildPkg({ status: PackageStatus.CLOSED });
-      packageModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(pkg),
-      });
+      prisma.package.findUnique.mockResolvedValue(
+        buildPkg({ status: 'closed' }),
+      );
 
       await expect(service.reserveSeat('pkg-1')).rejects.toBeInstanceOf(
         ConflictException,
       );
-      expect(pkg.save).not.toHaveBeenCalled();
+      expect(prisma.package.update).not.toHaveBeenCalled();
     });
   });
 
   describe('releaseSeat', () => {
     it('décrémente le nombre de places prises', async () => {
-      const pkg = buildPkg({ capacity: 10, seatsTaken: 4 });
-      packageModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(pkg),
-      });
+      prisma.package.findUnique.mockResolvedValue(
+        buildPkg({ capacity: 10, seatsTaken: 4 }),
+      );
+      prisma.package.update.mockResolvedValue(
+        buildPkg({ capacity: 10, seatsTaken: 3 }),
+      );
 
       const result = await service.releaseSeat('pkg-1');
 
@@ -106,10 +127,12 @@ describe('PackagesService — gestion des places (capacité forfait)', () => {
     });
 
     it('ne descend jamais sous zéro', async () => {
-      const pkg = buildPkg({ capacity: 10, seatsTaken: 0 });
-      packageModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(pkg),
-      });
+      prisma.package.findUnique.mockResolvedValue(
+        buildPkg({ capacity: 10, seatsTaken: 0 }),
+      );
+      prisma.package.update.mockResolvedValue(
+        buildPkg({ capacity: 10, seatsTaken: 0 }),
+      );
 
       const result = await service.releaseSeat('pkg-1');
 
@@ -117,14 +140,12 @@ describe('PackagesService — gestion des places (capacité forfait)', () => {
     });
 
     it("rouvre un forfait FULL dès qu'une place se libère", async () => {
-      const pkg = buildPkg({
-        capacity: 10,
-        seatsTaken: 10,
-        status: PackageStatus.FULL,
-      });
-      packageModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(pkg),
-      });
+      prisma.package.findUnique.mockResolvedValue(
+        buildPkg({ capacity: 10, seatsTaken: 10, status: 'full' }),
+      );
+      prisma.package.update.mockResolvedValue(
+        buildPkg({ capacity: 10, seatsTaken: 9, status: 'open' }),
+      );
 
       const result = await service.releaseSeat('pkg-1');
 
