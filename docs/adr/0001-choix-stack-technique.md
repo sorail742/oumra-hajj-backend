@@ -2,7 +2,7 @@
 
 - **Statut** : accepté
 - **Date** : 2026-09-02
-- **Décideurs** : Bonjour Keita (dev), chef de département
+- **Décideurs** : Sory KEITA (dev)
 
 ## Contexte
 
