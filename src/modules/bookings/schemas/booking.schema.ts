@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 export type BookingDocument = Booking & Document;
 
@@ -62,8 +62,9 @@ export class Booking {
   @Prop({ required: true, index: true })
   agency!: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Group' })
-  group?: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma du module groups (ADR 0013).
+  @Prop()
+  group?: string;
 
   @Prop({
     type: String,
