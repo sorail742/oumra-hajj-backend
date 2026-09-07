@@ -109,7 +109,7 @@ Request revue.
 
 ## Ouvert — à trancher avant la suite
 
-Voir issues #15 à #18 (ouvertes) pour le détail :
+Voir issues #15 à #19 (ouvertes) pour le détail :
 
 - **#15** Compléter la couverture de tests (`users`, `notifications`, `reviews`)
 - **#16** Confirmer l'ADR 0012 (CI/CD), provisionner SonarQube, choisir
@@ -118,6 +118,10 @@ Voir issues #15 à #18 (ouvertes) pour le détail :
   religieux — aucune fiche réelle en base actuellement)
 - **#18** Choisir les fournisseurs SMS/OTP, paiement Mobile Money et FCM
   (ADR 0006 non tranché)
+- **#19** Implémenter la messagerie pèlerin ↔ agence/guide — décision produit
+  prise (chat temps réel), détails techniques et schéma à trancher
+  ([ADR 0014](adr/0014-messagerie-agence-guide.md), `proposé`). Bloque
+  l'écran mobile correspondant tant que non accepté.
 
 ## Prochaines phases (cahier des charges §10, hors backend)
 
@@ -127,8 +131,8 @@ uniquement, voir `README.md`), utile pour situer où s'arrête ce dépôt :
 | Phase | Contenu | Statut |
 |---|---|---|
 | 1 — Cadrage & UX | Personas, maquettes | Externe à ce dépôt |
-| 2 — Backend & données | Ce dépôt | En cours (voir issues #15 à #18) |
-| 3 — App mobile pèlerin | Flutter, dépôt séparé | Non démarré (dépend du contrat API — voir `api-versioning.md`) |
+| 2 — Backend & données | Ce dépôt | En cours (voir issues #15 à #19) |
+| 3 — App mobile pèlerin | Flutter, dépôt séparé | Démarré côté maquettes (Stitch) — dépend du contrat API (`openapi.json`, `api-versioning.md`) et de l'ADR 0014 pour l'écran messagerie |
 | 4 — Espace agence & admin | Back-office web React | Non démarré |
 | 5 — Intégrations & tests | Mobile Money, push, géoloc | Bloqué par issue #18 |
 | 6 — Pilote & déploiement | Agence pilote, prod | Bloqué par issue #16 |

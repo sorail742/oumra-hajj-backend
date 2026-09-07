@@ -20,6 +20,7 @@ Statuts : `proposé` · `accepté` · `déprécié` · `remplacé`
 | [0011](0011-conventions-git-branches.md) | Conventions Git, branches et ADR | accepté |
 | [0012](0012-ci-cd-environnements.md) | CI/CD et environnements | proposé |
 | [0013](0013-migration-postgresql-prisma.md) | Migration de MongoDB/Mongoose vers PostgreSQL/Prisma (remplace 0004) | accepté |
+| [0014](0014-messagerie-agence-guide.md) | Messagerie pèlerin ↔ agence/guide | proposé |
 
 Les ADR marqués `proposé` doivent être confirmés (passage à `accepté`) avant le
 début de la phase du plan de développement à laquelle ils se rattachent.
