@@ -2,8 +2,8 @@ import { Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import { NotificationShape } from '../../types/notification.types';
 import { NotificationsService } from './notifications.service';
-import { NotificationDocument } from './schemas/notification.schema';
 
 @ApiBearerAuth()
 @ApiTags('notifications')
@@ -15,7 +15,7 @@ export class NotificationsController {
   list(
     @CurrentUser() user: JwtPayload,
     @Query('unreadOnly') unreadOnly?: string,
-  ): Promise<NotificationDocument[]> {
+  ): Promise<NotificationShape[]> {
     return this.notificationsService.listForUser(
       user.sub,
       unreadOnly === 'true',
@@ -26,7 +26,7 @@ export class NotificationsController {
   markRead(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
-  ): Promise<NotificationDocument> {
+  ): Promise<NotificationShape> {
     return this.notificationsService.markRead(user.sub, id);
   }
 }

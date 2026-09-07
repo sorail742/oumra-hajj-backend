@@ -1,14 +1,14 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import {
+  Notification as PrismaNotification,
+  NotificationType as PrismaNotificationType,
+} from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationType } from '../../common/enums/notification-type.enum';
+import { NotificationShape } from '../../types/notification.types';
 import { UsersService } from '../users/users.service';
 import { PushSender, PUSH_SENDER } from './senders/push-sender.interface';
 import { SmsSender, SMS_SENDER } from './senders/sms-sender.interface';
-import {
-  Notification,
-  NotificationDocument,
-  NotificationType,
-} from './schemas/notification.schema';
 
 export interface SendNotificationInput {
   recipientIds: string[];
@@ -18,26 +18,40 @@ export interface SendNotificationInput {
   isCritical?: boolean;
 }
 
+function toNotificationShape(
+  notification: PrismaNotification,
+): NotificationShape {
+  return {
+    id: notification.id,
+    recipientId: notification.recipientId,
+    type: notification.type as unknown as NotificationType,
+    title: notification.title,
+    content: notification.content,
+    isCritical: notification.isCritical,
+    readAt: notification.readAt ?? undefined,
+    createdAt: notification.createdAt,
+  };
+}
+
 @Injectable()
 export class NotificationsService {
   constructor(
-    @InjectModel(Notification.name)
-    private readonly notificationModel: Model<NotificationDocument>,
+    private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
     @Inject(PUSH_SENDER) private readonly pushSender: PushSender,
     @Inject(SMS_SENDER) private readonly smsSender: SmsSender,
   ) {}
 
-  async send(input: SendNotificationInput): Promise<NotificationDocument[]> {
-    const docs = await this.notificationModel.insertMany(
-      input.recipientIds.map((recipientId) => ({
-        recipient: recipientId,
-        type: input.type,
+  async send(input: SendNotificationInput): Promise<NotificationShape[]> {
+    const notifications = await this.prisma.notification.createManyAndReturn({
+      data: input.recipientIds.map((recipientId) => ({
+        recipientId,
+        type: input.type as unknown as PrismaNotificationType,
         title: input.title,
         content: input.content,
         isCritical: input.isCritical ?? false,
       })),
-    );
+    });
 
     // Envoi best-effort, sans bloquer la réponse API (voir ADR 0009 : le
     // module notifications ne doit pas ralentir les requêtes appelantes). Un
@@ -49,7 +63,7 @@ export class NotificationsService {
       ),
     );
 
-    return docs;
+    return notifications.map(toNotificationShape);
   }
 
   private async dispatch(
@@ -79,33 +93,35 @@ export class NotificationsService {
     return this.smsSender.send(phone, content);
   }
 
-  listForUser(
+  async listForUser(
     userId: string,
     unreadOnly = false,
-  ): Promise<NotificationDocument[]> {
-    const filter: Record<string, unknown> = {
-      recipient: userId,
-    };
-    if (unreadOnly) {
-      filter.readAt = { $exists: false };
-    }
-    return this.notificationModel.find(filter).sort({ createdAt: -1 }).exec();
+  ): Promise<NotificationShape[]> {
+    const notifications = await this.prisma.notification.findMany({
+      where: {
+        recipientId: userId,
+        ...(unreadOnly && { readAt: null }),
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return notifications.map(toNotificationShape);
   }
 
   async markRead(
     userId: string,
     notificationId: string,
-  ): Promise<NotificationDocument> {
-    const notification = await this.notificationModel
-      .findOneAndUpdate(
-        { _id: notificationId, recipient: userId },
-        { readAt: new Date() },
-        { new: true },
-      )
-      .exec();
-    if (!notification) {
+  ): Promise<NotificationShape> {
+    const existing = await this.prisma.notification.findFirst({
+      where: { id: notificationId, recipientId: userId },
+    });
+    if (!existing) {
       throw new NotFoundException('Notification introuvable');
     }
-    return notification;
+
+    const updated = await this.prisma.notification.update({
+      where: { id: existing.id },
+      data: { readAt: new Date() },
+    });
+    return toNotificationShape(updated);
   }
 }

@@ -75,7 +75,25 @@ Ordre retenu (dépendances d'abord) :
    `PilgrimDocumentStatus` déplacés vers `common/enums`. `IsMongoId` → `IsUUID`
    sur `bookingId` déjà fait au tour précédent (`documents`, `payments`,
    `reviews`) — rien à refaire ici.
-7. `rites`, `notifications`, `reviews`, `admin` — **prochaine étape** (dernière)
+7. ✅ `rites`, `notifications`, `reviews`, `admin` — dernière étape,
+   la plus contenue avec `payments`/`documents` : le graphe Prisma des 4
+   modules existait déjà depuis les fondations (aucune nouvelle migration
+   SQL). `RiteSheetPilgrimageType`/`NotificationType` déplacés vers
+   `common/enums`. Points d'implémentation notables : `RiteSheet.update()`
+   utilise `version: { increment: 1 }` plutôt qu'un lire-puis-incrémenter ;
+   `RiteProgress.syncBatch()` garde son pattern lecture-puis-upsert-conditionnel
+   (pas d'équivalent Prisma en une seule requête pour "n'écraser que si plus
+   récent") ; `Notification.send()` utilise `createManyAndReturn` (GA depuis
+   Prisma 5.14) pour renvoyer les lignes créées ; `Notification.markRead()`
+   vérifie l'appartenance via `findFirst` avant `update` (Prisma exige un
+   critère unique). `admin` ne avait aucun schéma propre — seule une
+   vérification était nécessaire, confirmée verte.
+
+   **Migration module par module terminée** : plus aucun module métier ne
+   référence Mongoose (`InjectModel`/`MongooseModule.forFeature` absents de
+   tout `src/modules/`). Seul `MongooseModule.forRootAsync()` dans
+   `app.module.ts` reste, désormais mort — retrait prévu dans une étape de
+   nettoyage séparée (voir ADR 0013, section Conséquences).
 
 Chaque étape : schéma Prisma du domaine + migration SQL + service réécrit
 (`PrismaService` au lieu de `Model<T>` Mongoose) + tests adaptés + Merge

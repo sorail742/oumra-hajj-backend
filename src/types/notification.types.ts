@@ -1,4 +1,4 @@
-import { NotificationType } from '../modules/notifications/schemas/notification.schema';
+import { NotificationType } from '../common/enums/notification-type.enum';
 
 export interface NotificationShape {
   id: string;

@@ -1,10 +1,10 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationType } from '../../common/enums/notification-type.enum';
 import { Role } from '../../common/enums/role.enum';
 import { AgenciesService } from '../agencies/agencies.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType } from '../notifications/schemas/notification.schema';
 import { UsersService } from '../users/users.service';
 import { GroupsService } from './groups.service';
 

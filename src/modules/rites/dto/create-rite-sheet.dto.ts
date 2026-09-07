@@ -8,7 +8,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { RiteSheetPilgrimageType } from '../schemas/rite-sheet.schema';
+import { RiteSheetPilgrimageType } from '../../../common/enums/rite-sheet-pilgrimage-type.enum';
 
 export class CreateRiteSheetDto {
   @ApiProperty()
