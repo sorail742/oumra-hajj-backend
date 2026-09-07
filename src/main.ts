@@ -1,11 +1,12 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { printBanner } from './common/logger/banner';
 import { AppConfig } from './config/configuration';
 import { setupApp } from './setup-app';
+import { buildSwaggerConfig } from './swagger.config';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -16,15 +17,7 @@ async function bootstrap(): Promise<void> {
   const env = configService.get('env', { infer: true });
 
   if (env !== 'production') {
-    const swaggerConfig = new DocumentBuilder()
-      .setTitle('Plateforme Oumra & Hadj — API')
-      .setDescription(
-        'API centrale : pèlerins, agences, forfaits, réservations, paiements, documents, rites, groupes, notifications.',
-      )
-      .setVersion('1.0')
-      .addBearerAuth()
-      .build();
-    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    const document = SwaggerModule.createDocument(app, buildSwaggerConfig());
     SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
   }
 
