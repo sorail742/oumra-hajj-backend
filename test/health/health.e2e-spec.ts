@@ -3,14 +3,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { setupApp } from '../../src/setup-app';
-import { startInMemoryMongo, stopInMemoryMongo } from '../utils/mongo-memory';
 
 describe('Health (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    process.env.MONGO_URI = await startInMemoryMongo();
-
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -22,7 +19,6 @@ describe('Health (e2e)', () => {
 
   afterAll(async () => {
     await app.close();
-    await stopInMemoryMongo();
   });
 
   it('/api/v1/health (GET) répond ok', () => {

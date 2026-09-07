@@ -1,8 +1,8 @@
 # État applicatif et mémoire (hors base de données principale)
 
 Ce document recense tout ce que l'API garde en état **en dehors** du modèle
-de données métier principal (Prisma après migration, voir ADR 0013) : ce qui
-expire, ce qui est reconstruit, ce qui n'est volontairement pas persisté.
+de données métier principal (Prisma, voir ADR 0013) : ce qui expire, ce qui
+est reconstruit, ce qui n'est volontairement pas persisté.
 Utile pour raisonner sur la montée en charge multi-instance et sur ce qui
 serait perdu en cas de redémarrage.
 
@@ -10,7 +10,7 @@ serait perdu en cas de redémarrage.
 
 | Donnée | Table/collection | TTL / cycle de vie |
 |---|---|---|
-| Code OTP | `Otp` | 5 min par défaut (`OTP_TTL_SECONDS`), purgé à la vérification ou expiré (index TTL Mongo ; contrainte applicative après migration Prisma) |
+| Code OTP | `Otp` | 5 min par défaut (`OTP_TTL_SECONDS`), purgé à la vérification ; expiration vérifiée en application (`expiresAt`), pas de TTL natif côté Postgres |
 | Refresh token | `RefreshToken` | Durée configurable (`JWT_REFRESH_EXPIRES_IN`, 30 j par défaut), révoqué à la rotation/déconnexion |
 
 Ces deux tables sont volontairement **en base**, pas en cache mémoire

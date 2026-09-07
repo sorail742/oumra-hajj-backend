@@ -35,13 +35,6 @@ pour les Maintainers) : tout changement passe par une Merge Request.
 par une Merge Request dédiée, au moment d'une mise en production (voir
 `devops.md`), jamais en continu à chaque fusion sur `develop`.
 
-## Migration Prisma en cours (ADR 0013)
-
-Chaque module migré de Mongoose vers Prisma suit ce même cycle, un module à
-la fois — voir l'ordre retenu dans `roadmap.md`. Ne pas migrer deux modules
-dans la même Merge Request : ça complique la revue et le retour arrière si
-un module pose problème.
-
 ## ADR
 
 Un ADR par décision structurante — voir `docs/adr/README.md` pour la liste

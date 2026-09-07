@@ -14,7 +14,7 @@ d'acceptation.
 Pipeline CI en place (`devops.md`), documentation API Swagger en place
 (`api-versioning.md`), workflow Git normalisé (`workflow.md`).
 
-## En cours : migration MongoDB → PostgreSQL/Prisma
+## Terminé : migration MongoDB → PostgreSQL/Prisma
 
 Décidée par [ADR 0013](adr/0013-migration-postgresql-prisma.md) (accepté),
 exécutée **module par module** (une branche + une Merge Request par module,
@@ -91,9 +91,17 @@ Ordre retenu (dépendances d'abord) :
 
    **Migration module par module terminée** : plus aucun module métier ne
    référence Mongoose (`InjectModel`/`MongooseModule.forFeature` absents de
-   tout `src/modules/`). Seul `MongooseModule.forRootAsync()` dans
-   `app.module.ts` reste, désormais mort — retrait prévu dans une étape de
-   nettoyage séparée (voir ADR 0013, section Conséquences).
+   tout `src/modules/`).
+8. ✅ Nettoyage final Mongo — retrait de `MongooseModule.forRootAsync()`
+   (`app.module.ts`), `mongoUri` (`configuration.ts`, `.env`/`.env.example`),
+   des dépendances `mongoose`/`@nestjs/mongoose`/`mongodb-memory-server`
+   (`package.json`) et de `test/utils/mongo-memory.ts` ; specs e2e (`health`,
+   `auth`, `bookings`) débarrassées de leur setup/teardown Mongo ;
+   `.gitlab-ci.yml`/`.gitignore` et documentation (`architecture.md`,
+   `coding-rules-backend.md`, `api-versioning.md`, `testing.md`, `devops.md`,
+   `README.md`, `CLAUDE.md`, `CURSOR.md`, `workflow.md`, `memory-system.md`,
+   `auth-setup.md`) mis à jour pour ne plus décrire de coexistence
+   Mongo/Postgres. Le backend ne dépend plus que de PostgreSQL/Prisma.
 
 Chaque étape : schéma Prisma du domaine + migration SQL + service réécrit
 (`PrismaService` au lieu de `Model<T>` Mongoose) + tests adaptés + Merge
@@ -119,7 +127,7 @@ uniquement, voir `README.md`), utile pour situer où s'arrête ce dépôt :
 | Phase | Contenu | Statut |
 |---|---|---|
 | 1 — Cadrage & UX | Personas, maquettes | Externe à ce dépôt |
-| 2 — Backend & données | Ce dépôt | En cours (migration DB) |
+| 2 — Backend & données | Ce dépôt | En cours (voir issues #15 à #18) |
 | 3 — App mobile pèlerin | Flutter, dépôt séparé | Non démarré (dépend du contrat API — voir `api-versioning.md`) |
 | 4 — Espace agence & admin | Back-office web React | Non démarré |
 | 5 — Intégrations & tests | Mobile Money, push, géoloc | Bloqué par issue #18 |

@@ -4,10 +4,9 @@ import {
   StartedPostgreSqlContainer,
 } from '@testcontainers/postgresql';
 
-// Postgres réel et éphémère pour les tests e2e des modules migrés sur Prisma
-// (ADR 0013), même rôle que test/utils/mongo-memory.ts pour Mongo : une
-// instance fraîche par fichier de test, zéro setup manuel local (Docker
-// requis). En CI, un service `postgres:` est fourni par .gitlab-ci.yml —
+// Postgres réel et éphémère pour les tests e2e (ADR 0013) : une instance
+// fraîche par fichier de test, zéro setup manuel local (Docker requis).
+// En CI, un service `postgres:` est fourni par .gitlab-ci.yml —
 // DATABASE_URL est alors déjà positionnée, testcontainers est sauté (le
 // runner n'expose pas le socket Docker nécessaire).
 //

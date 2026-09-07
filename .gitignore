@@ -23,5 +23,5 @@ npm-debug.log*
 # OS
 .DS_Store
 
-# mongodb-memory-server (binaires téléchargés pour les tests)
+# caches d'outils locaux (binaires téléchargés, etc.)
 node_modules/.cache

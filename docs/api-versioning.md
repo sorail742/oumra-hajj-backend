@@ -44,10 +44,10 @@ Une évolution **reste en v1** si elle :
 ## Contrat de types
 
 `src/types/` centralise les formes de réponse (`*Shape`) exposées par
-l'API, indépendamment du stockage (Mongoose aujourd'hui, Prisma après
-migration — voir [ADR 0013](adr/0013-migration-postgresql-prisma.md)). Toute
-évolution de champ de réponse doit être reflétée ici en premier — c'est la
-référence pour le contrat mobile/web (voir [ADR 0001](adr/0001-choix-stack-technique.md),
+l'API, indépendamment du modèle de stockage Prisma (voir
+[ADR 0013](adr/0013-migration-postgresql-prisma.md)). Toute évolution de
+champ de réponse doit être reflétée ici en premier — c'est la référence pour
+le contrat mobile/web (voir [ADR 0001](adr/0001-choix-stack-technique.md),
 "définition de contrat d'API claire").
 
 ## Documentation vivante

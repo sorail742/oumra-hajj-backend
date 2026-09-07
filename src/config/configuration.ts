@@ -2,10 +2,6 @@ export interface AppConfig {
   env: string;
   port: number;
   apiPrefix: string;
-  // Base historique (Mongoose) — retirée au fur et à mesure de la migration
-  // Prisma, voir ADR 0013 et docs/roadmap.md. Les deux coexistent tant que
-  // tous les modules ne sont pas migrés.
-  mongoUri: string;
   databaseUrl: string;
   jwt: {
     accessSecret: string;
@@ -27,7 +23,6 @@ export default (): AppConfig => ({
   env: process.env.NODE_ENV ?? 'development',
   port: parseInt(process.env.PORT ?? '3000', 10),
   apiPrefix: process.env.API_PREFIX ?? 'api',
-  mongoUri: process.env.MONGO_URI ?? 'mongodb://localhost:27017/oumra-hadj',
   databaseUrl:
     process.env.DATABASE_URL ??
     'postgresql://oumra_hadj:oumra_hadj_dev@localhost:5432/oumra_hadj_dev',

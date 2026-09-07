@@ -12,8 +12,8 @@ fonctionnel complet.
 
 ## Stack
 
-- **Backend** : NestJS + TypeScript, MongoDB/Mongoose. Voir `docs/adr/0001-*`
-  et `docs/adr/0002-*`.
+- **Backend** : NestJS + TypeScript, PostgreSQL/Prisma. Voir `docs/adr/0001-*`,
+  `docs/adr/0002-*` et `docs/adr/0013-*`.
 - **Frontend web** : React + TypeScript (Vite).
 - **Mobile** : Flutter/Dart (dépôt séparé), consomme la même API.
 - Toute décision d'architecture nouvelle ou modifiée passe par un ADR
@@ -38,11 +38,11 @@ fonctionnel complet.
 - TypeScript strict (`strict: true`) sur backend et frontend web — pas de
   `any` non justifié.
 - Backend : un module NestJS par domaine métier (`src/modules/<domaine>/`),
-  DTO validés avec `class-validator`, schémas Mongoose séparés des DTO
-  d'entrée/sortie. Voir `docs/adr/0002-*`.
+  DTO validés avec `class-validator`, séparés du schéma Prisma
+  (`prisma/schema.prisma`). Voir `docs/adr/0002-*`.
 - Pas de logique métier dans les contrôleurs : contrôleur = validation +
   appel service ; service = logique métier ; le contrôleur ne parle jamais
-  directement à Mongoose.
+  directement à Prisma.
 - Aucune donnée sensible (documents pèlerins, secrets, clés API, données de
   paiement) ne doit apparaître dans un log, un message de commit, ou un
   exemple de code. Voir `docs/adr/0008-*` et `docs/adr/0006-*`.

@@ -6,7 +6,7 @@ de modification d'une règle de fond, mettre à jour les trois.
 
 ## Contexte rapide
 
-- Backend NestJS + TypeScript + MongoDB/Mongoose (`backend/`).
+- Backend NestJS + TypeScript + PostgreSQL/Prisma (`backend/`).
 - Frontend React + TypeScript, Vite (`frontend/`).
 - Mobile Flutter/Dart dans un dépôt séparé (non couvert par ce dépôt).
 - Décisions d'architecture tracées dans `docs/adr/` — les consulter avant
@@ -21,7 +21,7 @@ de modification d'une règle de fond, mettre à jour les trois.
 - Compléter les DTO avec des décorateurs `class-validator` systématiquement
   pour toute entrée utilisateur.
 - Ne jamais suggérer de stocker un fichier (passeport, visa, billet) en base
-  MongoDB — uniquement sa métadonnée (voir `docs/adr/0008-*`).
+  de données — uniquement sa métadonnée (voir `docs/adr/0008-*`).
 - Ne jamais suggérer de logguer une donnée sensible (téléphone complet en
   clair dans un log de debug, contenu de document, secret, token).
 - Pour toute nouvelle dépendance externe significative (SDK de paiement,

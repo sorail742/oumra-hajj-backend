@@ -14,8 +14,7 @@ un contrôleur ajouté à un module existant qui ne le concerne pas
 
 - Un contrôleur ne fait que : valider (via DTO + `ValidationPipe` global),
   extraire `@CurrentUser()`, appeler le service, retourner son résultat.
-- Aucune règle métier, aucun accès à Prisma/Mongoose directement dans un
-  contrôleur.
+- Aucune règle métier, aucun accès à Prisma directement dans un contrôleur.
 - Toute route dont l'accès doit être restreint à un rôle porte
   `@Roles(Role.X, Role.Y)` explicitement. Pas de `@Roles()` = accessible à
   tout utilisateur authentifié (pas seulement au(x) rôle(s) "logique(s)") —
@@ -50,14 +49,10 @@ un contrôleur ajouté à un module existant qui ne le concerne pas
 
 ## Accès aux données
 
-Pendant la migration Prisma ([ADR 0013](adr/0013-migration-postgresql-prisma.md)) :
-
-- Modules déjà migrés : injecter `PrismaService`, utiliser
-  `this.prisma.<model>.findUnique(...)` etc.
-- Modules pas encore migrés : injecter le `Model<T>` Mongoose via
-  `@InjectModel` comme avant — ne pas migrer un module au fil de l'eau dans
-  une PR non dédiée, voir `workflow.md`.
-- Ne jamais mélanger les deux dans un même service.
+Tout accès aux données passe par `PrismaService` ([ADR 0013](adr/0013-migration-postgresql-prisma.md)) :
+injecter `PrismaService` (module `@Global()`, pas besoin de le réimporter) et
+utiliser `this.prisma.<model>.findUnique(...)` etc. Jamais d'accès direct au
+modèle de données d'un autre module — passer par son service exporté.
 
 ## Erreurs
 
