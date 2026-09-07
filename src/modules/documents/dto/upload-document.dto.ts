@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString, IsUUID, MinLength } from 'class-validator';
-import { PilgrimDocumentType } from '../schemas/document.schema';
+import { PilgrimDocumentType } from '../../../common/enums/pilgrim-document-type.enum';
 
 // Le téléversement effectif du fichier passe par le service de stockage
 // objet (voir ADR 0008) ; cette API n'échange que la référence obtenue.

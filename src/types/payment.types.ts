@@ -1,7 +1,5 @@
-import {
-  PaymentMethod,
-  PaymentStatus,
-} from '../modules/payments/schemas/payment.schema';
+import { PaymentMethod } from '../common/enums/payment-method.enum';
+import { PaymentStatus } from '../common/enums/payment-status.enum';
 
 export interface PaymentShape {
   id: string;

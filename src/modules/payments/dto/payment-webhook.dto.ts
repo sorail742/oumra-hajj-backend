@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString } from 'class-validator';
-import { PaymentStatus } from '../schemas/payment.schema';
+import { PaymentStatus } from '../../../common/enums/payment-status.enum';
 
 // Callback serveur-à-serveur du prestataire de paiement — le statut d'un
 // paiement n'est jamais mis à jour uniquement côté client (voir ADR 0006).

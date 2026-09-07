@@ -3,27 +3,43 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import {
+  Payment as PrismaPayment,
+  PaymentMethod as PrismaPaymentMethod,
+  PaymentStatus as PrismaPaymentStatus,
+} from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { Model } from 'mongoose';
+import { PrismaService } from '../../prisma/prisma.service';
 import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
+import { PaymentMethod } from '../../common/enums/payment-method.enum';
+import { PaymentStatus } from '../../common/enums/payment-status.enum';
 import { Role } from '../../common/enums/role.enum';
+import { PaymentShape } from '../../types/payment.types';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { PackagesService } from '../packages/packages.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
-import {
-  Payment,
-  PaymentDocument,
-  PaymentStatus,
-} from './schemas/payment.schema';
+
+function toPaymentShape(payment: PrismaPayment): PaymentShape {
+  return {
+    id: payment.id,
+    bookingId: payment.bookingId,
+    amount: payment.amount,
+    currency: payment.currency,
+    installmentNumber: payment.installmentNumber,
+    method: payment.method as unknown as PaymentMethod,
+    status: payment.status as unknown as PaymentStatus,
+    providerReference: payment.providerReference,
+    receiptRef: payment.receiptRef ?? undefined,
+    confirmedAt: payment.confirmedAt ?? undefined,
+  };
+}
 
 @Injectable()
 export class PaymentsService {
   constructor(
-    @InjectModel(Payment.name)
-    private readonly paymentModel: Model<PaymentDocument>,
+    private readonly prisma: PrismaService,
     private readonly bookingsService: BookingsService,
     private readonly packagesService: PackagesService,
     private readonly agenciesService: AgenciesService,
@@ -32,54 +48,58 @@ export class PaymentsService {
   async initiate(
     pilgrimId: string,
     dto: InitiatePaymentDto,
-  ): Promise<PaymentDocument> {
+  ): Promise<PaymentShape> {
     const booking = await this.bookingsService.findByIdOrFail(dto.bookingId);
     if (booking.pilgrimId !== pilgrimId) {
       throw new ForbiddenException('Cette réservation ne vous appartient pas');
     }
 
     const installmentNumber =
-      (await this.paymentModel.countDocuments({ booking: booking.id })) + 1;
+      (await this.prisma.payment.count({
+        where: { bookingId: booking.id },
+      })) + 1;
 
     // Référence provisoire tant qu'aucun agrégateur Mobile Money/carte n'est
     // intégré (voir ADR 0006) — à remplacer par la référence retournée par
     // l'appel d'initiation réel du prestataire.
-    return this.paymentModel.create({
-      booking: booking.id,
-      amount: dto.amount,
-      installmentNumber,
-      method: dto.method,
-      status: PaymentStatus.PENDING,
-      providerReference: `dev-${randomUUID()}`,
+    const payment = await this.prisma.payment.create({
+      data: {
+        bookingId: booking.id,
+        amount: dto.amount,
+        installmentNumber,
+        method: dto.method as unknown as PrismaPaymentMethod,
+        status: PaymentStatus.PENDING as unknown as PrismaPaymentStatus,
+        providerReference: `dev-${randomUUID()}`,
+      },
     });
+    return toPaymentShape(payment);
   }
 
-  findByIdOrFail(id: string): Promise<PaymentDocument> {
-    return this.paymentModel
-      .findById(id)
-      .exec()
-      .then((payment) => {
-        if (!payment) {
-          throw new NotFoundException('Paiement introuvable');
-        }
-        return payment;
-      });
+  async findByIdOrFail(id: string): Promise<PaymentShape> {
+    const payment = await this.prisma.payment.findUnique({ where: { id } });
+    if (!payment) {
+      throw new NotFoundException('Paiement introuvable');
+    }
+    return toPaymentShape(payment);
   }
 
-  async findForPilgrim(pilgrimId: string): Promise<PaymentDocument[]> {
+  async findForPilgrim(pilgrimId: string): Promise<PaymentShape[]> {
     const bookings = await this.bookingsService.findMine(pilgrimId);
     const bookingIds = bookings.map((b) => b.id);
-    return this.paymentModel.find({ booking: { $in: bookingIds } }).exec();
+    const payments = await this.prisma.payment.findMany({
+      where: { bookingId: { in: bookingIds } },
+    });
+    return payments.map(toPaymentShape);
   }
 
   async findAuthorizedOrFail(
     requesterId: string,
     requesterRole: Role,
     paymentId: string,
-  ): Promise<PaymentDocument> {
+  ): Promise<PaymentShape> {
     const payment = await this.findByIdOrFail(paymentId);
     const booking = await this.bookingsService.findByIdOrFail(
-      payment.booking.toString(),
+      payment.bookingId,
     );
 
     if (requesterRole === Role.ADMIN || booking.pilgrimId === requesterId) {
@@ -96,49 +116,61 @@ export class PaymentsService {
     throw new ForbiddenException("Vous n'avez pas accès à ce paiement");
   }
 
-  findByBooking(bookingId: string): Promise<PaymentDocument[]> {
-    return this.paymentModel.find({ booking: bookingId }).exec();
+  async findByBooking(bookingId: string): Promise<PaymentShape[]> {
+    const payments = await this.prisma.payment.findMany({
+      where: { bookingId },
+    });
+    return payments.map(toPaymentShape);
   }
 
-  async findForAgency(ownerId: string): Promise<PaymentDocument[]> {
+  async findForAgency(ownerId: string): Promise<PaymentShape[]> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
     const bookings = await this.bookingsService.findByAgency(ownerId);
     const bookingIds = bookings
       .filter((b) => b.agencyId === agency.id)
       .map((b) => b.id);
-    return this.paymentModel.find({ booking: { $in: bookingIds } }).exec();
+    const payments = await this.prisma.payment.findMany({
+      where: { bookingId: { in: bookingIds } },
+    });
+    return payments.map(toPaymentShape);
   }
 
   // Callback serveur-à-serveur du prestataire — voir ADR 0006.
-  async handleWebhook(dto: PaymentWebhookDto): Promise<PaymentDocument> {
-    const payment = await this.paymentModel
-      .findOne({ providerReference: dto.providerReference })
-      .exec();
-    if (!payment) {
+  async handleWebhook(dto: PaymentWebhookDto): Promise<PaymentShape> {
+    const existing = await this.prisma.payment.findUnique({
+      where: { providerReference: dto.providerReference },
+    });
+    if (!existing) {
       throw new NotFoundException('Paiement introuvable pour cette référence');
     }
 
-    payment.status = dto.status;
-    if (dto.status === PaymentStatus.SUCCEEDED) {
-      payment.confirmedAt = new Date();
-      payment.receiptRef = `RCPT-${payment._id.toString()}`;
-    }
-    await payment.save();
+    const payment = await this.prisma.payment.update({
+      where: { id: existing.id },
+      data: {
+        status: dto.status as unknown as PrismaPaymentStatus,
+        ...(dto.status === PaymentStatus.SUCCEEDED && {
+          confirmedAt: new Date(),
+          receiptRef: `RCPT-${existing.id}`,
+        }),
+      },
+    });
 
     if (dto.status === PaymentStatus.SUCCEEDED) {
-      await this.reconcileBookingPaymentStep(payment.booking.toString());
+      await this.reconcileBookingPaymentStep(payment.bookingId);
     }
 
-    return payment;
+    return toPaymentShape(payment);
   }
 
   // Supervision des paiements — cahier des charges §3.4.
   async sumSucceededAmount(): Promise<number> {
-    const [result] = await this.paymentModel.aggregate<{ total: number }>([
-      { $match: { status: PaymentStatus.SUCCEEDED } },
-      { $group: { _id: null, total: { $sum: '$amount' } } },
-    ]);
-    return result?.total ?? 0;
+    const result = await this.prisma.payment.aggregate({
+      where: {
+        status: PaymentStatus.SUCCEEDED as unknown as PrismaPaymentStatus,
+      },
+      _sum: { amount: true },
+    });
+    return result._sum.amount ?? 0;
   }
 
   private async reconcileBookingPaymentStep(bookingId: string): Promise<void> {

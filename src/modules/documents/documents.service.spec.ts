@@ -1,14 +1,13 @@
 import { ForbiddenException } from '@nestjs/common';
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaService } from '../../prisma/prisma.service';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { DocumentsService } from './documents.service';
-import { PilgrimDocument } from './schemas/document.schema';
 
 describe("DocumentsService — contrôle d'accès aux documents sensibles", () => {
   let service: DocumentsService;
-  let documentModel: { find: jest.Mock };
+  let prisma: { pilgrimDocument: { findMany: jest.Mock } };
   let bookingsService: { findByIdOrFail: jest.Mock };
   let agenciesService: { findByOwnerOrFail: jest.Mock };
 
@@ -17,10 +16,8 @@ describe("DocumentsService — contrôle d'accès aux documents sensibles", () =
   const bookingId = 'booking-1';
 
   beforeEach(async () => {
-    documentModel = {
-      find: jest
-        .fn()
-        .mockReturnValue({ exec: jest.fn().mockResolvedValue([]) }),
+    prisma = {
+      pilgrimDocument: { findMany: jest.fn().mockResolvedValue([]) },
     };
     bookingsService = { findByIdOrFail: jest.fn() };
     agenciesService = { findByOwnerOrFail: jest.fn() };
@@ -28,10 +25,7 @@ describe("DocumentsService — contrôle d'accès aux documents sensibles", () =
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DocumentsService,
-        {
-          provide: getModelToken(PilgrimDocument.name),
-          useValue: documentModel,
-        },
+        { provide: PrismaService, useValue: prisma },
         { provide: BookingsService, useValue: bookingsService },
         { provide: AgenciesService, useValue: agenciesService },
       ],

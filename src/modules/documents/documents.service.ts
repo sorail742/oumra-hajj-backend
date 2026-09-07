@@ -4,20 +4,33 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import {
+  PilgrimDocument as PrismaPilgrimDocument,
+  PilgrimDocumentStatus as PrismaPilgrimDocumentStatus,
+  PilgrimDocumentType as PrismaPilgrimDocumentType,
+} from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
+import { PilgrimDocumentStatus } from '../../common/enums/pilgrim-document-status.enum';
+import { PilgrimDocumentType } from '../../common/enums/pilgrim-document-type.enum';
+import { PilgrimDocumentShape } from '../../types/document.types';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { UploadDocumentDto } from './dto/upload-document.dto';
-import {
-  PilgrimDocument,
-  PilgrimDocumentDocument,
-  PilgrimDocumentStatus,
-  PilgrimDocumentType,
-} from './schemas/document.schema';
 
 const REQUIRED_TYPES = Object.values(PilgrimDocumentType);
+
+function toDocumentShape(doc: PrismaPilgrimDocument): PilgrimDocumentShape {
+  return {
+    id: doc.id,
+    bookingId: doc.bookingId,
+    pilgrimId: doc.pilgrimId,
+    type: doc.type as unknown as PilgrimDocumentType,
+    storageRef: doc.storageRef,
+    status: doc.status as unknown as PilgrimDocumentStatus,
+    rejectionReason: doc.rejectionReason ?? undefined,
+  };
+}
 
 @Injectable()
 export class DocumentsService {
@@ -25,8 +38,7 @@ export class DocumentsService {
   private readonly accessLogger = new Logger('DocumentAccess');
 
   constructor(
-    @InjectModel(PilgrimDocument.name)
-    private readonly documentModel: Model<PilgrimDocumentDocument>,
+    private readonly prisma: PrismaService,
     private readonly bookingsService: BookingsService,
     private readonly agenciesService: AgenciesService,
   ) {}
@@ -34,31 +46,38 @@ export class DocumentsService {
   async upload(
     pilgrimId: string,
     dto: UploadDocumentDto,
-  ): Promise<PilgrimDocumentDocument> {
+  ): Promise<PilgrimDocumentShape> {
     const booking = await this.bookingsService.findByIdOrFail(dto.bookingId);
     if (booking.pilgrimId !== pilgrimId) {
       throw new ForbiddenException('Cette réservation ne vous appartient pas');
     }
 
-    return this.documentModel.create({
-      booking: booking.id,
-      pilgrim: pilgrimId,
-      type: dto.type,
-      storageRef: dto.storageRef,
-      status: PilgrimDocumentStatus.PENDING,
+    const doc = await this.prisma.pilgrimDocument.create({
+      data: {
+        bookingId: booking.id,
+        pilgrimId,
+        type: dto.type as unknown as PrismaPilgrimDocumentType,
+        storageRef: dto.storageRef,
+        status:
+          PilgrimDocumentStatus.PENDING as unknown as PrismaPilgrimDocumentStatus,
+      },
     });
+    return toDocumentShape(doc);
   }
 
-  async findMine(pilgrimId: string): Promise<PilgrimDocumentDocument[]> {
+  async findMine(pilgrimId: string): Promise<PilgrimDocumentShape[]> {
     this.accessLogger.log(`Lecture (propriétaire) — pèlerin=${pilgrimId}`);
-    return this.documentModel.find({ pilgrim: pilgrimId }).exec();
+    const docs = await this.prisma.pilgrimDocument.findMany({
+      where: { pilgrimId },
+    });
+    return docs.map(toDocumentShape);
   }
 
   async findByBooking(
     requesterId: string,
     requesterRole: 'pilgrim' | 'agency',
     bookingId: string,
-  ): Promise<PilgrimDocumentDocument[]> {
+  ): Promise<PilgrimDocumentShape[]> {
     const booking = await this.bookingsService.findByIdOrFail(bookingId);
 
     if (requesterRole === 'pilgrim' && booking.pilgrimId !== requesterId) {
@@ -76,56 +95,66 @@ export class DocumentsService {
     this.accessLogger.log(
       `Lecture — demandeur=${requesterId} (${requesterRole}) réservation=${bookingId}`,
     );
-    return this.documentModel.find({ booking: booking.id }).exec();
+    const docs = await this.prisma.pilgrimDocument.findMany({
+      where: { bookingId: booking.id },
+    });
+    return docs.map(toDocumentShape);
   }
 
   async validate(
     ownerId: string,
     documentId: string,
-  ): Promise<PilgrimDocumentDocument> {
+  ): Promise<PilgrimDocumentShape> {
     const doc = await this.findByIdOrFail(documentId);
     await this.assertAgencyOwnership(ownerId, doc);
 
-    doc.status = PilgrimDocumentStatus.VALIDATED;
-    doc.rejectionReason = undefined;
-    await doc.save();
+    const updated = await this.prisma.pilgrimDocument.update({
+      where: { id: doc.id },
+      data: {
+        status:
+          PilgrimDocumentStatus.VALIDATED as unknown as PrismaPilgrimDocumentStatus,
+        rejectionReason: null,
+      },
+    });
 
-    await this.maybeCompleteDocumentsStep(doc.booking.toString());
-    return doc;
+    await this.maybeCompleteDocumentsStep(updated.bookingId);
+    return toDocumentShape(updated);
   }
 
   async reject(
     ownerId: string,
     documentId: string,
     reason: string,
-  ): Promise<PilgrimDocumentDocument> {
+  ): Promise<PilgrimDocumentShape> {
     const doc = await this.findByIdOrFail(documentId);
     await this.assertAgencyOwnership(ownerId, doc);
 
-    doc.status = PilgrimDocumentStatus.REJECTED;
-    doc.rejectionReason = reason;
-    return doc.save();
+    const updated = await this.prisma.pilgrimDocument.update({
+      where: { id: doc.id },
+      data: {
+        status:
+          PilgrimDocumentStatus.REJECTED as unknown as PrismaPilgrimDocumentStatus,
+        rejectionReason: reason,
+      },
+    });
+    return toDocumentShape(updated);
   }
 
-  private findByIdOrFail(id: string): Promise<PilgrimDocumentDocument> {
-    return this.documentModel
-      .findById(id)
-      .exec()
-      .then((doc) => {
-        if (!doc) {
-          throw new NotFoundException('Document introuvable');
-        }
-        return doc;
-      });
+  private async findByIdOrFail(id: string): Promise<PilgrimDocumentShape> {
+    const doc = await this.prisma.pilgrimDocument.findUnique({
+      where: { id },
+    });
+    if (!doc) {
+      throw new NotFoundException('Document introuvable');
+    }
+    return toDocumentShape(doc);
   }
 
   private async assertAgencyOwnership(
     ownerId: string,
-    doc: PilgrimDocumentDocument,
+    doc: PilgrimDocumentShape,
   ): Promise<void> {
-    const booking = await this.bookingsService.findByIdOrFail(
-      doc.booking.toString(),
-    );
+    const booking = await this.bookingsService.findByIdOrFail(doc.bookingId);
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
     if (booking.agencyId !== agency.id) {
       throw new ForbiddenException(
@@ -135,9 +164,12 @@ export class DocumentsService {
   }
 
   private async maybeCompleteDocumentsStep(bookingId: string): Promise<void> {
-    const docs = await this.documentModel.find({ booking: bookingId }).exec();
+    const docs = await this.prisma.pilgrimDocument.findMany({
+      where: { bookingId },
+    });
+    const shapes = docs.map(toDocumentShape);
     const validatedTypes = new Set(
-      docs
+      shapes
         .filter((d) => d.status === PilgrimDocumentStatus.VALIDATED)
         .map((d) => d.type),
     );
