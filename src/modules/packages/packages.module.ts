@@ -1,15 +1,10 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { AgenciesModule } from '../agencies/agencies.module';
 import { PackagesController } from './packages.controller';
 import { PackagesService } from './packages.service';
-import { Package, PackageSchema } from './schemas/package.schema';
 
 @Module({
-  imports: [
-    AgenciesModule,
-    MongooseModule.forFeature([{ name: Package.name, schema: PackageSchema }]),
-  ],
+  imports: [AgenciesModule],
   controllers: [PackagesController],
   providers: [PackagesService],
   exports: [PackagesService],

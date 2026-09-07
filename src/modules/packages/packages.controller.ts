@@ -13,11 +13,11 @@ import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import { PackageShape } from '../../types/package.types';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { QueryPackagesDto } from './dto/query-packages.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
 import { PackagesService } from './packages.service';
-import { PackageDocument } from './schemas/package.schema';
 
 @ApiTags('packages')
 @Controller('packages')
@@ -26,20 +26,20 @@ export class PackagesController {
 
   @Public()
   @Get()
-  listPublic(@Query() query: QueryPackagesDto): Promise<PackageDocument[]> {
+  listPublic(@Query() query: QueryPackagesDto): Promise<PackageShape[]> {
     return this.packagesService.listPublic(query);
   }
 
   @ApiBearerAuth()
   @Roles(Role.AGENCY)
   @Get('mine')
-  listMine(@CurrentUser() user: JwtPayload): Promise<PackageDocument[]> {
+  listMine(@CurrentUser() user: JwtPayload): Promise<PackageShape[]> {
     return this.packagesService.listMine(user.sub);
   }
 
   @Public()
   @Get(':id')
-  getById(@Param('id') id: string): Promise<PackageDocument> {
+  getById(@Param('id') id: string): Promise<PackageShape> {
     return this.packagesService.findByIdOrFail(id);
   }
 
@@ -49,7 +49,7 @@ export class PackagesController {
   create(
     @CurrentUser() user: JwtPayload,
     @Body() dto: CreatePackageDto,
-  ): Promise<PackageDocument> {
+  ): Promise<PackageShape> {
     return this.packagesService.create(user.sub, dto);
   }
 
@@ -60,7 +60,7 @@ export class PackagesController {
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() dto: UpdatePackageDto,
-  ): Promise<PackageDocument> {
+  ): Promise<PackageShape> {
     return this.packagesService.update(user.sub, id, dto);
   }
 
@@ -70,7 +70,7 @@ export class PackagesController {
   close(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
-  ): Promise<PackageDocument> {
+  ): Promise<PackageShape> {
     return this.packagesService.close(user.sub, id);
   }
 }

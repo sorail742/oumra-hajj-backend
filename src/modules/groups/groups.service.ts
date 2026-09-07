@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Role } from '../../common/enums/role.enum';
 import { AgenciesService } from '../agencies/agencies.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -28,7 +28,7 @@ export class GroupsService {
   async create(ownerId: string, dto: CreateGroupDto): Promise<GroupDocument> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
     return this.groupModel.create({
-      package: new Types.ObjectId(dto.packageId),
+      package: dto.packageId,
       agency: agency.id,
       title: dto.title,
     });

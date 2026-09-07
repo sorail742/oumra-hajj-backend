@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsMongoId, IsString, MinLength } from 'class-validator';
+import { IsString, IsUUID, MinLength } from 'class-validator';
 
 export class CreateGroupDto {
   @ApiProperty()
-  @IsMongoId()
+  @IsUUID()
   packageId!: string;
 
   @ApiProperty()

@@ -13,7 +13,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { PilgrimageType } from '../schemas/package.schema';
+import { PilgrimageType } from '../../../common/enums/pilgrimage-type.enum';
 
 class HotelInfoDto {
   @ApiProperty()

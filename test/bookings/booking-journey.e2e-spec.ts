@@ -128,7 +128,7 @@ describe('Parcours réservation + paiement (e2e)', () => {
         capacity: 1,
       })
       .expect(201);
-    const packageId = pkgRes.body._id as string;
+    const packageId = pkgRes.body.id as string;
 
     // 5. Un pèlerin s'inscrit par OTP.
     const pilgrimPhone = '+224620000011';

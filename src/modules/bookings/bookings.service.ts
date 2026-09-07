@@ -38,8 +38,8 @@ export class BookingsService {
 
     return this.bookingModel.create({
       pilgrim: pilgrimId,
-      package: pkg._id,
-      agency: pkg.agency,
+      package: pkg.id,
+      agency: pkg.agencyId,
     });
   }
 

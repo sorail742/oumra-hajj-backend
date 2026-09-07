@@ -27,7 +27,7 @@ describe('BookingsService', () => {
 
   const pilgrimId = new Types.ObjectId().toString();
   const agencyId = 'agency-1';
-  const packageId = new Types.ObjectId().toString();
+  const packageId = 'package-1';
   const bookingId = new Types.ObjectId().toString();
 
   beforeEach(async () => {
@@ -56,8 +56,8 @@ describe('BookingsService', () => {
   describe('create', () => {
     it('réserve une place sur le forfait avant de créer la réservation', async () => {
       packagesService.findByIdOrFail.mockResolvedValue({
-        _id: new Types.ObjectId(packageId),
-        agency: agencyId,
+        id: packageId,
+        agencyId,
       });
       packagesService.reserveSeat.mockResolvedValue({});
       bookingModel.create.mockResolvedValue({ _id: bookingId });
@@ -72,8 +72,8 @@ describe('BookingsService', () => {
 
     it("ne crée pas de réservation si la place n'a pas pu être réservée (forfait complet)", async () => {
       packagesService.findByIdOrFail.mockResolvedValue({
-        _id: new Types.ObjectId(packageId),
-        agency: agencyId,
+        id: packageId,
+        agencyId,
       });
       packagesService.reserveSeat.mockRejectedValue(
         new Error('Forfait complet'),
