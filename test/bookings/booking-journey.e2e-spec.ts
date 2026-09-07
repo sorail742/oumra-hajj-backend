@@ -77,6 +77,15 @@ describe('Parcours réservation + paiement (e2e)', () => {
         endDate: '2027-03-15',
         price: 500,
         capacity: 1,
+        stages: [
+          {
+            city: 'La Mecque',
+            hotelName: 'Hôtel Al Safwah',
+            distanceToMosqueMeters: 350,
+            startDate: '2027-03-01',
+            endDate: '2027-03-15',
+          },
+        ],
       })
       .expect(409);
 
@@ -123,6 +132,15 @@ describe('Parcours réservation + paiement (e2e)', () => {
         endDate: '2027-03-15',
         price: 500,
         capacity: 1,
+        stages: [
+          {
+            city: 'La Mecque',
+            hotelName: 'Hôtel Al Safwah',
+            distanceToMosqueMeters: 350,
+            startDate: '2027-03-01',
+            endDate: '2027-03-15',
+          },
+        ],
       })
       .expect(201);
     const packageId = pkgRes.body.id as string;

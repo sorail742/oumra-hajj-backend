@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import {
   Package as PrismaPackage,
+  PackageStage as PrismaPackageStage,
   PackageStatus as PrismaPackageStatus,
   PilgrimageType as PrismaPilgrimageType,
 } from '@prisma/client';
@@ -14,16 +15,28 @@ import { PackageStatus } from '../../common/enums/package-status.enum';
 import { PilgrimageType } from '../../common/enums/pilgrimage-type.enum';
 import { PackageShape } from '../../types/package.types';
 import { AgenciesService } from '../agencies/agencies.service';
-import { CreatePackageDto } from './dto/create-package.dto';
+import { CreatePackageDto, PackageStageDto } from './dto/create-package.dto';
 import { QueryPackagesDto } from './dto/query-packages.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
 
-function toPackageShape(pkg: PrismaPackage): PackageShape {
-  const hasHotel =
-    pkg.hotelName !== null ||
-    pkg.hotelCity !== null ||
-    pkg.hotelDistanceToMosqueM !== null;
+type PrismaPackageWithStages = PrismaPackage & { stages: PrismaPackageStage[] };
 
+// Inclusion Prisma partagee entre toutes les requetes qui renvoient un
+// PackageShape — les etapes doivent toujours etre chargees et triees
+// chronologiquement (voir PackageShape.stages).
+const WITH_STAGES = { stages: { orderBy: { startDate: 'asc' as const } } };
+
+function toStageCreateInput(stage: PackageStageDto) {
+  return {
+    city: stage.city,
+    hotelName: stage.hotelName,
+    distanceToMosqueMeters: stage.distanceToMosqueMeters,
+    startDate: new Date(stage.startDate),
+    endDate: new Date(stage.endDate),
+  };
+}
+
+function toPackageShape(pkg: PrismaPackageWithStages): PackageShape {
   return {
     id: pkg.id,
     agencyId: pkg.agencyId,
@@ -36,13 +49,14 @@ function toPackageShape(pkg: PrismaPackage): PackageShape {
     currency: pkg.currency,
     capacity: pkg.capacity,
     seatsTaken: pkg.seatsTaken,
-    hotel: hasHotel
-      ? {
-          name: pkg.hotelName ?? '',
-          city: pkg.hotelCity ?? '',
-          distanceToMosqueMeters: pkg.hotelDistanceToMosqueM ?? undefined,
-        }
-      : undefined,
+    stages: pkg.stages.map((stage) => ({
+      id: stage.id,
+      city: stage.city,
+      hotelName: stage.hotelName,
+      distanceToMosqueMeters: stage.distanceToMosqueMeters ?? undefined,
+      startDate: stage.startDate,
+      endDate: stage.endDate,
+    })),
     inclusions: pkg.inclusions,
     status: pkg.status as unknown as PackageStatus,
   };
@@ -70,11 +84,10 @@ export class PackagesService {
         price: dto.price,
         currency: dto.currency,
         capacity: dto.capacity,
-        hotelName: dto.hotel?.name,
-        hotelCity: dto.hotel?.city,
-        hotelDistanceToMosqueM: dto.hotel?.distanceToMosqueMeters,
         inclusions: dto.inclusions ?? [],
+        stages: { create: dto.stages.map(toStageCreateInput) },
       },
+      include: WITH_STAGES,
     });
     return toPackageShape(pkg);
   }
@@ -87,7 +100,7 @@ export class PackagesService {
     const pkg = await this.findByIdOrFail(packageId);
     await this.assertOwnership(ownerId, pkg);
 
-    const { hotel, startDate, endDate, type, ...rest } = dto;
+    const { stages, startDate, endDate, type, ...rest } = dto;
     const updated = await this.prisma.package.update({
       where: { id: pkg.id },
       data: {
@@ -95,12 +108,17 @@ export class PackagesService {
         ...(type && { type: type as unknown as PrismaPilgrimageType }),
         ...(startDate && { startDate: new Date(startDate) }),
         ...(endDate && { endDate: new Date(endDate) }),
-        ...(hotel && {
-          hotelName: hotel.name,
-          hotelCity: hotel.city,
-          hotelDistanceToMosqueM: hotel.distanceToMosqueMeters,
+        // Remplace l'ensemble des etapes plutot que de les fusionner —
+        // memes semantiques que l'ancien champ `hotel`, qui etait deja
+        // integralement ecrase a chaque mise a jour.
+        ...(stages && {
+          stages: {
+            deleteMany: {},
+            create: stages.map(toStageCreateInput),
+          },
         }),
       },
+      include: WITH_STAGES,
     });
     return toPackageShape(updated);
   }
@@ -112,12 +130,16 @@ export class PackagesService {
     const updated = await this.prisma.package.update({
       where: { id: pkg.id },
       data: { status: PackageStatus.CLOSED as unknown as PrismaPackageStatus },
+      include: WITH_STAGES,
     });
     return toPackageShape(updated);
   }
 
   async findByIdOrFail(id: string): Promise<PackageShape> {
-    const pkg = await this.prisma.package.findUnique({ where: { id } });
+    const pkg = await this.prisma.package.findUnique({
+      where: { id },
+      include: WITH_STAGES,
+    });
     if (!pkg) {
       throw new NotFoundException('Forfait introuvable');
     }
@@ -134,6 +156,7 @@ export class PackagesService {
         ...(query.agencyId && { agencyId: query.agencyId }),
       },
       orderBy: { startDate: 'asc' },
+      include: WITH_STAGES,
     });
     return pkgs.map(toPackageShape);
   }
@@ -142,6 +165,7 @@ export class PackagesService {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
     const pkgs = await this.prisma.package.findMany({
       where: { agencyId: agency.id },
+      include: WITH_STAGES,
     });
     return pkgs.map(toPackageShape);
   }
@@ -165,6 +189,7 @@ export class PackagesService {
     const updated = await this.prisma.package.update({
       where: { id: pkg.id },
       data: { seatsTaken, status: status as unknown as PrismaPackageStatus },
+      include: WITH_STAGES,
     });
     return toPackageShape(updated);
   }
@@ -180,6 +205,7 @@ export class PackagesService {
     const updated = await this.prisma.package.update({
       where: { id: pkg.id },
       data: { seatsTaken, status: status as unknown as PrismaPackageStatus },
+      include: WITH_STAGES,
     });
     return toPackageShape(updated);
   }
