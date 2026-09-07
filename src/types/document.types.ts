@@ -1,7 +1,5 @@
-import {
-  PilgrimDocumentStatus,
-  PilgrimDocumentType,
-} from '../modules/documents/schemas/document.schema';
+import { PilgrimDocumentStatus } from '../common/enums/pilgrim-document-status.enum';
+import { PilgrimDocumentType } from '../common/enums/pilgrim-document-type.enum';
 
 export interface PilgrimDocumentShape {
   id: string;

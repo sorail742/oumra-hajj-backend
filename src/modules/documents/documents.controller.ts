@@ -12,10 +12,10 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import { PilgrimDocumentShape } from '../../types/document.types';
 import { DocumentsService } from './documents.service';
 import { RejectDocumentDto } from './dto/reject-document.dto';
 import { UploadDocumentDto } from './dto/upload-document.dto';
-import { PilgrimDocumentDocument } from './schemas/document.schema';
 
 @ApiBearerAuth()
 @ApiTags('documents')
@@ -28,15 +28,13 @@ export class DocumentsController {
   upload(
     @CurrentUser() user: JwtPayload,
     @Body() dto: UploadDocumentDto,
-  ): Promise<PilgrimDocumentDocument> {
+  ): Promise<PilgrimDocumentShape> {
     return this.documentsService.upload(user.sub, dto);
   }
 
   @Roles(Role.PILGRIM)
   @Get('mine')
-  listMine(
-    @CurrentUser() user: JwtPayload,
-  ): Promise<PilgrimDocumentDocument[]> {
+  listMine(@CurrentUser() user: JwtPayload): Promise<PilgrimDocumentShape[]> {
     return this.documentsService.findMine(user.sub);
   }
 
@@ -45,7 +43,7 @@ export class DocumentsController {
   listByBooking(
     @CurrentUser() user: JwtPayload,
     @Query('bookingId') bookingId: string,
-  ): Promise<PilgrimDocumentDocument[]> {
+  ): Promise<PilgrimDocumentShape[]> {
     const role = user.role === Role.AGENCY ? 'agency' : 'pilgrim';
     return this.documentsService.findByBooking(user.sub, role, bookingId);
   }
@@ -55,7 +53,7 @@ export class DocumentsController {
   validate(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
-  ): Promise<PilgrimDocumentDocument> {
+  ): Promise<PilgrimDocumentShape> {
     return this.documentsService.validate(user.sub, id);
   }
 
@@ -65,7 +63,7 @@ export class DocumentsController {
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() dto: RejectDocumentDto,
-  ): Promise<PilgrimDocumentDocument> {
+  ): Promise<PilgrimDocumentShape> {
     return this.documentsService.reject(user.sub, id, dto.reason);
   }
 }

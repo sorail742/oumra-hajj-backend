@@ -68,8 +68,14 @@ Ordre retenu (dépendances d'abord) :
    contrainte unique. `BookingStatus`/`DossierStepKey`/`DossierStepStatus`
    déplacés vers `common/enums`. `IsMongoId` → `IsUUID` sur les 3 DTO qui
    valident un `bookingId` (`documents`, `payments`, `reviews`).
-6. `payments`, `documents` — **prochaine étape**
-7. `rites`, `notifications`, `reviews`, `admin`
+6. ✅ `payments`, `documents` — étape la plus contenue à ce jour : ni l'un
+   ni l'autre n'est référencé par un autre module Mongoose (contrairement à
+   `booking`), donc aucune ondulation en dehors des deux modules eux-mêmes.
+   `PaymentMethod`/`PaymentStatus`/`PilgrimDocumentType`/
+   `PilgrimDocumentStatus` déplacés vers `common/enums`. `IsMongoId` → `IsUUID`
+   sur `bookingId` déjà fait au tour précédent (`documents`, `payments`,
+   `reviews`) — rien à refaire ici.
+7. `rites`, `notifications`, `reviews`, `admin` — **prochaine étape** (dernière)
 
 Chaque étape : schéma Prisma du domaine + migration SQL + service réécrit
 (`PrismaService` au lieu de `Model<T>` Mongoose) + tests adaptés + Merge

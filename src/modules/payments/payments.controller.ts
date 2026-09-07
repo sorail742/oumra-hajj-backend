@@ -13,10 +13,10 @@ import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import { PaymentShape } from '../../types/payment.types';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
 import { PaymentsService } from './payments.service';
-import { PaymentDocument } from './schemas/payment.schema';
 
 @ApiTags('payments')
 @Controller('payments')
@@ -29,21 +29,21 @@ export class PaymentsController {
   initiate(
     @CurrentUser() user: JwtPayload,
     @Body() dto: InitiatePaymentDto,
-  ): Promise<PaymentDocument> {
+  ): Promise<PaymentShape> {
     return this.paymentsService.initiate(user.sub, dto);
   }
 
   @ApiBearerAuth()
   @Roles(Role.PILGRIM)
   @Get('mine')
-  listMine(@CurrentUser() user: JwtPayload): Promise<PaymentDocument[]> {
+  listMine(@CurrentUser() user: JwtPayload): Promise<PaymentShape[]> {
     return this.paymentsService.findForPilgrim(user.sub);
   }
 
   @ApiBearerAuth()
   @Roles(Role.AGENCY)
   @Get('agency')
-  listForAgency(@CurrentUser() user: JwtPayload): Promise<PaymentDocument[]> {
+  listForAgency(@CurrentUser() user: JwtPayload): Promise<PaymentShape[]> {
     return this.paymentsService.findForAgency(user.sub);
   }
 
@@ -54,7 +54,7 @@ export class PaymentsController {
   @Public()
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
-  webhook(@Body() dto: PaymentWebhookDto): Promise<PaymentDocument> {
+  webhook(@Body() dto: PaymentWebhookDto): Promise<PaymentShape> {
     return this.paymentsService.handleWebhook(dto);
   }
 
@@ -63,7 +63,7 @@ export class PaymentsController {
   getById(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
-  ): Promise<PaymentDocument> {
+  ): Promise<PaymentShape> {
     return this.paymentsService.findAuthorizedOrFail(user.sub, user.role, id);
   }
 }
