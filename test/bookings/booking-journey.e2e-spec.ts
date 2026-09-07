@@ -108,7 +108,7 @@ describe('Parcours réservation + paiement (e2e)', () => {
       .get('/api/v1/agencies?status=pending')
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
-    const agencyId = pendingAgencies.body[0]._id as string;
+    const agencyId = pendingAgencies.body[0].id as string;
 
     await request(server)
       .patch(`/api/v1/agencies/${agencyId}/approve`)

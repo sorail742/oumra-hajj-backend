@@ -61,7 +61,7 @@ export class BookingsService {
 
   async findByAgency(ownerId: string): Promise<BookingDocument[]> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
-    return this.bookingModel.find({ agency: agency._id }).exec();
+    return this.bookingModel.find({ agency: agency.id }).exec();
   }
 
   async findAuthorizedOrFail(
@@ -80,7 +80,7 @@ export class BookingsService {
 
     if (requesterRole === Role.AGENCY) {
       const agency = await this.agenciesService.findByOwnerOrFail(requesterId);
-      if (booking.agency.equals(agency._id as Types.ObjectId)) {
+      if (booking.agency === agency.id) {
         return booking;
       }
     }
@@ -176,7 +176,7 @@ export class BookingsService {
     booking: BookingDocument,
   ): Promise<void> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
-    if (!booking.agency.equals(agency._id as Types.ObjectId)) {
+    if (booking.agency !== agency.id) {
       throw new ForbiddenException(
         "Cette réservation n'appartient pas à votre agence",
       );

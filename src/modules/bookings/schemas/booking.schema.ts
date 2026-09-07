@@ -57,8 +57,9 @@ export class Booking {
   @Prop({ type: Types.ObjectId, ref: 'Package', required: true, index: true })
   package!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Agency', required: true, index: true })
-  agency!: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma du module agencies (ADR 0013).
+  @Prop({ required: true, index: true })
+  agency!: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Group' })
   group?: Types.ObjectId;

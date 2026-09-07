@@ -1,4 +1,4 @@
-import { AgencyValidationStatus } from '../modules/agencies/schemas/agency.schema';
+import { AgencyValidationStatus } from '../common/enums/agency-validation-status.enum';
 import { BookingStatus } from '../modules/bookings/schemas/booking.schema';
 
 export interface PlatformStatsShape {

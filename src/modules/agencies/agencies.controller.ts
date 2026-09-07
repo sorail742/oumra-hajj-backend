@@ -11,16 +11,14 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { AgencyValidationStatus } from '../../common/enums/agency-validation-status.enum';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import { AgencyShape } from '../../types/agency.types';
 import { AgenciesService } from './agencies.service';
 import { RegisterAgencyDto } from './dto/register-agency.dto';
 import { RejectAgencyDto } from './dto/reject-agency.dto';
 import { UpdateAgencyDto } from './dto/update-agency.dto';
-import {
-  AgencyDocument,
-  AgencyValidationStatus,
-} from './schemas/agency.schema';
 
 @ApiTags('agencies')
 @Controller('agencies')
@@ -29,14 +27,14 @@ export class AgenciesController {
 
   @Public()
   @Post('register')
-  register(@Body() dto: RegisterAgencyDto): Promise<AgencyDocument> {
+  register(@Body() dto: RegisterAgencyDto): Promise<AgencyShape> {
     return this.agenciesService.register(dto);
   }
 
   @ApiBearerAuth()
   @Roles(Role.AGENCY)
   @Get('me')
-  getOwn(@CurrentUser() user: JwtPayload): Promise<AgencyDocument> {
+  getOwn(@CurrentUser() user: JwtPayload): Promise<AgencyShape> {
     return this.agenciesService.findByOwnerOrFail(user.sub);
   }
 
@@ -46,7 +44,7 @@ export class AgenciesController {
   updateOwn(
     @CurrentUser() user: JwtPayload,
     @Body() dto: UpdateAgencyDto,
-  ): Promise<AgencyDocument> {
+  ): Promise<AgencyShape> {
     return this.agenciesService.updateOwn(user.sub, dto);
   }
 
@@ -56,14 +54,14 @@ export class AgenciesController {
   @Get()
   list(
     @Query('status') status?: AgencyValidationStatus,
-  ): Promise<AgencyDocument[]> {
+  ): Promise<AgencyShape[]> {
     return this.agenciesService.findByStatus(status);
   }
 
   @ApiBearerAuth()
   @Roles(Role.ADMIN)
   @Get(':id')
-  getById(@Param('id') id: string): Promise<AgencyDocument> {
+  getById(@Param('id') id: string): Promise<AgencyShape> {
     return this.agenciesService.findByIdOrFail(id);
   }
 
@@ -73,7 +71,7 @@ export class AgenciesController {
   approve(
     @Param('id') id: string,
     @CurrentUser() admin: JwtPayload,
-  ): Promise<AgencyDocument> {
+  ): Promise<AgencyShape> {
     return this.agenciesService.approve(id, admin.sub);
   }
 
@@ -84,7 +82,7 @@ export class AgenciesController {
     @Param('id') id: string,
     @CurrentUser() admin: JwtPayload,
     @Body() dto: RejectAgencyDto,
-  ): Promise<AgencyDocument> {
+  ): Promise<AgencyShape> {
     return this.agenciesService.reject(id, admin.sub, dto.reason);
   }
 }

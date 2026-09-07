@@ -13,8 +13,8 @@ describe("DocumentsService — contrôle d'accès aux documents sensibles", () =
   let bookingsService: { findByIdOrFail: jest.Mock };
   let agenciesService: { findByOwnerOrFail: jest.Mock };
 
-  const otherAgencyId = new Types.ObjectId();
-  const ownAgencyId = new Types.ObjectId();
+  const otherAgencyId = 'other-agency';
+  const ownAgencyId = 'own-agency';
   const bookingId = new Types.ObjectId().toString();
 
   beforeEach(async () => {
@@ -47,7 +47,7 @@ describe("DocumentsService — contrôle d'accès aux documents sensibles", () =
       pilgrim: { toString: () => 'pilgrim-1' },
       agency: otherAgencyId,
     });
-    agenciesService.findByOwnerOrFail.mockResolvedValue({ _id: ownAgencyId });
+    agenciesService.findByOwnerOrFail.mockResolvedValue({ id: ownAgencyId });
 
     await expect(
       service.findByBooking('agency-owner-1', 'agency', bookingId),
@@ -72,7 +72,7 @@ describe("DocumentsService — contrôle d'accès aux documents sensibles", () =
       pilgrim: { toString: () => 'pilgrim-1' },
       agency: ownAgencyId,
     });
-    agenciesService.findByOwnerOrFail.mockResolvedValue({ _id: ownAgencyId });
+    agenciesService.findByOwnerOrFail.mockResolvedValue({ id: ownAgencyId });
 
     await expect(
       service.findByBooking('agency-owner-1', 'agency', bookingId),

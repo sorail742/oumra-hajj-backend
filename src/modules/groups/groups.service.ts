@@ -29,7 +29,7 @@ export class GroupsService {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
     return this.groupModel.create({
       package: new Types.ObjectId(dto.packageId),
-      agency: agency._id,
+      agency: agency.id,
       title: dto.title,
     });
   }
@@ -49,7 +49,7 @@ export class GroupsService {
   listByAgency(ownerId: string): Promise<GroupDocument[]> {
     return this.agenciesService
       .findByOwnerOrFail(ownerId)
-      .then((agency) => this.groupModel.find({ agency: agency._id }).exec());
+      .then((agency) => this.groupModel.find({ agency: agency.id }).exec());
   }
 
   listForGuide(guideUserId: string): Promise<GroupDocument[]> {
@@ -83,7 +83,7 @@ export class GroupsService {
 
     if (requesterRole === Role.AGENCY) {
       const agency = await this.agenciesService.findByOwnerOrFail(requesterId);
-      if (group.agency.equals(agency._id as Types.ObjectId)) {
+      if (group.agency === agency.id) {
         return group;
       }
     }
@@ -200,7 +200,7 @@ export class GroupsService {
     group: GroupDocument,
   ): Promise<void> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
-    if (!group.agency.equals(agency._id as Types.ObjectId)) {
+    if (group.agency !== agency.id) {
       throw new ForbiddenException("Ce groupe n'appartient pas à votre agence");
     }
   }

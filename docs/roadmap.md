@@ -31,9 +31,14 @@ Ordre retenu (dépendances d'abord) :
    aucune logique métier modifiée. Infra de test Postgres mise en place
    (`prisma/migrations/`, `test/utils/postgres-test-db.ts` via
    `testcontainers`, service `postgres:` en CI).
-2. `agencies` — **prochaine étape** : migrer réellement le module (collection
-   `agencies` elle-même) vers Prisma, pas seulement ses références à `User`
-3. `packages`
+2. ✅ `agencies` — `AgencyValidationStatus` déplacé vers `common/enums`
+   (vivait dans le schéma Mongoose qui a disparu avec ce module). Les 4
+   modules Mongoose qui référençaient une `Agency` par `ObjectId`
+   (`packages`, `bookings`, `groups`, `reviews`) ajustés en `String`, même
+   changement mécanique qu'à l'étape précédente. Tables Postgres déjà
+   présentes depuis la migration initiale, aucune nouvelle migration SQL
+   nécessaire pour cette étape.
+3. `packages` — **prochaine étape**
 4. `groups`
 5. `bookings`
 6. `payments`, `documents`
