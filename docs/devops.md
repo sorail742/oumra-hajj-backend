@@ -15,17 +15,11 @@ Déclenché sur chaque Merge Request et sur les push vers `develop`/`main`.
 | `build` | `build` | `nest build`, vérifie que le build de prod passe |
 | `sonarqube` | `sonarqube-check` | Analyse qualité — non bloquant tant que `SONAR_HOST_URL`/`SONAR_TOKEN` ne sont pas configurés |
 
-Image `node:20`+ (pas `-alpine`) : nécessaire pour les modules natifs
-(`bcrypt`) et le binaire `mongod` téléchargé par `mongodb-memory-server`
-pendant la période de transition Mongoose → Prisma (voir ADR 0013).
+Image `node:20`+ (pas `-alpine`) : nécessaire pour le module natif `bcrypt`
+(outils de compilation absents des images Alpine).
 
-Le job `e2e-tests` a un service `postgres:` depuis la migration du premier
-module (`users`/`auth`) : dès qu'un module tourne sur Prisma, ses tests e2e
-ont besoin d'un Postgres atteignable, pas seulement une fois **tous** les
-modules migrés. `mongodb-memory-server` reste utilisé en parallèle pour les
-modules pas encore migrés — les deux coexistent dans le pipeline pendant
-toute la transition. Seul `mongodb-memory-server` disparaîtra à la fin
-(dernier module migré), le service `postgres:` restant.
+Le job `e2e-tests` a un service `postgres:` (voir ADR 0013) : `prisma
+migrate deploy` applique le schéma avant `npm run test:e2e`.
 
 ## Branches protégées
 
@@ -50,9 +44,6 @@ seules les Merge Requests fusionnées par un Maintainer la modifient — voir
   `SONAR_HOST_URL`/`SONAR_TOKEN` dans les paramètres CI/CD du projet.
 - Confirmer l'ADR 0012 (`proposé` → `accepté`) une fois ces deux points
   tranchés.
-- Retirer `mongodb-memory-server` et le service Mongo (s'il est ajouté) du
-  pipeline une fois la migration Prisma terminée sur tous les modules — le
-  service `postgres:` reste, lui, depuis la migration du premier module.
 
 ## Variables CI/CD
 

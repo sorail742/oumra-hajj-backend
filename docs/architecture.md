@@ -27,8 +27,7 @@ Voir [ADR 0001](adr/0001-choix-stack-technique.md) et
 [ADR 0013](adr/0013-migration-postgresql-prisma.md) pour l'historique complet.
 
 - NestJS + TypeScript strict
-- PostgreSQL + Prisma (ORM) — migration en cours depuis MongoDB/Mongoose,
-  module par module (voir `roadmap.md`)
+- PostgreSQL + Prisma (ORM) — voir [ADR 0013](adr/0013-migration-postgresql-prisma.md)
 - Auth JWT (access + refresh), OTP pèlerin/guide, email+mot de passe
   agence/admin ([ADR 0003](adr/0003-strategie-authentification.md))
 - Documentation API : Swagger/OpenAPI sur `/api/docs` (hors production)
@@ -44,8 +43,6 @@ src/modules/<domaine>/
   <domaine>.controller.ts    # validation + appel service, jamais de logique métier
   <domaine>.service.ts       # logique métier, seul point d'accès aux données
   dto/                       # DTO entrée/sortie, validés par class-validator
-  schemas/                   # (transitoire) schémas Mongoose — remplacés par
-                              # prisma/schema.prisma au fil de la migration
   *.controller.spec.ts
   *.service.spec.ts
 ```
@@ -84,7 +81,7 @@ doit jamais réimporter A.
 2. `RolesGuard` (global) : vérifie `@Roles(...)` si présent sur la route.
 3. `ValidationPipe` (global) : valide et transforme le DTO d'entrée.
 4. Contrôleur : appelle le service, ne contient aucune règle métier.
-5. Service : logique métier, accès aux données via Prisma (ou Mongoose
-   pendant la transition), appelle d'autres services si besoin.
+5. Service : logique métier, accès aux données via Prisma, appelle d'autres
+   services si besoin.
 6. `HttpExceptionFilter` (global) : formalise toute erreur en réponse JSON
    cohérente (voir `error-codes.md`).

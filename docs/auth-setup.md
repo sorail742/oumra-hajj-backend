@@ -46,15 +46,19 @@ journalise le code au lieu de l'envoyer :
 Aucun endpoint public ne crée de compte `admin` (volontaire — voir
 `RolesGuard`). En développement, l'insérer directement en base :
 
-```js
-// mongosh (avant migration) — voir prisma/seed.ts après migration Prisma
-db.users.insertOne({
-  fullName: "Admin Dev",
-  email: "admin@dev.local",
-  passwordHash: "<bcrypt hash>",
-  role: "admin",
-  preferredLanguage: "fr",
-  isActive: true,
+```ts
+// script one-off (ex. `npx ts-node`) — ou via `npx prisma studio` en graphique
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+await prisma.user.create({
+  data: {
+    fullName: "Admin Dev",
+    email: "admin@dev.local",
+    passwordHash: "<bcrypt hash>",
+    role: "admin",
+    preferredLanguage: "fr",
+    isActive: true,
+  },
 });
 ```
 

@@ -8,7 +8,6 @@ import { Role } from '../../src/common/enums/role.enum';
 import { OTP_SENDER } from '../../src/modules/auth/otp/otp-sender.interface';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { setupApp } from '../../src/setup-app';
-import { startInMemoryMongo, stopInMemoryMongo } from '../utils/mongo-memory';
 import { startTestPostgres, stopTestPostgres } from '../utils/postgres-test-db';
 
 // Parcours d'intégration complet : inscription agence -> validation admin ->
@@ -21,7 +20,6 @@ describe('Parcours réservation + paiement (e2e)', () => {
   let lastOtpCode: string;
 
   beforeAll(async () => {
-    process.env.MONGO_URI = await startInMemoryMongo();
     process.env.DATABASE_URL = await startTestPostgres();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -43,7 +41,6 @@ describe('Parcours réservation + paiement (e2e)', () => {
 
   afterAll(async () => {
     await app.close();
-    await stopInMemoryMongo();
     await stopTestPostgres();
   });
 

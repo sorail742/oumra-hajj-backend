@@ -3,14 +3,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { setupApp } from '../../src/setup-app';
-import { startInMemoryMongo, stopInMemoryMongo } from '../utils/mongo-memory';
 import { startTestPostgres, stopTestPostgres } from '../utils/postgres-test-db';
 
 describe('Auth (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    process.env.MONGO_URI = await startInMemoryMongo();
     process.env.DATABASE_URL = await startTestPostgres();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -24,7 +22,6 @@ describe('Auth (e2e)', () => {
 
   afterAll(async () => {
     await app.close();
-    await stopInMemoryMongo();
     await stopTestPostgres();
   });
 

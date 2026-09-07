@@ -3,9 +3,8 @@
 # fonctionnalité = une branche, fusionnée dans develop une fois la CI verte,
 # puis develop fusionné dans main pour une mise en production (voir ADR 0011).
 
-# Image Debian (pas -alpine) : mongodb-memory-server télécharge un binaire
-# mongod lié à glibc pour les tests e2e (ADR 0010), et bcrypt (module natif)
-# a besoin des outils de compilation présents par défaut sur cette image.
+# Image Debian (pas -alpine) : bcrypt (module natif) a besoin des outils de
+# compilation présents par défaut sur cette image.
 image: node:24
 
 stages:
@@ -54,11 +53,8 @@ unit-tests:
 e2e-tests:
   extends: .node_job
   stage: test
-  # Service Postgres pour les modules déjà migrés sur Prisma (users, auth —
-  # ADR 0013) ; mongodb-memory-server reste utilisé en parallèle pour les
-  # modules pas encore migrés (voir test/utils/mongo-memory.ts et
-  # test/utils/postgres-test-db.ts). Ce service sera retiré une fois Mongo
-  # totalement sorti, pas l'inverse — voir docs/devops.md.
+  # Service Postgres pour les tests e2e (ADR 0013) — voir
+  # test/utils/postgres-test-db.ts pour l'équivalent local (testcontainers).
   services:
     - postgres:16-alpine
   variables:
