@@ -55,8 +55,20 @@ Ordre retenu (dépendances d'abord) :
    Mongoose qui référençait un `Group` par `ObjectId` (`bookings`, champ
    `group`) ajusté en `String`. Couverture de tests élargie (le service
    n'avait auparavant que les tests du bouton SOS).
-5. `bookings` — **prochaine étape**
-6. `payments`, `documents`
+5. ✅ `bookings` — module le plus référencé à ce jour : `payments`,
+   `documents` et `reviews` lisent tous des champs de `Booking`
+   (`pilgrim`/`agency`/`package`/`_id`), pas seulement son id — leur accès
+   à ces champs a dû être réécrit (`booking.pilgrim.toString()` →
+   `booking.pilgrimId`, etc.) en plus du changement mécanique habituel sur
+   leur propre champ `booking` (`ObjectId` → `String`). `steps`
+   (sous-document Mongoose) devient une table relationnelle dédiée
+   (`BookingStep`, `@@unique([bookingId, key])`) créée une fois pour
+   toutes à la réservation (5 étapes fixes, jamais ajoutées/retirées) —
+   `updateStep`/`markStepDone` deviennent de simples `update` sur cette
+   contrainte unique. `BookingStatus`/`DossierStepKey`/`DossierStepStatus`
+   déplacés vers `common/enums`. `IsMongoId` → `IsUUID` sur les 3 DTO qui
+   valident un `bookingId` (`documents`, `payments`, `reviews`).
+6. `payments`, `documents` — **prochaine étape**
 7. `rites`, `notifications`, `reviews`, `admin`
 
 Chaque étape : schéma Prisma du domaine + migration SQL + service réécrit

@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { BookingStatus } from '../../common/enums/booking-status.enum';
 import { BookingsService } from '../bookings/bookings.service';
-import { BookingStatus } from '../bookings/schemas/booking.schema';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { Review, ReviewDocument } from './schemas/review.schema';
 
@@ -25,7 +25,7 @@ export class ReviewsService {
     dto: CreateReviewDto,
   ): Promise<ReviewDocument> {
     const booking = await this.bookingsService.findByIdOrFail(dto.bookingId);
-    if (booking.pilgrim.toString() !== pilgrimId) {
+    if (booking.pilgrimId !== pilgrimId) {
       throw new BadRequestException('Cette réservation ne vous appartient pas');
     }
     if (!REVIEWABLE_STATUSES.includes(booking.status)) {
@@ -35,7 +35,7 @@ export class ReviewsService {
     }
 
     const existing = await this.reviewModel
-      .findOne({ booking: booking._id })
+      .findOne({ booking: booking.id })
       .exec();
     if (existing) {
       throw new ConflictException('Un avis existe déjà pour cette réservation');
@@ -43,8 +43,8 @@ export class ReviewsService {
 
     return this.reviewModel.create({
       pilgrim: pilgrimId,
-      agency: booking.agency,
-      booking: booking._id,
+      agency: booking.agencyId,
+      booking: booking.id,
       rating: dto.rating,
       comment: dto.comment,
     });

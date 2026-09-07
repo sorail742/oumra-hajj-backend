@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsMongoId, IsString, MinLength } from 'class-validator';
+import { IsEnum, IsString, IsUUID, MinLength } from 'class-validator';
 import { PilgrimDocumentType } from '../schemas/document.schema';
 
 // Le téléversement effectif du fichier passe par le service de stockage
 // objet (voir ADR 0008) ; cette API n'échange que la référence obtenue.
 export class UploadDocumentDto {
   @ApiProperty()
-  @IsMongoId()
+  @IsUUID()
   bookingId!: string;
 
   @ApiProperty({ enum: PilgrimDocumentType })

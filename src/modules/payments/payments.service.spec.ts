@@ -3,8 +3,8 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { AgenciesService } from '../agencies/agencies.service';
+import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
 import { BookingsService } from '../bookings/bookings.service';
-import { DossierStepKey } from '../bookings/schemas/booking.schema';
 import { PackagesService } from '../packages/packages.service';
 import { PaymentsService } from './payments.service';
 import { Payment, PaymentStatus } from './schemas/payment.schema';
@@ -77,7 +77,7 @@ describe('PaymentsService', () => {
           ]),
       });
       bookingsService.findByIdOrFail.mockResolvedValue({
-        package: { toString: () => 'package-1' },
+        packageId: 'package-1',
       });
       packagesService.findByIdOrFail.mockResolvedValue({ price: 500 });
 
@@ -113,7 +113,7 @@ describe('PaymentsService', () => {
           ]),
       });
       bookingsService.findByIdOrFail.mockResolvedValue({
-        package: { toString: () => 'package-1' },
+        packageId: 'package-1',
       });
       packagesService.findByIdOrFail.mockResolvedValue({ price: 500 });
 

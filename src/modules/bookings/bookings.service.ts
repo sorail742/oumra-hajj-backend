@@ -3,27 +3,57 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import {
+  Booking as PrismaBooking,
+  BookingStatus as PrismaBookingStatus,
+  BookingStep as PrismaBookingStep,
+  DossierStepKey as PrismaDossierStepKey,
+  DossierStepStatus as PrismaDossierStepStatus,
+} from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import { BookingStatus } from '../../common/enums/booking-status.enum';
+import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
+import { DossierStepStatus } from '../../common/enums/dossier-step-status.enum';
 import { Role } from '../../common/enums/role.enum';
+import { BookingShape } from '../../types/booking.types';
 import { AgenciesService } from '../agencies/agencies.service';
 import { GroupsService } from '../groups/groups.service';
 import { PackagesService } from '../packages/packages.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
-import {
-  Booking,
-  BookingDocument,
-  BookingStatus,
-  DossierStepKey,
-  DossierStepStatus,
-} from './schemas/booking.schema';
+
+const BOOKING_INCLUDE = { steps: true } as const;
+
+const DEFAULT_STEPS: DossierStepKey[] = [
+  DossierStepKey.PAYMENT,
+  DossierStepKey.VISA,
+  DossierStepKey.FLIGHT,
+  DossierStepKey.VACCINATION,
+  DossierStepKey.DOCUMENTS,
+];
+
+type BookingRecord = PrismaBooking & { steps: PrismaBookingStep[] };
+
+function toBookingShape(booking: BookingRecord): BookingShape {
+  return {
+    id: booking.id,
+    pilgrimId: booking.pilgrimId,
+    packageId: booking.packageId,
+    agencyId: booking.agencyId,
+    groupId: booking.groupId ?? undefined,
+    status: booking.status as unknown as BookingStatus,
+    steps: booking.steps.map((step) => ({
+      key: step.key as unknown as DossierStepKey,
+      status: step.status as unknown as DossierStepStatus,
+      updatedAt: step.updatedAt,
+    })),
+  };
+}
 
 @Injectable()
 export class BookingsService {
   constructor(
-    @InjectModel(Booking.name)
-    private readonly bookingModel: Model<BookingDocument>,
+    private readonly prisma: PrismaService,
     private readonly packagesService: PackagesService,
     private readonly agenciesService: AgenciesService,
     private readonly groupsService: GroupsService,
@@ -32,55 +62,70 @@ export class BookingsService {
   async create(
     pilgrimId: string,
     dto: CreateBookingDto,
-  ): Promise<BookingDocument> {
+  ): Promise<BookingShape> {
     const pkg = await this.packagesService.findByIdOrFail(dto.packageId);
     await this.packagesService.reserveSeat(dto.packageId);
 
-    return this.bookingModel.create({
-      pilgrim: pilgrimId,
-      package: pkg.id,
-      agency: pkg.agencyId,
+    const booking = await this.prisma.booking.create({
+      data: {
+        pilgrimId,
+        packageId: pkg.id,
+        agencyId: pkg.agencyId,
+        steps: {
+          create: DEFAULT_STEPS.map((key) => ({
+            key: key as unknown as PrismaDossierStepKey,
+            status:
+              DossierStepStatus.PENDING as unknown as PrismaDossierStepStatus,
+          })),
+        },
+      },
+      include: BOOKING_INCLUDE,
     });
+    return toBookingShape(booking);
   }
 
-  findByIdOrFail(id: string): Promise<BookingDocument> {
-    return this.bookingModel
-      .findById(id)
-      .exec()
-      .then((booking) => {
-        if (!booking) {
-          throw new NotFoundException('Réservation introuvable');
-        }
-        return booking;
-      });
+  async findByIdOrFail(id: string): Promise<BookingShape> {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+      include: BOOKING_INCLUDE,
+    });
+    if (!booking) {
+      throw new NotFoundException('Réservation introuvable');
+    }
+    return toBookingShape(booking);
   }
 
-  findMine(pilgrimId: string): Promise<BookingDocument[]> {
-    return this.bookingModel.find({ pilgrim: pilgrimId }).exec();
+  async findMine(pilgrimId: string): Promise<BookingShape[]> {
+    const bookings = await this.prisma.booking.findMany({
+      where: { pilgrimId },
+      include: BOOKING_INCLUDE,
+    });
+    return bookings.map(toBookingShape);
   }
 
-  async findByAgency(ownerId: string): Promise<BookingDocument[]> {
+  async findByAgency(ownerId: string): Promise<BookingShape[]> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
-    return this.bookingModel.find({ agency: agency.id }).exec();
+    const bookings = await this.prisma.booking.findMany({
+      where: { agencyId: agency.id },
+      include: BOOKING_INCLUDE,
+    });
+    return bookings.map(toBookingShape);
   }
 
   async findAuthorizedOrFail(
     requesterId: string,
     requesterRole: Role,
     bookingId: string,
-  ): Promise<BookingDocument> {
+  ): Promise<BookingShape> {
     const booking = await this.findByIdOrFail(bookingId);
 
-    if (
-      requesterRole === Role.ADMIN ||
-      booking.pilgrim.toString() === requesterId
-    ) {
+    if (requesterRole === Role.ADMIN || booking.pilgrimId === requesterId) {
       return booking;
     }
 
     if (requesterRole === Role.AGENCY) {
       const agency = await this.agenciesService.findByOwnerOrFail(requesterId);
-      if (booking.agency === agency.id) {
+      if (booking.agencyId === agency.id) {
         return booking;
       }
     }
@@ -92,91 +137,119 @@ export class BookingsService {
     ownerId: string,
     bookingId: string,
     dto: UpdateStepDto,
-  ): Promise<BookingDocument> {
+  ): Promise<BookingShape> {
     const booking = await this.findByIdOrFail(bookingId);
     await this.assertAgencyOwnership(ownerId, booking);
 
-    const step = booking.steps.find((s) => s.key === dto.key);
-    if (!step) {
-      throw new NotFoundException('Étape de dossier introuvable');
-    }
-    step.status = dto.status;
-    step.updatedAt = new Date();
+    await this.prisma.bookingStep
+      .update({
+        where: {
+          bookingId_key: {
+            bookingId: booking.id,
+            key: dto.key as unknown as PrismaDossierStepKey,
+          },
+        },
+        data: { status: dto.status as unknown as PrismaDossierStepStatus },
+      })
+      .catch(() => {
+        throw new NotFoundException('Étape de dossier introuvable');
+      });
 
-    if (booking.steps.every((s) => s.status === DossierStepStatus.DONE)) {
-      booking.status = BookingStatus.CONFIRMED;
-    }
-
-    return booking.save();
+    return this.maybeConfirm(booking.id);
   }
 
   // Appelé par le module payments lorsqu'une tranche solde le forfait.
   async markStepDone(
     bookingId: string,
     key: DossierStepKey,
-  ): Promise<BookingDocument> {
-    const booking = await this.findByIdOrFail(bookingId);
-    const step = booking.steps.find((s) => s.key === key);
-    if (step) {
-      step.status = DossierStepStatus.DONE;
-      step.updatedAt = new Date();
-    }
-    if (booking.steps.every((s) => s.status === DossierStepStatus.DONE)) {
-      booking.status = BookingStatus.CONFIRMED;
-    }
-    return booking.save();
+  ): Promise<BookingShape> {
+    await this.prisma.bookingStep.update({
+      where: {
+        bookingId_key: {
+          bookingId,
+          key: key as unknown as PrismaDossierStepKey,
+        },
+      },
+      data: {
+        status: DossierStepStatus.DONE as unknown as PrismaDossierStepStatus,
+      },
+    });
+    return this.maybeConfirm(bookingId);
   }
 
   async assignGroup(
     ownerId: string,
     bookingId: string,
     groupId: string,
-  ): Promise<BookingDocument> {
+  ): Promise<BookingShape> {
     const booking = await this.findByIdOrFail(bookingId);
     await this.assertAgencyOwnership(ownerId, booking);
 
-    await this.groupsService.addMember(
-      ownerId,
-      groupId,
-      booking.pilgrim.toString(),
-    );
-    booking.group = groupId;
-    return booking.save();
+    await this.groupsService.addMember(ownerId, groupId, booking.pilgrimId);
+
+    const updated = await this.prisma.booking.update({
+      where: { id: booking.id },
+      data: { groupId },
+      include: BOOKING_INCLUDE,
+    });
+    return toBookingShape(updated);
   }
 
-  async cancel(pilgrimId: string, bookingId: string): Promise<BookingDocument> {
+  async cancel(pilgrimId: string, bookingId: string): Promise<BookingShape> {
     const booking = await this.findByIdOrFail(bookingId);
-    if (booking.pilgrim.toString() !== pilgrimId) {
+    if (booking.pilgrimId !== pilgrimId) {
       throw new ForbiddenException('Cette réservation ne vous appartient pas');
     }
     if (booking.status !== BookingStatus.CANCELLED) {
-      await this.packagesService.releaseSeat(booking.package.toString());
+      await this.packagesService.releaseSeat(booking.packageId);
     }
-    booking.status = BookingStatus.CANCELLED;
-    return booking.save();
+
+    const updated = await this.prisma.booking.update({
+      where: { id: booking.id },
+      data: {
+        status: BookingStatus.CANCELLED as unknown as PrismaBookingStatus,
+      },
+      include: BOOKING_INCLUDE,
+    });
+    return toBookingShape(updated);
   }
 
   // Statistiques globales admin — cahier des charges §3.4.
   async countByStatus(): Promise<Record<BookingStatus, number>> {
-    const counts = await this.bookingModel.aggregate<{
-      _id: BookingStatus;
-      count: number;
-    }>([{ $group: { _id: '$status', count: { $sum: 1 } } }]);
-    const result = Object.fromEntries(
-      Object.values(BookingStatus).map((status) => [status, 0]),
+    const statuses = Object.values(BookingStatus);
+    const counts = await Promise.all(
+      statuses.map((status) =>
+        this.prisma.booking.count({
+          where: { status: status as unknown as PrismaBookingStatus },
+        }),
+      ),
+    );
+    return Object.fromEntries(
+      statuses.map((status, i) => [status, counts[i]]),
     ) as Record<BookingStatus, number>;
-    for (const { _id, count } of counts) {
-      result[_id] = count;
+  }
+
+  private async maybeConfirm(bookingId: string): Promise<BookingShape> {
+    const booking = await this.findByIdOrFail(bookingId);
+    if (booking.steps.every((s) => s.status === DossierStepStatus.DONE)) {
+      const updated = await this.prisma.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: BookingStatus.CONFIRMED as unknown as PrismaBookingStatus,
+        },
+        include: BOOKING_INCLUDE,
+      });
+      return toBookingShape(updated);
     }
-    return result;
+    return booking;
   }
 
   private async assertAgencyOwnership(
     ownerId: string,
-    booking: BookingDocument,
+    booking: BookingShape,
   ): Promise<void> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
-    if (booking.agency !== agency.id) {
+    if (booking.agencyId !== agency.id) {
       throw new ForbiddenException(
         "Cette réservation n'appartient pas à votre agence",
       );

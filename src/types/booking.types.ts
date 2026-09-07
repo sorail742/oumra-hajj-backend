@@ -1,8 +1,6 @@
-import {
-  BookingStatus,
-  DossierStepKey,
-  DossierStepStatus,
-} from '../modules/bookings/schemas/booking.schema';
+import { BookingStatus } from '../common/enums/booking-status.enum';
+import { DossierStepKey } from '../common/enums/dossier-step-key.enum';
+import { DossierStepStatus } from '../common/enums/dossier-step-status.enum';
 
 export interface DossierStepShape {
   key: DossierStepKey;

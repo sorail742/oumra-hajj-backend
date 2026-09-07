@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 export type PaymentDocument = Payment & Document;
 
@@ -19,8 +19,9 @@ export enum PaymentStatus {
 // transaction du prestataire est conservée (voir ADR 0006).
 @Schema({ timestamps: true })
 export class Payment {
-  @Prop({ type: Types.ObjectId, ref: 'Booking', required: true, index: true })
-  booking!: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma du module bookings (ADR 0013).
+  @Prop({ required: true, index: true })
+  booking!: string;
 
   @Prop({ required: true, min: 0 })
   amount!: number;

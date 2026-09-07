@@ -5,11 +5,11 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { randomUUID } from 'crypto';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
+import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
 import { Role } from '../../common/enums/role.enum';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
-import { DossierStepKey } from '../bookings/schemas/booking.schema';
 import { PackagesService } from '../packages/packages.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
@@ -34,18 +34,18 @@ export class PaymentsService {
     dto: InitiatePaymentDto,
   ): Promise<PaymentDocument> {
     const booking = await this.bookingsService.findByIdOrFail(dto.bookingId);
-    if (booking.pilgrim.toString() !== pilgrimId) {
+    if (booking.pilgrimId !== pilgrimId) {
       throw new ForbiddenException('Cette réservation ne vous appartient pas');
     }
 
     const installmentNumber =
-      (await this.paymentModel.countDocuments({ booking: booking._id })) + 1;
+      (await this.paymentModel.countDocuments({ booking: booking.id })) + 1;
 
     // Référence provisoire tant qu'aucun agrégateur Mobile Money/carte n'est
     // intégré (voir ADR 0006) — à remplacer par la référence retournée par
     // l'appel d'initiation réel du prestataire.
     return this.paymentModel.create({
-      booking: booking._id,
+      booking: booking.id,
       amount: dto.amount,
       installmentNumber,
       method: dto.method,
@@ -68,7 +68,7 @@ export class PaymentsService {
 
   async findForPilgrim(pilgrimId: string): Promise<PaymentDocument[]> {
     const bookings = await this.bookingsService.findMine(pilgrimId);
-    const bookingIds = bookings.map((b) => b._id as Types.ObjectId);
+    const bookingIds = bookings.map((b) => b.id);
     return this.paymentModel.find({ booking: { $in: bookingIds } }).exec();
   }
 
@@ -82,16 +82,13 @@ export class PaymentsService {
       payment.booking.toString(),
     );
 
-    if (
-      requesterRole === Role.ADMIN ||
-      booking.pilgrim.toString() === requesterId
-    ) {
+    if (requesterRole === Role.ADMIN || booking.pilgrimId === requesterId) {
       return payment;
     }
 
     if (requesterRole === Role.AGENCY) {
       const agency = await this.agenciesService.findByOwnerOrFail(requesterId);
-      if (booking.agency === agency.id) {
+      if (booking.agencyId === agency.id) {
         return payment;
       }
     }
@@ -100,17 +97,15 @@ export class PaymentsService {
   }
 
   findByBooking(bookingId: string): Promise<PaymentDocument[]> {
-    return this.paymentModel
-      .find({ booking: new Types.ObjectId(bookingId) })
-      .exec();
+    return this.paymentModel.find({ booking: bookingId }).exec();
   }
 
   async findForAgency(ownerId: string): Promise<PaymentDocument[]> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
     const bookings = await this.bookingsService.findByAgency(ownerId);
     const bookingIds = bookings
-      .filter((b) => b.agency === agency.id)
-      .map((b) => b._id as Types.ObjectId);
+      .filter((b) => b.agencyId === agency.id)
+      .map((b) => b.id);
     return this.paymentModel.find({ booking: { $in: bookingIds } }).exec();
   }
 
@@ -148,9 +143,7 @@ export class PaymentsService {
 
   private async reconcileBookingPaymentStep(bookingId: string): Promise<void> {
     const booking = await this.bookingsService.findByIdOrFail(bookingId);
-    const pkg = await this.packagesService.findByIdOrFail(
-      booking.package.toString(),
-    );
+    const pkg = await this.packagesService.findByIdOrFail(booking.packageId);
     const payments = await this.findByBooking(bookingId);
     const totalPaid = payments
       .filter((p) => p.status === PaymentStatus.SUCCEEDED)
