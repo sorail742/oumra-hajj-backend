@@ -1,8 +1,8 @@
 # 0014 — Messagerie pèlerin ↔ agence/guide
 
-- **Statut** : proposé
+- **Statut** : accepté
 - **Date** : 2026-09-07
-- **Décideurs** : Sory KEITA — décision produit initiale prise, détails techniques à confirmer
+- **Décideurs** : Sory KEITA
 
 ## Contexte
 
@@ -16,15 +16,32 @@ préparation des écrans mobiles ("Parcours Pèlerin").
 
 L'utilisateur a tranché la question produit qui bloquait le sujet : un
 **vrai chat temps réel**, pas une version minimale "contact téléphone/SMS
-direct". Les détails d'usage (participants autorisés, historique, pièces
-jointes, modération) restent à préciser — voir "Questions ouvertes"
-ci-dessous.
+direct" — puis les quatre points d'usage encore ouverts (participants,
+historique, pièces jointes, modération), voir "Validation" ci-dessous.
 
 ## Décision
 
 - Nouveau module `messaging`, indépendant des modules existants — une
   conversation référence un `bookingId` (donc un pèlerin, une agence, et
   éventuellement un guide via le `groupId` de la réservation), pas l'inverse.
+- **Deux fils strictement séparés et privés par réservation** : un fil
+  pèlerin↔agence, un fil pèlerin↔guide — jamais fusionnés. Un pèlerin d'un
+  groupe ne voit ni les fils des autres pèlerins avec le guide, ni leurs
+  échanges avec l'agence. Modélisé comme deux `Conversation` par `bookingId`
+  (`channel: 'agency' | 'guide'`), pas un participant supplémentaire sur une
+  conversation unique.
+- **Texte seul en V1** — aucune pièce jointe (photo/document). Le coffre-fort
+  documents (`documents`) reste l'unique canal de fichiers ; pas de recoupement
+  de périmètre avec [ADR 0008](0008-stockage-documents-sensibles.md) pour
+  cette première version.
+- **Pas de modération admin** sur ce canal — messagerie privée classique,
+  contrairement au contenu religieux (fiches de rites) qui reste seul soumis
+  à validation avant publication.
+- **Rétention limitée, pas de purge à date fixe imposée par l'ADR** : les
+  messages sont conservés le temps du voyage puis purgés automatiquement un
+  délai après clôture du dossier (`BookingStatus.COMPLETED`) — la durée
+  exacte est un paramètre de configuration (`.env`), pas une valeur figée ici,
+  pour rester ajustable sans nouvel ADR.
 - Transport temps réel via **Socket.IO** (`@nestjs/websockets` +
   `@nestjs/platform-socket.io`), authentifié par le même JWT access token
   que le REST (guard dédié sur le handshake, pas de session parallèle).
@@ -43,34 +60,26 @@ ci-dessous.
   destinataire n'est pas connecté au socket au moment de l'envoi — réutilise
   le module `notifications` existant plutôt que d'en recréer un.
 
-## Questions ouvertes (à trancher avant de passer ce statut à "accepté")
+## Validation
 
-- **Participants** : le pèlerin peut-il écrire à un guide *et* à l'agence
-  dans la même conversation, ou sont-ce deux fils séparés ? Un membre du
-  groupe peut-il voir les messages des autres pèlerins au guide, ou est-ce
-  strictement 1-à-1 ?
-- **Historique** : durée de rétention des messages (illimitée ? purgée X mois
-  après la fin du voyage, en lien avec la sensibilité des données du
-  cahier des charges §8) ?
-- **Pièces jointes** : texte seul au lancement, ou photo/document dès la V1 ?
-  Si document, ça touche potentiellement au périmètre sensible de
-  [ADR 0008](0008-stockage-documents-sensibles.md).
-- **Modération** : un message signalable/modérable par l'admin (cahier des
-  charges §3.4, "Modération de contenu") s'applique-t-elle à la messagerie,
-  ou seulement au contenu religieux publié (fiches de rites) ?
+Confirmé le 2026-09-07 par Sory KEITA sur les quatre points restés ouverts :
+deux fils séparés et privés (agence / guide), texte seul en V1, aucune
+modération admin, rétention limitée à la durée du voyage plus un délai post
+clôture (durée exacte laissée en configuration).
 
 ## Conséquences
 
 - Nouvelle dépendance (`@nestjs/websockets`, `@nestjs/platform-socket.io`,
   `socket.io`) — première brique temps réel du backend, jusqu'ici entièrement
   REST.
-- Nouveau schéma Prisma (`Conversation`, `Message`) et migration SQL associée
-  — à concevoir une fois les questions ouvertes ci-dessus tranchées, pas
-  avant, pour éviter une deuxième migration de correction.
+- Nouveau schéma Prisma (`Conversation` avec `channel`, `Message`) et
+  migration SQL associée — deux fils par réservation simplifient le modèle
+  par rapport à un fil combiné multi-participants.
 - Débloque l'écran "Messagerie agence/guide" côté mobile (actuellement
-  marqué "bloqué" dans le document Parcours Pèlerin) et la fonctionnalité
-  "Communication de masse" côté agence (cahier des charges §3.2), qui peut
-  réutiliser la même infrastructure de diffusion.
-- À intégrer à `docs/roadmap.md` comme étape de migration/implémentation à
-  part entière une fois accepté — hors périmètre de la migration Prisma déjà
+  marqué "bloqué" dans le document Parcours Pèlerin, à mettre à jour avec une
+  navigation à deux fils) et la fonctionnalité "Communication de masse" côté
+  agence (cahier des charges §3.2), qui peut réutiliser la même
+  infrastructure de diffusion.
+- Implémentation à suivre comme une étape à part entière de
+  `docs/roadmap.md` (issue #19) — hors périmètre de la migration Prisma déjà
   terminée (ADR 0013), qui ne portait que sur les modules existants.

@@ -118,10 +118,10 @@ Voir issues #15 à #19 (ouvertes) pour le détail :
   religieux — aucune fiche réelle en base actuellement)
 - **#18** Choisir les fournisseurs SMS/OTP, paiement Mobile Money et FCM
   (ADR 0006 non tranché)
-- **#19** Implémenter la messagerie pèlerin ↔ agence/guide — décision produit
-  prise (chat temps réel), détails techniques et schéma à trancher
-  ([ADR 0014](adr/0014-messagerie-agence-guide.md), `proposé`). Bloque
-  l'écran mobile correspondant tant que non accepté.
+- **#19** Implémenter la messagerie pèlerin ↔ agence/guide — module
+  `messaging`, deux fils privés (agence / guide), Socket.IO + persistance
+  serveur ([ADR 0014](adr/0014-messagerie-agence-guide.md), `accepté`).
+  Prêt à démarrer.
 
 ## Prochaines phases (cahier des charges §10, hors backend)
 
