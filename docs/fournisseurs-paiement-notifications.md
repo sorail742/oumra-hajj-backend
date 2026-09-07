@@ -3,7 +3,7 @@
 Document de synthèse pour aider à trancher l'**issue #18** (`docs/roadmap.md`)
 et l'[ADR 0006](adr/0006-gestion-paiements.md) (statut `proposé`). Ce n'est
 **pas** une décision : l'ADR 0006 reste `proposé` et [ADR 0009](adr/0009-notifications.md)
-reste `accepté` tel quel tant que l'utilisateur (Bonjour Keita) n'a pas
+reste `accepté` tel quel tant que l'utilisateur (Sory KEITA) n'a pas
 confirmé un choix — voir `CONTRIBUTING.md` pour la procédure de passage
 `proposé` → `accepté`.
 
