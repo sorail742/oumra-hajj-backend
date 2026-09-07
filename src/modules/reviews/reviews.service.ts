@@ -3,27 +3,35 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Review as PrismaReview } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus } from '../../common/enums/booking-status.enum';
+import { ReviewShape } from '../../types/review.types';
 import { BookingsService } from '../bookings/bookings.service';
 import { CreateReviewDto } from './dto/create-review.dto';
-import { Review, ReviewDocument } from './schemas/review.schema';
 
 const REVIEWABLE_STATUSES = [BookingStatus.CONFIRMED, BookingStatus.COMPLETED];
+
+function toReviewShape(review: PrismaReview): ReviewShape {
+  return {
+    id: review.id,
+    pilgrimId: review.pilgrimId,
+    agencyId: review.agencyId,
+    bookingId: review.bookingId,
+    rating: review.rating,
+    comment: review.comment ?? undefined,
+    createdAt: review.createdAt,
+  };
+}
 
 @Injectable()
 export class ReviewsService {
   constructor(
-    @InjectModel(Review.name)
-    private readonly reviewModel: Model<ReviewDocument>,
+    private readonly prisma: PrismaService,
     private readonly bookingsService: BookingsService,
   ) {}
 
-  async create(
-    pilgrimId: string,
-    dto: CreateReviewDto,
-  ): Promise<ReviewDocument> {
+  async create(pilgrimId: string, dto: CreateReviewDto): Promise<ReviewShape> {
     const booking = await this.bookingsService.findByIdOrFail(dto.bookingId);
     if (booking.pilgrimId !== pilgrimId) {
       throw new BadRequestException('Cette réservation ne vous appartient pas');
@@ -34,30 +42,37 @@ export class ReviewsService {
       );
     }
 
-    const existing = await this.reviewModel
-      .findOne({ booking: booking.id })
-      .exec();
+    const existing = await this.prisma.review.findUnique({
+      where: { bookingId: booking.id },
+    });
     if (existing) {
       throw new ConflictException('Un avis existe déjà pour cette réservation');
     }
 
-    return this.reviewModel.create({
-      pilgrim: pilgrimId,
-      agency: booking.agencyId,
-      booking: booking.id,
-      rating: dto.rating,
-      comment: dto.comment,
+    const review = await this.prisma.review.create({
+      data: {
+        pilgrimId,
+        agencyId: booking.agencyId,
+        bookingId: booking.id,
+        rating: dto.rating,
+        comment: dto.comment,
+      },
     });
+    return toReviewShape(review);
   }
 
-  listByAgency(agencyId: string): Promise<ReviewDocument[]> {
-    return this.reviewModel
-      .find({ agency: agencyId })
-      .sort({ createdAt: -1 })
-      .exec();
+  async listByAgency(agencyId: string): Promise<ReviewShape[]> {
+    const reviews = await this.prisma.review.findMany({
+      where: { agencyId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return reviews.map(toReviewShape);
   }
 
-  findMine(pilgrimId: string): Promise<ReviewDocument[]> {
-    return this.reviewModel.find({ pilgrim: pilgrimId }).exec();
+  async findMine(pilgrimId: string): Promise<ReviewShape[]> {
+    const reviews = await this.prisma.review.findMany({
+      where: { pilgrimId },
+    });
+    return reviews.map(toReviewShape);
   }
 }

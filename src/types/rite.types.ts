@@ -1,4 +1,4 @@
-import { RiteSheetPilgrimageType } from '../modules/rites/schemas/rite-sheet.schema';
+import { RiteSheetPilgrimageType } from '../common/enums/rite-sheet-pilgrimage-type.enum';
 
 export interface RiteSheetShape {
   id: string;

@@ -11,11 +11,11 @@ import {
   GroupMemberLocation as PrismaGroupMemberLocation,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationType } from '../../common/enums/notification-type.enum';
 import { Role } from '../../common/enums/role.enum';
 import { GroupShape } from '../../types/group.types';
 import { AgenciesService } from '../agencies/agencies.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType } from '../notifications/schemas/notification.schema';
 import { UsersService } from '../users/users.service';
 import { AddItineraryStepDto } from './dto/add-itinerary-step.dto';
 import { CreateGroupDto } from './dto/create-group.dto';

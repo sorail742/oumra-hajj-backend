@@ -5,9 +5,9 @@ import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import { ReviewShape } from '../../types/review.types';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { ReviewsService } from './reviews.service';
-import { ReviewDocument } from './schemas/review.schema';
 
 @ApiTags('reviews')
 @Controller('reviews')
@@ -20,20 +20,20 @@ export class ReviewsController {
   create(
     @CurrentUser() user: JwtPayload,
     @Body() dto: CreateReviewDto,
-  ): Promise<ReviewDocument> {
+  ): Promise<ReviewShape> {
     return this.reviewsService.create(user.sub, dto);
   }
 
   @ApiBearerAuth()
   @Roles(Role.PILGRIM)
   @Get('mine')
-  listMine(@CurrentUser() user: JwtPayload): Promise<ReviewDocument[]> {
+  listMine(@CurrentUser() user: JwtPayload): Promise<ReviewShape[]> {
     return this.reviewsService.findMine(user.sub);
   }
 
   @Public()
   @Get('agency/:agencyId')
-  listByAgency(@Param('agencyId') agencyId: string): Promise<ReviewDocument[]> {
+  listByAgency(@Param('agencyId') agencyId: string): Promise<ReviewShape[]> {
     return this.reviewsService.listByAgency(agencyId);
   }
 }

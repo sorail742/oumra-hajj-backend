@@ -1,24 +1,35 @@
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaService } from '../../prisma/prisma.service';
 import { RiteProgressService } from './rite-progress.service';
-import { RiteProgress } from './schemas/rite-progress.schema';
 
 describe('RiteProgressService — synchronisation hors-ligne (ADR 0007)', () => {
   let service: RiteProgressService;
-  let riteProgressModel: { findOne: jest.Mock; findOneAndUpdate: jest.Mock };
+  let prisma: {
+    riteProgress: { findUnique: jest.Mock; upsert: jest.Mock };
+  };
 
   const pilgrimId = 'pilgrim-1';
 
+  const buildProgress = (overrides: Partial<Record<string, unknown>> = {}) => ({
+    id: 'progress-1',
+    pilgrimId,
+    riteKey: 'tawaf',
+    completed: false,
+    tawafCount: 0,
+    saiCount: 0,
+    clientUpdatedAt: new Date(),
+    ...overrides,
+  });
+
   beforeEach(async () => {
-    riteProgressModel = { findOne: jest.fn(), findOneAndUpdate: jest.fn() };
+    prisma = {
+      riteProgress: { findUnique: jest.fn(), upsert: jest.fn() },
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RiteProgressService,
-        {
-          provide: getModelToken(RiteProgress.name),
-          useValue: riteProgressModel,
-        },
+        { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
 
@@ -27,13 +38,10 @@ describe('RiteProgressService — synchronisation hors-ligne (ADR 0007)', () => 
 
   describe('syncBatch', () => {
     it("applique la mise à jour quand aucune progression locale n'existe encore (upsert)", async () => {
-      riteProgressModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-      const updated = { riteKey: 'tawaf', tawafCount: 3 };
-      riteProgressModel.findOneAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(updated),
-      });
+      prisma.riteProgress.findUnique.mockResolvedValue(null);
+      prisma.riteProgress.upsert.mockResolvedValue(
+        buildProgress({ tawafCount: 3 }),
+      );
 
       const result = await service.syncBatch(pilgrimId, {
         items: [
@@ -45,19 +53,16 @@ describe('RiteProgressService — synchronisation hors-ligne (ADR 0007)', () => 
         ],
       });
 
-      expect(riteProgressModel.findOneAndUpdate).toHaveBeenCalled();
-      expect(result).toEqual([updated]);
+      expect(prisma.riteProgress.upsert).toHaveBeenCalled();
+      expect(result[0].tawafCount).toBe(3);
     });
 
     it('ignore une mise à jour plus ancienne que ce qui est déjà stocké (conflit résolu par horodatage client)', async () => {
-      const serverSideRecord = {
-        riteKey: 'tawaf',
+      const serverSideRecord = buildProgress({
         tawafCount: 7,
         clientUpdatedAt: new Date('2026-01-02T10:00:00Z'),
-      };
-      riteProgressModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(serverSideRecord),
       });
+      prisma.riteProgress.findUnique.mockResolvedValue(serverSideRecord);
 
       const result = await service.syncBatch(pilgrimId, {
         items: [
@@ -69,23 +74,19 @@ describe('RiteProgressService — synchronisation hors-ligne (ADR 0007)', () => 
         ],
       });
 
-      expect(riteProgressModel.findOneAndUpdate).not.toHaveBeenCalled();
-      expect(result).toEqual([serverSideRecord]);
+      expect(prisma.riteProgress.upsert).not.toHaveBeenCalled();
+      expect(result[0].tawafCount).toBe(7);
     });
 
     it('applique une mise à jour plus récente que ce qui est stocké', async () => {
-      const serverSideRecord = {
-        riteKey: 'tawaf',
+      const serverSideRecord = buildProgress({
         tawafCount: 2,
         clientUpdatedAt: new Date('2026-01-01T10:00:00Z'),
-      };
-      riteProgressModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(serverSideRecord),
       });
-      const updated = { riteKey: 'tawaf', tawafCount: 7 };
-      riteProgressModel.findOneAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(updated),
-      });
+      prisma.riteProgress.findUnique.mockResolvedValue(serverSideRecord);
+      prisma.riteProgress.upsert.mockResolvedValue(
+        buildProgress({ tawafCount: 7 }),
+      );
 
       const result = await service.syncBatch(pilgrimId, {
         items: [
@@ -97,21 +98,15 @@ describe('RiteProgressService — synchronisation hors-ligne (ADR 0007)', () => 
         ],
       });
 
-      expect(riteProgressModel.findOneAndUpdate).toHaveBeenCalled();
-      expect(result).toEqual([updated]);
+      expect(prisma.riteProgress.upsert).toHaveBeenCalled();
+      expect(result[0].tawafCount).toBe(7);
     });
 
     it('traite plusieurs étapes du lot indépendamment', async () => {
-      riteProgressModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-      riteProgressModel.findOneAndUpdate
-        .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue({ riteKey: 'tawaf' }),
-        })
-        .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue({ riteKey: 'sai' }),
-        });
+      prisma.riteProgress.findUnique.mockResolvedValue(null);
+      prisma.riteProgress.upsert
+        .mockResolvedValueOnce(buildProgress({ riteKey: 'tawaf' }))
+        .mockResolvedValueOnce(buildProgress({ riteKey: 'sai' }));
 
       const result = await service.syncBatch(pilgrimId, {
         items: [
@@ -129,24 +124,23 @@ describe('RiteProgressService — synchronisation hors-ligne (ADR 0007)', () => 
       });
 
       expect(result).toHaveLength(2);
-      expect(riteProgressModel.findOneAndUpdate).toHaveBeenCalledTimes(2);
+      expect(prisma.riteProgress.upsert).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('resetCounter', () => {
     it("remet le compteur Tawaf/Sa'i courant à zéro", async () => {
-      riteProgressModel.findOneAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ tawafCount: 0, saiCount: 0 }),
-      });
+      prisma.riteProgress.upsert.mockResolvedValue(
+        buildProgress({ tawafCount: 0, saiCount: 0 }),
+      );
 
       const result = await service.resetCounter(pilgrimId, 'tawaf');
 
-      expect(riteProgressModel.findOneAndUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ riteKey: 'tawaf' }),
+      expect(prisma.riteProgress.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          $set: expect.objectContaining({ tawafCount: 0, saiCount: 0 }),
+          where: { pilgrimId_riteKey: { pilgrimId, riteKey: 'tawaf' } },
+          update: expect.objectContaining({ tawafCount: 0, saiCount: 0 }),
         }),
-        expect.objectContaining({ upsert: true }),
       );
       expect(result.tawafCount).toBe(0);
     });

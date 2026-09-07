@@ -13,13 +13,12 @@ import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import { RiteProgressShape, RiteSheetShape } from '../../types/rite.types';
 import { CreateRiteSheetDto } from './dto/create-rite-sheet.dto';
 import { SyncRiteProgressDto } from './dto/sync-rite-progress.dto';
 import { UpdateRiteSheetDto } from './dto/update-rite-sheet.dto';
 import { RiteProgressService } from './rite-progress.service';
 import { RiteSheetsService } from './rite-sheets.service';
-import { RiteProgressDocument } from './schemas/rite-progress.schema';
-import { RiteSheetDocument } from './schemas/rite-sheet.schema';
 
 @ApiTags('rites')
 @Controller('rites')
@@ -34,21 +33,21 @@ export class RitesController {
   listPublished(
     @Query('pilgrimageType') pilgrimageType?: string,
     @Query('language') language?: string,
-  ): Promise<RiteSheetDocument[]> {
+  ): Promise<RiteSheetShape[]> {
     return this.riteSheetsService.listPublished(pilgrimageType, language);
   }
 
   @ApiBearerAuth()
   @Roles(Role.ADMIN)
   @Get('sheets/admin')
-  listAll(): Promise<RiteSheetDocument[]> {
+  listAll(): Promise<RiteSheetShape[]> {
     return this.riteSheetsService.listAll();
   }
 
   @ApiBearerAuth()
   @Roles(Role.ADMIN)
   @Post('sheets')
-  createSheet(@Body() dto: CreateRiteSheetDto): Promise<RiteSheetDocument> {
+  createSheet(@Body() dto: CreateRiteSheetDto): Promise<RiteSheetShape> {
     return this.riteSheetsService.create(dto);
   }
 
@@ -58,7 +57,7 @@ export class RitesController {
   updateSheet(
     @Param('id') id: string,
     @Body() dto: UpdateRiteSheetDto,
-  ): Promise<RiteSheetDocument> {
+  ): Promise<RiteSheetShape> {
     return this.riteSheetsService.update(id, dto);
   }
 
@@ -69,16 +68,14 @@ export class RitesController {
   validateSheet(
     @CurrentUser() reviewer: JwtPayload,
     @Param('id') id: string,
-  ): Promise<RiteSheetDocument> {
+  ): Promise<RiteSheetShape> {
     return this.riteSheetsService.validate(id, reviewer.sub);
   }
 
   @ApiBearerAuth()
   @Roles(Role.PILGRIM)
   @Get('progress')
-  getMyProgress(
-    @CurrentUser() user: JwtPayload,
-  ): Promise<RiteProgressDocument[]> {
+  getMyProgress(@CurrentUser() user: JwtPayload): Promise<RiteProgressShape[]> {
     return this.riteProgressService.findMine(user.sub);
   }
 
@@ -88,7 +85,7 @@ export class RitesController {
   syncProgress(
     @CurrentUser() user: JwtPayload,
     @Body() dto: SyncRiteProgressDto,
-  ): Promise<RiteProgressDocument[]> {
+  ): Promise<RiteProgressShape[]> {
     return this.riteProgressService.syncBatch(user.sub, dto);
   }
 
@@ -98,7 +95,7 @@ export class RitesController {
   resetCounter(
     @CurrentUser() user: JwtPayload,
     @Param('riteKey') riteKey: string,
-  ): Promise<RiteProgressDocument> {
+  ): Promise<RiteProgressShape> {
     return this.riteProgressService.resetCounter(user.sub, riteKey);
   }
 }
