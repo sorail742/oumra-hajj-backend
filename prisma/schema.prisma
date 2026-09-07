@@ -233,32 +233,47 @@ model AgencyLegalDocument {
 // ---------------------------------------------------------------------------
 
 model Package {
-  id                     String         @id @default(uuid())
-  agencyId               String
-  agency                 Agency         @relation(fields: [agencyId], references: [id])
-  type                   PilgrimageType
-  title                  String
-  description            String?
-  startDate              DateTime
-  endDate                DateTime
-  price                  Float
-  currency               String         @default("GNF")
-  capacity               Int
-  seatsTaken             Int            @default(0)
-  hotelName              String?
-  hotelCity              String?
-  hotelDistanceToMosqueM Int?
-  inclusions             String[]
-  status                 PackageStatus  @default(open)
-  createdAt              DateTime       @default(now())
-  updatedAt              DateTime       @updatedAt
+  id          String         @id @default(uuid())
+  agencyId    String
+  agency      Agency         @relation(fields: [agencyId], references: [id])
+  type        PilgrimageType
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  price       Float
+  currency    String         @default("GNF")
+  capacity    Int
+  seatsTaken  Int            @default(0)
+  inclusions  String[]
+  status      PackageStatus  @default(open)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
+  stages   PackageStage[]
   bookings Booking[]
   groups   Group[]
 
   @@index([type])
   @@index([status])
   @@map("packages")
+}
+
+// Un forfait peut inclure plusieurs etapes/hebergements (ex. Medine puis La
+// Mecque) — Package.startDate/endDate restent les bornes globales du voyage,
+// distinctes des dates propres a chaque etape.
+model PackageStage {
+  id                     String   @id @default(uuid())
+  packageId              String
+  package                Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  city                   String
+  hotelName              String
+  distanceToMosqueMeters Int?
+  startDate              DateTime
+  endDate                DateTime
+
+  @@index([packageId])
+  @@map("package_stages")
 }
 
 // ---------------------------------------------------------------------------

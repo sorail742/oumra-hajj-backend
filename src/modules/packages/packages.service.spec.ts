@@ -8,7 +8,11 @@ import { PackagesService } from './packages.service';
 describe('PackagesService — gestion des places (capacité forfait)', () => {
   let service: PackagesService;
   let prisma: {
-    package: { findUnique: jest.Mock; update: jest.Mock };
+    package: { findUnique: jest.Mock; update: jest.Mock; create: jest.Mock };
+  };
+  let agenciesService: {
+    findByOwnerOrFail: jest.Mock;
+    assertApproved: jest.Mock;
   };
 
   const buildPkg = (
@@ -16,6 +20,14 @@ describe('PackagesService — gestion des places (capacité forfait)', () => {
       capacity: number;
       seatsTaken: number;
       status: string;
+      stages: Array<{
+        id: string;
+        city: string;
+        hotelName: string;
+        distanceToMosqueMeters?: number;
+        startDate: Date;
+        endDate: Date;
+      }>;
     }>,
   ) => ({
     id: 'pkg-1',
@@ -29,9 +41,7 @@ describe('PackagesService — gestion des places (capacité forfait)', () => {
     currency: 'GNF',
     capacity: 10,
     seatsTaken: 0,
-    hotelName: null,
-    hotelCity: null,
-    hotelDistanceToMosqueM: null,
+    stages: [],
     inclusions: [],
     status: 'open',
     ...overrides,
@@ -39,14 +49,18 @@ describe('PackagesService — gestion des places (capacité forfait)', () => {
 
   beforeEach(async () => {
     prisma = {
-      package: { findUnique: jest.fn(), update: jest.fn() },
+      package: { findUnique: jest.fn(), update: jest.fn(), create: jest.fn() },
+    };
+    agenciesService = {
+      findByOwnerOrFail: jest.fn(),
+      assertApproved: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PackagesService,
         { provide: PrismaService, useValue: prisma },
-        { provide: AgenciesService, useValue: {} },
+        { provide: AgenciesService, useValue: agenciesService },
       ],
     }).compile();
 
@@ -151,6 +165,156 @@ describe('PackagesService — gestion des places (capacité forfait)', () => {
 
       expect(result.seatsTaken).toBe(9);
       expect(result.status).toBe(PackageStatus.OPEN);
+    });
+  });
+
+  describe('create — étapes multiples', () => {
+    const ownerId = 'owner-1';
+
+    beforeEach(() => {
+      agenciesService.findByOwnerOrFail.mockResolvedValue({ id: 'agency-1' });
+      agenciesService.assertApproved.mockResolvedValue(undefined);
+    });
+
+    it('crée les étapes en une seule écriture imbriquée, triées par date', async () => {
+      prisma.package.create.mockResolvedValue(
+        buildPkg({
+          stages: [
+            {
+              id: 'stage-medine',
+              city: 'Médine',
+              hotelName: 'Hôtel Al Ansar',
+              distanceToMosqueMeters: 200,
+              startDate: new Date('2027-03-01'),
+              endDate: new Date('2027-03-05'),
+            },
+            {
+              id: 'stage-mecque',
+              city: 'La Mecque',
+              hotelName: 'Hôtel Al Safwah',
+              distanceToMosqueMeters: 350,
+              startDate: new Date('2027-03-05'),
+              endDate: new Date('2027-03-15'),
+            },
+          ],
+        }),
+      );
+
+      const result = await service.create(ownerId, {
+        type: 'oumra' as never,
+        title: 'Oumra Ramadan',
+        startDate: '2027-03-01',
+        endDate: '2027-03-15',
+        price: 500,
+        capacity: 10,
+        stages: [
+          {
+            city: 'Médine',
+            hotelName: 'Hôtel Al Ansar',
+            distanceToMosqueMeters: 200,
+            startDate: '2027-03-01',
+            endDate: '2027-03-05',
+          },
+          {
+            city: 'La Mecque',
+            hotelName: 'Hôtel Al Safwah',
+            distanceToMosqueMeters: 350,
+            startDate: '2027-03-05',
+            endDate: '2027-03-15',
+          },
+        ],
+      });
+
+      expect(prisma.package.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            stages: {
+              create: [
+                expect.objectContaining({
+                  city: 'Médine',
+                  hotelName: 'Hôtel Al Ansar',
+                  distanceToMosqueMeters: 200,
+                }),
+                expect.objectContaining({
+                  city: 'La Mecque',
+                  hotelName: 'Hôtel Al Safwah',
+                  distanceToMosqueMeters: 350,
+                }),
+              ],
+            },
+          }),
+          include: { stages: { orderBy: { startDate: 'asc' } } },
+        }),
+      );
+      expect(result.stages).toHaveLength(2);
+      expect(result.stages[0].city).toBe('Médine');
+      expect(result.stages[1].city).toBe('La Mecque');
+    });
+  });
+
+  describe('update — remplacement des étapes', () => {
+    const ownerId = 'owner-1';
+
+    beforeEach(() => {
+      prisma.package.findUnique.mockResolvedValue(buildPkg({}));
+      agenciesService.findByOwnerOrFail.mockResolvedValue({ id: 'agency-1' });
+    });
+
+    it('remplace intégralement les étapes existantes (deleteMany + create)', async () => {
+      prisma.package.update.mockResolvedValue(
+        buildPkg({
+          stages: [
+            {
+              id: 'stage-nouvelle',
+              city: 'La Mecque',
+              hotelName: 'Nouvel hôtel',
+              distanceToMosqueMeters: 100,
+              startDate: new Date('2027-03-01'),
+              endDate: new Date('2027-03-15'),
+            },
+          ],
+        }),
+      );
+
+      await service.update(ownerId, 'pkg-1', {
+        stages: [
+          {
+            city: 'La Mecque',
+            hotelName: 'Nouvel hôtel',
+            distanceToMosqueMeters: 100,
+            startDate: '2027-03-01',
+            endDate: '2027-03-15',
+          },
+        ],
+      });
+
+      expect(prisma.package.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            stages: {
+              deleteMany: {},
+              create: [
+                expect.objectContaining({
+                  city: 'La Mecque',
+                  hotelName: 'Nouvel hôtel',
+                }),
+              ],
+            },
+          }),
+        }),
+      );
+    });
+
+    it("ne touche pas aux étapes si le DTO n'en fournit pas", async () => {
+      prisma.package.update.mockResolvedValue(buildPkg({}));
+
+      await service.update(ownerId, 'pkg-1', { title: 'Nouveau titre' });
+
+      expect(prisma.package.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.not.objectContaining({ stages: expect.anything() }),
+        }),
+      );
     });
   });
 });

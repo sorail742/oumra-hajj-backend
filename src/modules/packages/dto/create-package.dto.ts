@@ -1,12 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMinSize,
   IsArray,
   IsDateString,
   IsEnum,
   IsInt,
   IsNumber,
-  IsObject,
   IsOptional,
   IsPositive,
   IsString,
@@ -15,19 +15,29 @@ import {
 } from 'class-validator';
 import { PilgrimageType } from '../../../common/enums/pilgrimage-type.enum';
 
-class HotelInfoDto {
-  @ApiProperty()
-  @IsString()
-  name!: string;
-
+// Une etape/hebergement du forfait (ex. Medine puis La Mecque) — voir
+// PackageStageShape.
+export class PackageStageDto {
   @ApiProperty()
   @IsString()
   city!: string;
+
+  @ApiProperty()
+  @IsString()
+  hotelName!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
   distanceToMosqueMeters?: number;
+
+  @ApiProperty()
+  @IsDateString()
+  startDate!: string;
+
+  @ApiProperty()
+  @IsDateString()
+  endDate!: string;
 }
 
 export class CreatePackageDto {
@@ -68,12 +78,12 @@ export class CreatePackageDto {
   @IsPositive()
   capacity!: number;
 
-  @ApiPropertyOptional({ type: HotelInfoDto })
-  @IsOptional()
-  @IsObject()
-  @ValidateNested()
-  @Type(() => HotelInfoDto)
-  hotel?: HotelInfoDto;
+  @ApiProperty({ type: [PackageStageDto] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => PackageStageDto)
+  stages!: PackageStageDto[];
 
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
