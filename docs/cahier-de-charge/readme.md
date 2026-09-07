@@ -180,11 +180,11 @@ Description
 Application mobile (pèlerin, guide)
 Flutter / Dart — un seul code pour Android et iOS, mode hors-ligne facilité par le stockage local (Hive / SQLite).
 Back-office web (agence, admin)
-Application web (React ou Flutter Web) consommant la même API backend.
+Application web React + TypeScript (Vite) consommant la même API backend.
 Backend / API
-Node.js + Express, architecture REST (ou GraphQL si besoin de requêtes complexes côté back-office).
+NestJS (TypeScript), architecture REST modulaire (voir ADR 0001, ADR 0002).
 Base de données
-MongoDB avec Mongoose (schémas : utilisateurs, forfaits, réservations, paiements, groupes, documents).
+PostgreSQL avec Prisma (schéma relationnel : utilisateurs, forfaits, réservations, paiements, groupes, documents — voir ADR 0013).
 Authentification
 Numéro de téléphone + OTP (SMS), tokens JWT, rôles (pèlerin / agence / guide / admin).
 Paiement
@@ -196,7 +196,7 @@ Stockage cloud sécurisé (ex. Firebase Storage ou équivalent) avec chiffrement
 Géolocalisation
 API de cartographie avec cache hors-ligne des cartes de La Mecque / Médine.
 6.2 Architecture globale (vue logique)
-App mobile Pèlerin/Guide (Flutter) et Back-office Agence/Admin (Web) communiquent avec une API centrale Node.js/Express, laquelle interagit avec MongoDB (données métier), un service de paiement (Mobile Money / carte), un service de notifications push, et un service de stockage de documents. Un module de synchronisation hors-ligne permet à l'application mobile de continuer à fonctionner (guide des rites, compteur, documents) sans réseau, puis de se resynchroniser automatiquement.
+App mobile Pèlerin/Guide (Flutter) et Back-office Agence/Admin (Web) communiquent avec une API centrale NestJS, laquelle interagit avec PostgreSQL (données métier), un service de paiement (Mobile Money / carte), un service de notifications push, et un service de stockage de documents. Un module de synchronisation hors-ligne permet à l'application mobile de continuer à fonctionner (guide des rites, compteur, documents) sans réseau, puis de se resynchroniser automatiquement.
 6.3 Intégrations tierces à prévoir
     • Passerelles Mobile Money locales (Orange Money, MTN Money) et carte bancaire internationale.
     • Service SMS/OTP pour l'authentification et les alertes critiques.
@@ -204,8 +204,8 @@ App mobile Pèlerin/Guide (Flutter) et Back-office Agence/Admin (Web) communique
     • Cartes hors-ligne de La Mecque et Médine (zones du Haram, hôtels, points d'eau, secours).
     • À terme : veille sur les exigences de la plateforme officielle saoudienne Nusuk, qui centralise désormais permis, visas et hébergement — le produit doit être pensé comme complémentaire (préparation, suivi famille, guide des rites) plutôt qu'en concurrence frontale sur les démarches officielles.
 
-7. Modèle de données (collections principales)
-Collection
+7. Modèle de données (entités principales)
+Entité
 Champs principaux
 User
 identité, téléphone, rôle (pèlerin/agence/guide/admin), langue préférée, contact d'urgence, groupe sanguin.
@@ -247,7 +247,7 @@ Contenu & durée estimée
 Phase 1 — Cadrage & UX
 Ateliers de cadrage, personas, maquettes basse puis haute fidélité (Figma), validation du cadrage. ~2 semaines
 Phase 2 — Backend & données
-Modélisation MongoDB/Mongoose, API Node.js/Express (auth, forfaits, réservations), documentation API. ~3 semaines
+Modélisation PostgreSQL/Prisma, API NestJS (auth, forfaits, réservations), documentation API. ~3 semaines
 Phase 3 — App mobile pèlerin
 Développement Flutter : inscription, catalogue, paiement, coffre-fort documents, guide des rites, compteur, Qibla. ~4 semaines
 Phase 4 — Espace agence & admin
@@ -265,7 +265,7 @@ Test avec une agence pilote et un petit groupe réel, corrections, formation des
 12. Livrables attendus
     • Application mobile Flutter (Android/iOS) — espace pèlerin et guide.
     • Back-office web — espace agence et administrateur.
-    • API backend Node.js/MongoDB documentée.
+    • API backend NestJS/PostgreSQL documentée.
     • Maquettes UX/UI validées (Figma).
     • Documentation technique et guide d'utilisation pour les agences.
     • Présentation de synthèse pour validation finale.
