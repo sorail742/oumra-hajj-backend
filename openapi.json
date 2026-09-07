@@ -1975,22 +1975,30 @@
           "reason"
         ]
       },
-      "HotelInfoDto": {
+      "PackageStageDto": {
         "type": "object",
         "properties": {
-          "name": {
+          "city": {
             "type": "string"
           },
-          "city": {
+          "hotelName": {
             "type": "string"
           },
           "distanceToMosqueMeters": {
             "type": "number"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
           }
         },
         "required": [
-          "name",
-          "city"
+          "city",
+          "hotelName",
+          "startDate",
+          "endDate"
         ]
       },
       "CreatePackageDto": {
@@ -2024,8 +2032,11 @@
           "capacity": {
             "type": "number"
           },
-          "hotel": {
-            "$ref": "#/components/schemas/HotelInfoDto"
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PackageStageDto"
+            }
           },
           "inclusions": {
             "type": "array",
@@ -2040,7 +2051,8 @@
           "startDate",
           "endDate",
           "price",
-          "capacity"
+          "capacity",
+          "stages"
         ]
       },
       "UpdatePackageDto": {
@@ -2074,8 +2086,11 @@
           "capacity": {
             "type": "number"
           },
-          "hotel": {
-            "$ref": "#/components/schemas/HotelInfoDto"
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PackageStageDto"
+            }
           },
           "inclusions": {
             "type": "array",
