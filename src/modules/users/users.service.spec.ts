@@ -70,6 +70,74 @@ describe('UsersService', () => {
     });
   });
 
+  describe('findById', () => {
+    it("renvoie l'utilisateur sans passwordHash quand il existe", async () => {
+      prisma.user.findUnique.mockResolvedValue(baseUser);
+
+      const user = await service.findById('user-1');
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+      });
+      expect(user?.id).toBe('user-1');
+    });
+
+    it('renvoie null si aucun utilisateur ne correspond', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      const user = await service.findById('unknown');
+
+      expect(user).toBeNull();
+    });
+  });
+
+  describe('findByIdOrFail', () => {
+    it("lève NotFoundException si l'utilisateur n'existe pas", async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.findByIdOrFail('unknown')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it("renvoie l'utilisateur quand il existe", async () => {
+      prisma.user.findUnique.mockResolvedValue(baseUser);
+
+      const user = await service.findByIdOrFail('user-1');
+
+      expect(user.id).toBe('user-1');
+    });
+  });
+
+  describe('findByPhone', () => {
+    it('cherche par numéro de téléphone tel quel', async () => {
+      prisma.user.findUnique.mockResolvedValue(baseUser);
+
+      const user = await service.findByPhone('+224620000000');
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { phone: '+224620000000' },
+      });
+      expect(user?.id).toBe('user-1');
+    });
+  });
+
+  describe('findByEmail', () => {
+    it("normalise l'email en minuscules avant la recherche", async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        ...baseUser,
+        email: 'agence@example.gn',
+      });
+
+      const user = await service.findByEmail('Agence@Example.GN');
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'agence@example.gn' },
+      });
+      expect(user?.email).toBe('agence@example.gn');
+    });
+  });
+
   describe('findByEmailWithPassword', () => {
     it('demande explicitement passwordHash via omit: false', async () => {
       prisma.user.findUnique.mockResolvedValue({
@@ -126,6 +194,40 @@ describe('UsersService', () => {
       await expect(
         service.updateProfile('unknown', { fullName: 'X' }),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('setActive', () => {
+    it('suspend un utilisateur', async () => {
+      prisma.user.update.mockResolvedValue({ ...baseUser, isActive: false });
+
+      const user = await service.setActive('user-1', false);
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { isActive: false },
+      });
+      expect(user.isActive).toBe(false);
+    });
+
+    it('réactive un utilisateur', async () => {
+      prisma.user.update.mockResolvedValue({ ...baseUser, isActive: true });
+
+      const user = await service.setActive('user-1', true);
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { isActive: true },
+      });
+      expect(user.isActive).toBe(true);
+    });
+
+    it("lève NotFoundException si l'utilisateur n'existe pas", async () => {
+      prisma.user.update.mockRejectedValue(new Error('Record not found'));
+
+      await expect(service.setActive('unknown', true)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 
