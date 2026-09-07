@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document as MongooseDocument, Types } from 'mongoose';
+import { Document as MongooseDocument } from 'mongoose';
 
 export type PilgrimDocumentDocument = PilgrimDocument & MongooseDocument;
 
@@ -21,8 +21,9 @@ export enum PilgrimDocumentStatus {
 // seule référence conservée ici.
 @Schema({ timestamps: true })
 export class PilgrimDocument {
-  @Prop({ type: Types.ObjectId, ref: 'Booking', required: true, index: true })
-  booking!: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma du module bookings (ADR 0013).
+  @Prop({ required: true, index: true })
+  booking!: string;
 
   // Id Postgres (UUID) depuis la migration Prisma de users/auth (ADR 0013).
   @Prop({ required: true, index: true })

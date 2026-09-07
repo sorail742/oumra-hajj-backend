@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsMongoId, IsNumber, IsPositive } from 'class-validator';
+import { IsEnum, IsNumber, IsPositive, IsUUID } from 'class-validator';
 import { PaymentMethod } from '../schemas/payment.schema';
 
 export class InitiatePaymentDto {
   @ApiProperty()
-  @IsMongoId()
+  @IsUUID()
   bookingId!: string;
 
   @ApiProperty()

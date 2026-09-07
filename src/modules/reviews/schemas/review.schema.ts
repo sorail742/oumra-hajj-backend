@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 export type ReviewDocument = Review & Document;
 
@@ -13,8 +13,9 @@ export class Review {
   @Prop({ required: true, index: true })
   agency!: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Booking', required: true, unique: true })
-  booking!: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma du module bookings (ADR 0013).
+  @Prop({ required: true, unique: true })
+  booking!: string;
 
   @Prop({ required: true, min: 1, max: 5 })
   rating!: number;

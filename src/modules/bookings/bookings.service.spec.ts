@@ -1,22 +1,26 @@
 import { ForbiddenException } from '@nestjs/common';
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
+import { PrismaService } from '../../prisma/prisma.service';
+import { BookingStatus } from '../../common/enums/booking-status.enum';
+import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
+import { Role } from '../../common/enums/role.enum';
 import { AgenciesService } from '../agencies/agencies.service';
 import { GroupsService } from '../groups/groups.service';
 import { PackagesService } from '../packages/packages.service';
-import { Role } from '../../common/enums/role.enum';
 import { BookingsService } from './bookings.service';
-import {
-  Booking,
-  BookingStatus,
-  DossierStepKey,
-  DossierStepStatus,
-} from './schemas/booking.schema';
 
 describe('BookingsService', () => {
   let service: BookingsService;
-  let bookingModel: { create: jest.Mock; findById: jest.Mock };
+  let prisma: {
+    booking: {
+      create: jest.Mock;
+      findUnique: jest.Mock;
+      findMany: jest.Mock;
+      update: jest.Mock;
+      count: jest.Mock;
+    };
+    bookingStep: { update: jest.Mock };
+  };
   let packagesService: {
     findByIdOrFail: jest.Mock;
     reserveSeat: jest.Mock;
@@ -25,13 +29,53 @@ describe('BookingsService', () => {
   let agenciesService: { findByOwnerOrFail: jest.Mock };
   let groupsService: { addMember: jest.Mock };
 
-  const pilgrimId = new Types.ObjectId().toString();
+  const pilgrimId = 'pilgrim-1';
   const agencyId = 'agency-1';
   const packageId = 'package-1';
-  const bookingId = new Types.ObjectId().toString();
+  const bookingId = 'booking-1';
+
+  const allStepsDone = () => [
+    { key: DossierStepKey.PAYMENT, status: 'done', updatedAt: new Date() },
+    { key: DossierStepKey.VISA, status: 'done', updatedAt: new Date() },
+    { key: DossierStepKey.FLIGHT, status: 'done', updatedAt: new Date() },
+    { key: DossierStepKey.VACCINATION, status: 'done', updatedAt: new Date() },
+    { key: DossierStepKey.DOCUMENTS, status: 'done', updatedAt: new Date() },
+  ];
+
+  const allStepsButOneDone = () => [
+    ...allStepsDone().slice(0, 4),
+    { key: DossierStepKey.DOCUMENTS, status: 'pending', updatedAt: new Date() },
+  ];
+
+  const buildBooking = (
+    overrides: Partial<{
+      pilgrimId: string;
+      agencyId: string;
+      status: string;
+      steps: { key: string; status: string; updatedAt: Date }[];
+    }>,
+  ) => ({
+    id: bookingId,
+    pilgrimId,
+    packageId,
+    agencyId,
+    groupId: null,
+    status: 'pending_payment',
+    steps: [],
+    ...overrides,
+  });
 
   beforeEach(async () => {
-    bookingModel = { create: jest.fn(), findById: jest.fn() };
+    prisma = {
+      booking: {
+        create: jest.fn(),
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
+        update: jest.fn(),
+        count: jest.fn().mockResolvedValue(0),
+      },
+      bookingStep: { update: jest.fn() },
+    };
     packagesService = {
       findByIdOrFail: jest.fn(),
       reserveSeat: jest.fn(),
@@ -43,7 +87,7 @@ describe('BookingsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BookingsService,
-        { provide: getModelToken(Booking.name), useValue: bookingModel },
+        { provide: PrismaService, useValue: prisma },
         { provide: PackagesService, useValue: packagesService },
         { provide: AgenciesService, useValue: agenciesService },
         { provide: GroupsService, useValue: groupsService },
@@ -60,13 +104,15 @@ describe('BookingsService', () => {
         agencyId,
       });
       packagesService.reserveSeat.mockResolvedValue({});
-      bookingModel.create.mockResolvedValue({ _id: bookingId });
+      prisma.booking.create.mockResolvedValue(buildBooking({}));
 
       await service.create(pilgrimId, { packageId });
 
       expect(packagesService.reserveSeat).toHaveBeenCalledWith(packageId);
-      expect(bookingModel.create).toHaveBeenCalledWith(
-        expect.objectContaining({ agency: agencyId }),
+      expect(prisma.booking.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ agencyId, packageId }),
+        }),
       );
     });
 
@@ -80,23 +126,18 @@ describe('BookingsService', () => {
       );
 
       await expect(service.create(pilgrimId, { packageId })).rejects.toThrow();
-      expect(bookingModel.create).not.toHaveBeenCalled();
+      expect(prisma.booking.create).not.toHaveBeenCalled();
     });
   });
 
   describe('cancel', () => {
     it('libère la place du forfait et passe le statut à CANCELLED', async () => {
-      const booking = {
-        pilgrim: { toString: () => pilgrimId },
-        package: { toString: () => packageId },
-        status: BookingStatus.CONFIRMED,
-        save: jest.fn().mockImplementation(function (this: unknown) {
-          return Promise.resolve(this);
-        }),
-      };
-      bookingModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(booking),
-      });
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ pilgrimId, status: 'confirmed' }),
+      );
+      prisma.booking.update.mockResolvedValue(
+        buildBooking({ pilgrimId, status: 'cancelled' }),
+      );
       packagesService.releaseSeat.mockResolvedValue({});
 
       const result = await service.cancel(pilgrimId, bookingId);
@@ -106,15 +147,9 @@ describe('BookingsService', () => {
     });
 
     it("refuse d'annuler la réservation d'un autre pèlerin", async () => {
-      const booking = {
-        pilgrim: { toString: () => 'someone-else' },
-        package: { toString: () => packageId },
-        status: BookingStatus.CONFIRMED,
-        save: jest.fn(),
-      };
-      bookingModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(booking),
-      });
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ pilgrimId: 'someone-else', status: 'confirmed' }),
+      );
 
       await expect(service.cancel(pilgrimId, bookingId)).rejects.toBeInstanceOf(
         ForbiddenException,
@@ -123,17 +158,12 @@ describe('BookingsService', () => {
     });
 
     it('ne libère pas la place une seconde fois si la réservation est déjà annulée', async () => {
-      const booking = {
-        pilgrim: { toString: () => pilgrimId },
-        package: { toString: () => packageId },
-        status: BookingStatus.CANCELLED,
-        save: jest.fn().mockImplementation(function (this: unknown) {
-          return Promise.resolve(this);
-        }),
-      };
-      bookingModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(booking),
-      });
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ pilgrimId, status: 'cancelled' }),
+      );
+      prisma.booking.update.mockResolvedValue(
+        buildBooking({ pilgrimId, status: 'cancelled' }),
+      );
 
       await service.cancel(pilgrimId, bookingId);
 
@@ -141,46 +171,15 @@ describe('BookingsService', () => {
     });
   });
 
-  describe('markStepDone / updateStep — passage automatique en CONFIRMED', () => {
-    const allStepsButOneDone = () => [
-      {
-        key: DossierStepKey.PAYMENT,
-        status: DossierStepStatus.DONE,
-        updatedAt: new Date(),
-      },
-      {
-        key: DossierStepKey.VISA,
-        status: DossierStepStatus.DONE,
-        updatedAt: new Date(),
-      },
-      {
-        key: DossierStepKey.FLIGHT,
-        status: DossierStepStatus.DONE,
-        updatedAt: new Date(),
-      },
-      {
-        key: DossierStepKey.VACCINATION,
-        status: DossierStepStatus.DONE,
-        updatedAt: new Date(),
-      },
-      {
-        key: DossierStepKey.DOCUMENTS,
-        status: DossierStepStatus.PENDING,
-        updatedAt: new Date(),
-      },
-    ];
-
+  describe('markStepDone — passage automatique en CONFIRMED', () => {
     it('passe la réservation à CONFIRMED quand la dernière étape se termine', async () => {
-      const booking = {
-        steps: allStepsButOneDone(),
-        status: BookingStatus.PENDING_PAYMENT,
-        save: jest.fn().mockImplementation(function (this: unknown) {
-          return Promise.resolve(this);
-        }),
-      };
-      bookingModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(booking),
-      });
+      prisma.bookingStep.update.mockResolvedValue({});
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ steps: allStepsDone() }),
+      );
+      prisma.booking.update.mockResolvedValue(
+        buildBooking({ steps: allStepsDone(), status: 'confirmed' }),
+      );
 
       const result = await service.markStepDone(
         bookingId,
@@ -191,38 +190,24 @@ describe('BookingsService', () => {
     });
 
     it('reste PENDING_PAYMENT tant que toutes les étapes ne sont pas terminées', async () => {
-      const steps = allStepsButOneDone();
-      const booking = {
-        steps,
-        status: BookingStatus.PENDING_PAYMENT,
-        save: jest.fn().mockImplementation(function (this: unknown) {
-          return Promise.resolve(this);
-        }),
-      };
-      bookingModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(booking),
-      });
+      prisma.bookingStep.update.mockResolvedValue({});
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ steps: allStepsButOneDone() }),
+      );
 
-      // Termine une étape qui n'est pas la dernière restante : DOCUMENTS reste PENDING.
       const result = await service.markStepDone(
         bookingId,
         DossierStepKey.PAYMENT,
       );
 
       expect(result.status).toBe(BookingStatus.PENDING_PAYMENT);
+      expect(prisma.booking.update).not.toHaveBeenCalled();
     });
   });
 
   describe('findAuthorizedOrFail', () => {
-    const makeBooking = () => ({
-      pilgrim: { toString: () => pilgrimId },
-      agency: agencyId,
-    });
-
     it('autorise le pèlerin propriétaire de la réservation', async () => {
-      bookingModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(makeBooking()),
-      });
+      prisma.booking.findUnique.mockResolvedValue(buildBooking({ pilgrimId }));
 
       await expect(
         service.findAuthorizedOrFail(pilgrimId, Role.PILGRIM, bookingId),
@@ -230,9 +215,7 @@ describe('BookingsService', () => {
     });
 
     it('refuse un autre pèlerin', async () => {
-      bookingModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(makeBooking()),
-      });
+      prisma.booking.findUnique.mockResolvedValue(buildBooking({ pilgrimId }));
 
       await expect(
         service.findAuthorizedOrFail(
@@ -244,9 +227,7 @@ describe('BookingsService', () => {
     });
 
     it("autorise l'admin quelle que soit la réservation", async () => {
-      bookingModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(makeBooking()),
-      });
+      prisma.booking.findUnique.mockResolvedValue(buildBooking({ pilgrimId }));
 
       await expect(
         service.findAuthorizedOrFail('admin-1', Role.ADMIN, bookingId),
@@ -254,9 +235,9 @@ describe('BookingsService', () => {
     });
 
     it("refuse une agence qui n'est pas propriétaire de la réservation", async () => {
-      bookingModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(makeBooking()),
-      });
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ pilgrimId, agencyId }),
+      );
       agenciesService.findByOwnerOrFail.mockResolvedValue({
         id: 'other-agency',
       });

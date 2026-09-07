@@ -148,7 +148,7 @@ describe('Parcours réservation + paiement (e2e)', () => {
       .set('Authorization', `Bearer ${pilgrimToken}`)
       .send({ packageId })
       .expect(201);
-    const bookingId = bookingRes.body._id as string;
+    const bookingId = bookingRes.body.id as string;
 
     // Le forfait est désormais complet pour un second pèlerin.
     await request(server)

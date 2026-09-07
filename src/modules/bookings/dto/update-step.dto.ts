@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
-import { DossierStepKey, DossierStepStatus } from '../schemas/booking.schema';
+import { DossierStepKey } from '../../../common/enums/dossier-step-key.enum';
+import { DossierStepStatus } from '../../../common/enums/dossier-step-status.enum';
 
 export class UpdateStepDto {
   @ApiProperty({ enum: DossierStepKey })

@@ -5,10 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
+import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
-import { DossierStepKey } from '../bookings/schemas/booking.schema';
 import { UploadDocumentDto } from './dto/upload-document.dto';
 import {
   PilgrimDocument,
@@ -36,12 +36,12 @@ export class DocumentsService {
     dto: UploadDocumentDto,
   ): Promise<PilgrimDocumentDocument> {
     const booking = await this.bookingsService.findByIdOrFail(dto.bookingId);
-    if (booking.pilgrim.toString() !== pilgrimId) {
+    if (booking.pilgrimId !== pilgrimId) {
       throw new ForbiddenException('Cette réservation ne vous appartient pas');
     }
 
     return this.documentModel.create({
-      booking: booking._id,
+      booking: booking.id,
       pilgrim: pilgrimId,
       type: dto.type,
       storageRef: dto.storageRef,
@@ -61,15 +61,12 @@ export class DocumentsService {
   ): Promise<PilgrimDocumentDocument[]> {
     const booking = await this.bookingsService.findByIdOrFail(bookingId);
 
-    if (
-      requesterRole === 'pilgrim' &&
-      booking.pilgrim.toString() !== requesterId
-    ) {
+    if (requesterRole === 'pilgrim' && booking.pilgrimId !== requesterId) {
       throw new ForbiddenException('Cette réservation ne vous appartient pas');
     }
     if (requesterRole === 'agency') {
       const agency = await this.agenciesService.findByOwnerOrFail(requesterId);
-      if (booking.agency !== agency.id) {
+      if (booking.agencyId !== agency.id) {
         throw new ForbiddenException(
           "Cette réservation n'appartient pas à votre agence",
         );
@@ -79,7 +76,7 @@ export class DocumentsService {
     this.accessLogger.log(
       `Lecture — demandeur=${requesterId} (${requesterRole}) réservation=${bookingId}`,
     );
-    return this.documentModel.find({ booking: booking._id }).exec();
+    return this.documentModel.find({ booking: booking.id }).exec();
   }
 
   async validate(
@@ -130,7 +127,7 @@ export class DocumentsService {
       doc.booking.toString(),
     );
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
-    if (booking.agency !== agency.id) {
+    if (booking.agencyId !== agency.id) {
       throw new ForbiddenException(
         "Ce document n'appartient pas à votre agence",
       );
@@ -138,9 +135,7 @@ export class DocumentsService {
   }
 
   private async maybeCompleteDocumentsStep(bookingId: string): Promise<void> {
-    const docs = await this.documentModel
-      .find({ booking: new Types.ObjectId(bookingId) })
-      .exec();
+    const docs = await this.documentModel.find({ booking: bookingId }).exec();
     const validatedTypes = new Set(
       docs
         .filter((d) => d.status === PilgrimDocumentStatus.VALIDATED)
