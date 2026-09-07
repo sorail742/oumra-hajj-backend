@@ -13,6 +13,7 @@ import { BookingsModule } from './modules/bookings/bookings.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { GroupsModule } from './modules/groups/groups.module';
 import { HealthModule } from './modules/health/health.module';
+import { MessagingModule } from './modules/messaging/messaging.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PackagesModule } from './modules/packages/packages.module';
 import { PaymentsModule } from './modules/payments/payments.module';
@@ -44,6 +45,7 @@ import { PrismaModule } from './prisma/prisma.module';
     RitesModule,
     NotificationsModule,
     ReviewsModule,
+    MessagingModule,
     AdminModule,
   ],
   providers: [

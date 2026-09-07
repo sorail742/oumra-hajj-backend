@@ -106,23 +106,28 @@ enum NotificationType {
   other
 }
 
+enum MessagingChannel {
+  agency
+  guide
+}
+
 // ---------------------------------------------------------------------------
 // Auth (ADR 0003)
 // ---------------------------------------------------------------------------
 
 model User {
-  id                String    @id @default(uuid())
+  id                String   @id @default(uuid())
   fullName          String
-  phone             String?   @unique
-  email             String?   @unique
+  phone             String?  @unique
+  email             String?  @unique
   passwordHash      String?
   role              Role
-  preferredLanguage String    @default("fr")
+  preferredLanguage String   @default("fr")
   bloodType         String?
   passportNumber    String?
-  isActive          Boolean   @default(true)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   // Contact d'urgence — colonnes plutôt qu'un sous-document (relationnel).
   emergencyContactFullName     String?
@@ -133,18 +138,19 @@ model User {
   agencyId String?
   agency   Agency? @relation("AgencyGuides", fields: [agencyId], references: [id])
 
-  ownedAgency        Agency?             @relation("AgencyOwner")
-  refreshTokens      RefreshToken[]
-  bookingsAsPilgrim  Booking[]           @relation("BookingPilgrim")
-  documents          PilgrimDocument[]
-  riteProgress       RiteProgress[]
-  notifications      Notification[]
-  reviews            Review[]
-  validatedAgencies  Agency[]            @relation("AgencyValidatedBy")
-  validatedRiteSheets RiteSheet[]        @relation("RiteSheetValidatedBy")
-  guidedGroups       Group[]             @relation("GroupGuide")
-  groupMemberships   GroupMember[]
-  groupLocations     GroupMemberLocation[]
+  ownedAgency         Agency?               @relation("AgencyOwner")
+  refreshTokens       RefreshToken[]
+  bookingsAsPilgrim   Booking[]             @relation("BookingPilgrim")
+  documents           PilgrimDocument[]
+  riteProgress        RiteProgress[]
+  notifications       Notification[]
+  reviews             Review[]
+  sentMessages        Message[]
+  validatedAgencies   Agency[]              @relation("AgencyValidatedBy")
+  validatedRiteSheets RiteSheet[]           @relation("RiteSheetValidatedBy")
+  guidedGroups        Group[]               @relation("GroupGuide")
+  groupMemberships    GroupMember[]
+  groupLocations      GroupMemberLocation[]
 
   @@map("users")
 }
@@ -181,24 +187,24 @@ model RefreshToken {
 // ---------------------------------------------------------------------------
 
 model Agency {
-  id                 String                 @id @default(uuid())
-  legalName          String
-  ownerId            String                 @unique
-  owner              User                   @relation("AgencyOwner", fields: [ownerId], references: [id])
-  contactEmail       String
-  contactPhone       String
-  address            String?
-  validationStatus   AgencyValidationStatus @default(pending)
-  rejectionReason    String?
-  validatedById      String?
-  validatedBy        User?                  @relation("AgencyValidatedBy", fields: [validatedById], references: [id])
-  validatedAt        DateTime?
-  commissionRate     Float                  @default(0)
-  bankAccountName    String?
-  bankAccountNumber  String?
-  bankName           String?
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
+  id                String                 @id @default(uuid())
+  legalName         String
+  ownerId           String                 @unique
+  owner             User                   @relation("AgencyOwner", fields: [ownerId], references: [id])
+  contactEmail      String
+  contactPhone      String
+  address           String?
+  validationStatus  AgencyValidationStatus @default(pending)
+  rejectionReason   String?
+  validatedById     String?
+  validatedBy       User?                  @relation("AgencyValidatedBy", fields: [validatedById], references: [id])
+  validatedAt       DateTime?
+  commissionRate    Float                  @default(0)
+  bankAccountName   String?
+  bankAccountNumber String?
+  bankName          String?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
 
   legalDocuments AgencyLegalDocument[]
   guides         User[]                @relation("AgencyGuides")
@@ -271,10 +277,10 @@ model Group {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members    GroupMember[]
-  itinerary  GroupItineraryStep[]
-  locations  GroupMemberLocation[]
-  bookings   Booking[]
+  members   GroupMember[]
+  itinerary GroupItineraryStep[]
+  locations GroupMemberLocation[]
+  bookings  Booking[]
 
   @@index([agencyId])
   @@map("groups")
@@ -335,10 +341,11 @@ model Booking {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
-  steps     BookingStep[]
-  payments  Payment[]
-  documents PilgrimDocument[]
-  review    Review?
+  steps         BookingStep[]
+  payments      Payment[]
+  documents     PilgrimDocument[]
+  review        Review?
+  conversations Conversation[]
 
   @@index([pilgrimId])
   @@index([packageId])
@@ -348,12 +355,12 @@ model Booking {
 }
 
 model BookingStep {
-  id        String             @id @default(uuid())
+  id        String            @id @default(uuid())
   bookingId String
-  booking   Booking            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking   Booking           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   key       DossierStepKey
-  status    DossierStepStatus  @default(pending)
-  updatedAt DateTime           @updatedAt
+  status    DossierStepStatus @default(pending)
+  updatedAt DateTime          @updatedAt
 
   @@unique([bookingId, key])
   @@map("booking_steps")
@@ -364,19 +371,19 @@ model BookingStep {
 // ---------------------------------------------------------------------------
 
 model Payment {
-  id                 String        @id @default(uuid())
-  bookingId          String
-  booking            Booking       @relation(fields: [bookingId], references: [id])
-  amount             Float
-  currency           String        @default("GNF")
-  installmentNumber  Int
-  method             PaymentMethod
-  status             PaymentStatus @default(pending)
-  providerReference  String        @unique
-  receiptRef         String?
-  confirmedAt        DateTime?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  id                String        @id @default(uuid())
+  bookingId         String
+  booking           Booking       @relation(fields: [bookingId], references: [id])
+  amount            Float
+  currency          String        @default("GNF")
+  installmentNumber Int
+  method            PaymentMethod
+  status            PaymentStatus @default(pending)
+  providerReference String        @unique
+  receiptRef        String?
+  confirmedAt       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([bookingId])
   @@index([status])
@@ -410,21 +417,21 @@ model PilgrimDocument {
 // ---------------------------------------------------------------------------
 
 model RiteSheet {
-  id             String                   @id @default(uuid())
+  id             String                  @id @default(uuid())
   key            String
   title          String
   pilgrimageType RiteSheetPilgrimageType
-  order          Int                      @default(0)
+  order          Int                     @default(0)
   content        String
   audioRef       String?
-  language       String                   @default("fr")
-  version        Int                      @default(1)
-  isValidated    Boolean                  @default(false)
+  language       String                  @default("fr")
+  version        Int                     @default(1)
+  isValidated    Boolean                 @default(false)
   validatedById  String?
-  validatedBy    User?                    @relation("RiteSheetValidatedBy", fields: [validatedById], references: [id])
+  validatedBy    User?                   @relation("RiteSheetValidatedBy", fields: [validatedById], references: [id])
   validatedAt    DateTime?
-  createdAt      DateTime                 @default(now())
-  updatedAt      DateTime                 @updatedAt
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
 
   @@index([key])
   @@map("rite_sheets")
@@ -483,4 +490,45 @@ model Review {
 
   @@index([agencyId])
   @@map("reviews")
+}
+
+// ---------------------------------------------------------------------------
+// Messagerie (ADR 0014) — deux fils strictement séparés et privés par
+// réservation (agence, guide), jamais fusionnés. Pas de modération admin sur
+// ce canal (contrairement au contenu religieux). Rétention : purge
+// applicative à écrire côté job/cron une fois `Booking.status` à `completed`
+// depuis un délai configurable — pas d'équivalent Postgres natif à un TTL,
+// même limitation que pour `Otp` ci-dessus.
+// ---------------------------------------------------------------------------
+
+model Conversation {
+  id        String           @id @default(uuid())
+  bookingId String
+  booking   Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  channel   MessagingChannel
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  messages Message[]
+
+  @@unique([bookingId, channel])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  content        String
+  // Horodatage client, pour l'ordre d'affichage cote mobile (meme pattern que
+  // RiteProgress.clientUpdatedAt) — le serveur reste seul juge de l'ordre de
+  // persistance via `createdAt`.
+  clientSentAt   DateTime
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@map("messages")
 }

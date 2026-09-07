@@ -14,3 +14,4 @@ export * from './group.types';
 export * from './notification.types';
 export * from './review.types';
 export * from './admin.types';
+export * from './messaging.types';
