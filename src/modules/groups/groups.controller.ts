@@ -13,12 +13,12 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import { GroupShape } from '../../types/group.types';
 import { AddItineraryStepDto } from './dto/add-itinerary-step.dto';
 import { AssignGuideDto } from './dto/assign-guide.dto';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { GroupsService } from './groups.service';
-import { GroupDocument } from './schemas/group.schema';
 
 @ApiBearerAuth()
 @ApiTags('groups')
@@ -31,25 +31,25 @@ export class GroupsController {
   create(
     @CurrentUser() user: JwtPayload,
     @Body() dto: CreateGroupDto,
-  ): Promise<GroupDocument> {
+  ): Promise<GroupShape> {
     return this.groupsService.create(user.sub, dto);
   }
 
   @Roles(Role.AGENCY)
   @Get('mine')
-  listMine(@CurrentUser() user: JwtPayload): Promise<GroupDocument[]> {
+  listMine(@CurrentUser() user: JwtPayload): Promise<GroupShape[]> {
     return this.groupsService.listByAgency(user.sub);
   }
 
   @Roles(Role.GUIDE)
   @Get('assigned')
-  listAssigned(@CurrentUser() user: JwtPayload): Promise<GroupDocument[]> {
+  listAssigned(@CurrentUser() user: JwtPayload): Promise<GroupShape[]> {
     return this.groupsService.listForGuide(user.sub);
   }
 
   @Roles(Role.PILGRIM)
   @Get('joined')
-  listJoined(@CurrentUser() user: JwtPayload): Promise<GroupDocument[]> {
+  listJoined(@CurrentUser() user: JwtPayload): Promise<GroupShape[]> {
     return this.groupsService.listForPilgrim(user.sub);
   }
 
@@ -57,7 +57,7 @@ export class GroupsController {
   getById(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
-  ): Promise<GroupDocument> {
+  ): Promise<GroupShape> {
     return this.groupsService.findAuthorizedOrFail(user.sub, user.role, id);
   }
 
@@ -67,7 +67,7 @@ export class GroupsController {
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() dto: AssignGuideDto,
-  ): Promise<GroupDocument> {
+  ): Promise<GroupShape> {
     return this.groupsService.assignGuide(user.sub, id, dto.guideUserId);
   }
 
@@ -77,7 +77,7 @@ export class GroupsController {
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() dto: AddItineraryStepDto,
-  ): Promise<GroupDocument> {
+  ): Promise<GroupShape> {
     return this.groupsService.addItineraryStep(user.sub, id, dto);
   }
 
@@ -87,7 +87,7 @@ export class GroupsController {
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() dto: UpdateLocationDto,
-  ): Promise<GroupDocument> {
+  ): Promise<GroupShape> {
     return this.groupsService.updateLocation(user.sub, id, dto);
   }
 

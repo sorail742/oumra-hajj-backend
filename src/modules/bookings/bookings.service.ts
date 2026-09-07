@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Role } from '../../common/enums/role.enum';
 import { AgenciesService } from '../agencies/agencies.service';
 import { GroupsService } from '../groups/groups.service';
@@ -140,7 +140,7 @@ export class BookingsService {
       groupId,
       booking.pilgrim.toString(),
     );
-    booking.group = new Types.ObjectId(groupId);
+    booking.group = groupId;
     return booking.save();
   }
 

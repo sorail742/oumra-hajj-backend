@@ -45,8 +45,17 @@ Ordre retenu (dépendances d'abord) :
    `hotelName`/`hotelCity`/`hotelDistanceToMosqueM` côté Postgres,
    reconstruit en objet imbriqué dans `PackageShape` (même pattern que
    `bankDetails` pour `agencies`).
-4. `groups` — **prochaine étape**
-5. `bookings`
+4. ✅ `groups` — module le plus complexe migré à ce jour : `itinerary` et
+   `locations` (sous-documents Mongoose) deviennent des tables
+   relationnelles dédiées (`GroupItineraryStep`, `GroupMemberLocation`),
+   `members` devient une table de jointure (`GroupMember`,
+   `@@unique([groupId, userId])`) plutôt qu'un tableau scalaire —
+   `updateLocation` en profite pour devenir un `upsert` atomique sur cette
+   contrainte unique au lieu d'un find-puis-remplace manuel. Le seul module
+   Mongoose qui référençait un `Group` par `ObjectId` (`bookings`, champ
+   `group`) ajusté en `String`. Couverture de tests élargie (le service
+   n'avait auparavant que les tests du bouton SOS).
+5. `bookings` — **prochaine étape**
 6. `payments`, `documents`
 7. `rites`, `notifications`, `reviews`, `admin`
 
