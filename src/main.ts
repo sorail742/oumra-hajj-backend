@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { printBanner } from './common/logger/banner';
 import { AppConfig } from './config/configuration';
 import { setupApp } from './setup-app';
 
@@ -33,6 +34,12 @@ async function bootstrap(): Promise<void> {
     `API démarrée sur http://localhost:${port}/${apiPrefix}/v1`,
     'Bootstrap',
   );
+
+  printBanner({
+    port: String(port),
+    environment: env,
+    version: process.env.npm_package_version ?? '0.0.1',
+  });
 }
 
 void bootstrap();
