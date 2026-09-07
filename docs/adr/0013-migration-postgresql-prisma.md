@@ -2,7 +2,7 @@
 
 - **Statut** : accepté
 - **Date** : 2026-09-03
-- **Décideurs** : Bonjour Keita (dev)
+- **Décideurs** : Sory KEITA (dev)
 - **Remplace** : [0004 — Base de données et ODM](0004-base-de-donnees-orm.md) (accepté)
 - **Impacte** : [0001 — Choix de la stack technique globale](0001-choix-stack-technique.md) (accepté), qui mentionnait MongoDB/Mongoose comme partie de la stack retenue
 
@@ -14,7 +14,7 @@ pèlerins, contenu religieux versionné). Le backend a depuis été implémenté
 intégralement sur cette base : 12 modules métier, schémas Mongoose, DTO
 validés, 46 tests unitaires + e2e, pipeline CI GitLab fonctionnel.
 
-Le donneur d'ordre (Bonjour Keita) demande de basculer vers **PostgreSQL**
+Le donneur d'ordre (Sory KEITA) demande de basculer vers **PostgreSQL**
 comme base de données et **Prisma** comme ORM. Cette décision inverse un
 choix déjà accepté ; conformément à `CLAUDE.md` ("Ne pas changer de base de
 données [...] sans ADR validé au préalable"), elle est documentée ici avant
@@ -76,7 +76,7 @@ sur l'implémentation existante.
 
 ## Validation
 
-Confirmé le 2026-09-03 par Bonjour Keita. Exécution retenue : migration
+Confirmé le 2026-09-03 par Sory KEITA. Exécution retenue : migration
 **module par module** (une branche par module migré, tests adaptés, Merge
 Request revue avant fusion dans `develop`) plutôt qu'une réécriture en un
 seul passage, pour garder le backend utilisable entre chaque étape — voir
