@@ -1,7 +1,6 @@
 import { ConflictException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
 import { Role } from '../../common/enums/role.enum';
 import { UsersService } from '../users/users.service';
 import { AgenciesService } from './agencies.service';
@@ -29,7 +28,7 @@ describe('AgenciesService — inscription et validation des agences', () => {
 
   describe('register', () => {
     it('refuse une inscription avec un email déjà utilisé', async () => {
-      usersService.findByEmail.mockResolvedValue({ _id: new Types.ObjectId() });
+      usersService.findByEmail.mockResolvedValue({ id: 'existing-user' });
 
       await expect(
         service.register({
@@ -46,9 +45,9 @@ describe('AgenciesService — inscription et validation des agences', () => {
 
     it("crée l'utilisateur agence (rôle AGENCY, mot de passe hashé) puis l'agence en statut PENDING", async () => {
       usersService.findByEmail.mockResolvedValue(null);
-      const ownerId = new Types.ObjectId();
-      usersService.create.mockResolvedValue({ _id: ownerId });
-      agencyModel.create.mockResolvedValue({ _id: new Types.ObjectId() });
+      const ownerId = 'owner-1';
+      usersService.create.mockResolvedValue({ id: ownerId });
+      agencyModel.create.mockResolvedValue({ _id: 'agency-1' });
 
       await service.register({
         legalName: 'Agence Test',
@@ -107,10 +106,7 @@ describe('AgenciesService — inscription et validation des agences', () => {
         exec: jest.fn().mockResolvedValue(agency),
       });
 
-      const result = await service.approve(
-        'agency-1',
-        new Types.ObjectId().toString(),
-      );
+      const result = await service.approve('agency-1', 'admin-1');
 
       expect(result.validationStatus).toBe(AgencyValidationStatus.APPROVED);
       expect(result.rejectionReason).toBeUndefined();
@@ -129,7 +125,7 @@ describe('AgenciesService — inscription et validation des agences', () => {
 
       const result = await service.reject(
         'agency-1',
-        new Types.ObjectId().toString(),
+        'admin-1',
         'documents illisibles',
       );
 

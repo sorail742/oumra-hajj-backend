@@ -1,32 +1,31 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { randomInt } from 'crypto';
-import { Model, Types } from 'mongoose';
+import { PrismaService } from '../../prisma/prisma.service';
 import { AppConfig } from '../../config/configuration';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
 import { UsersService } from '../users/users.service';
-import { UserDocument } from '../users/schemas/user.schema';
 import { AuthTokensDto } from './dto/auth-tokens.dto';
 import { OtpSender, OTP_SENDER } from './otp/otp-sender.interface';
-import { Otp, OtpDocument } from './schemas/otp.schema';
-import {
-  RefreshToken,
-  RefreshTokenDocument,
-} from './schemas/refresh-token.schema';
 
 const SALT_ROUNDS = 12;
 const MAX_OTP_ATTEMPTS = 5;
 
+interface Identity {
+  id: string;
+  role: Role;
+  phone?: string | null;
+  email?: string | null;
+  isActive: boolean;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(Otp.name) private readonly otpModel: Model<OtpDocument>,
-    @InjectModel(RefreshToken.name)
-    private readonly refreshTokenModel: Model<RefreshTokenDocument>,
+    private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<AppConfig, true>,
@@ -40,11 +39,13 @@ export class AuthService {
     const code = this.generateNumericCode(codeLength);
     const codeHash = await bcrypt.hash(code, SALT_ROUNDS);
 
-    await this.otpModel.deleteMany({ phone });
-    await this.otpModel.create({
-      phone,
-      codeHash,
-      expiresAt: new Date(Date.now() + ttlSeconds * 1000),
+    await this.prisma.otp.deleteMany({ where: { phone } });
+    await this.prisma.otp.create({
+      data: {
+        phone,
+        codeHash,
+        expiresAt: new Date(Date.now() + ttlSeconds * 1000),
+      },
     });
 
     await this.otpSender.send(phone, code);
@@ -56,10 +57,10 @@ export class AuthService {
     code: string,
     fullName?: string,
   ): Promise<AuthTokensDto> {
-    const otp = await this.otpModel
-      .findOne({ phone })
-      .sort({ createdAt: -1 })
-      .exec();
+    const otp = await this.prisma.otp.findFirst({
+      where: { phone },
+      orderBy: { createdAt: 'desc' },
+    });
     if (!otp || otp.expiresAt.getTime() < Date.now()) {
       throw new UnauthorizedException('Code invalide ou expiré');
     }
@@ -72,14 +73,14 @@ export class AuthService {
 
     const matches = await bcrypt.compare(code, otp.codeHash);
     if (!matches) {
-      await this.otpModel.updateOne(
-        { _id: otp._id },
-        { $inc: { attempts: 1 } },
-      );
+      await this.prisma.otp.update({
+        where: { id: otp.id },
+        data: { attempts: { increment: 1 } },
+      });
       throw new UnauthorizedException('Code invalide ou expiré');
     }
 
-    await this.otpModel.deleteOne({ _id: otp._id });
+    await this.prisma.otp.delete({ where: { id: otp.id } });
 
     let user = await this.usersService.findByPhone(phone);
     if (!user) {
@@ -115,7 +116,7 @@ export class AuthService {
       throw new UnauthorizedException('Compte suspendu');
     }
 
-    return this.issueTokens(user);
+    return this.issueTokens(user as unknown as Identity);
   }
 
   async refresh(rawRefreshToken: string): Promise<AuthTokensDto> {
@@ -142,32 +143,32 @@ export class AuthService {
       throw new UnauthorizedException('Compte suspendu');
     }
 
-    await this.refreshTokenModel.updateOne(
-      { _id: stored._id },
-      { revoked: true },
-    );
+    await this.prisma.refreshToken.update({
+      where: { id: stored.id },
+      data: { revoked: true },
+    });
     return this.issueTokens(user);
   }
 
   async logout(userId: string, rawRefreshToken: string): Promise<void> {
     const stored = await this.findMatchingRefreshToken(userId, rawRefreshToken);
     if (stored) {
-      await this.refreshTokenModel.updateOne(
-        { _id: stored._id },
-        { revoked: true },
-      );
+      await this.prisma.refreshToken.update({
+        where: { id: stored.id },
+        data: { revoked: true },
+      });
     }
   }
 
-  private async issueTokens(user: UserDocument): Promise<AuthTokensDto> {
+  private async issueTokens(user: Identity): Promise<AuthTokensDto> {
     const { accessSecret, accessExpiresIn, refreshSecret, refreshExpiresIn } =
       this.configService.get('jwt', { infer: true });
 
     const payload: JwtPayload = {
-      sub: (user._id as Types.ObjectId).toString(),
+      sub: user.id,
       role: user.role,
-      phone: user.phone,
-      email: user.email,
+      phone: user.phone ?? undefined,
+      email: user.email ?? undefined,
     };
 
     const accessToken = await this.jwtService.signAsync(payload, {
@@ -181,10 +182,12 @@ export class AuthService {
 
     const decoded = this.jwtService.decode<{ exp: number }>(refreshToken);
     const tokenHash = await bcrypt.hash(refreshToken, SALT_ROUNDS);
-    await this.refreshTokenModel.create({
-      user: user._id,
-      tokenHash,
-      expiresAt: new Date(decoded.exp * 1000),
+    await this.prisma.refreshToken.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiresAt: new Date(decoded.exp * 1000),
+      },
     });
 
     return { accessToken, refreshToken };
@@ -193,14 +196,14 @@ export class AuthService {
   private async findMatchingRefreshToken(
     userId: string,
     rawRefreshToken: string,
-  ): Promise<RefreshTokenDocument | null> {
-    const candidates = await this.refreshTokenModel
-      .find({
-        user: new Types.ObjectId(userId),
+  ): Promise<{ id: string; tokenHash: string } | null> {
+    const candidates = await this.prisma.refreshToken.findMany({
+      where: {
+        userId,
         revoked: false,
-        expiresAt: { $gt: new Date() },
-      })
-      .exec();
+        expiresAt: { gt: new Date() },
+      },
+    });
 
     for (const candidate of candidates) {
       // eslint-disable-next-line no-await-in-loop

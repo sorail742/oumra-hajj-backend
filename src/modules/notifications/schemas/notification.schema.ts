@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 export type NotificationDocument = Notification & Document;
 
@@ -16,8 +16,9 @@ export enum NotificationType {
 
 @Schema({ timestamps: true })
 export class Notification {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
-  recipient!: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma de users/auth (ADR 0013).
+  @Prop({ required: true, index: true })
+  recipient!: string;
 
   @Prop({ type: String, enum: NotificationType, required: true })
   type!: NotificationType;

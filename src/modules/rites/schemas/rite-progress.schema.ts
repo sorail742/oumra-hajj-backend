@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 export type RiteProgressDocument = RiteProgress & Document;
 
@@ -8,8 +8,9 @@ export type RiteProgressDocument = RiteProgress & Document;
 // (stratégie "local-first, sync-later" — voir ADR 0007).
 @Schema({ timestamps: true })
 export class RiteProgress {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
-  pilgrim!: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma de users/auth (ADR 0013).
+  @Prop({ required: true, index: true })
+  pilgrim!: string;
 
   @Prop({ required: true, index: true })
   riteKey!: string;

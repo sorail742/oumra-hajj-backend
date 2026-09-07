@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Role } from '../../common/enums/role.enum';
 import { UsersService } from '../users/users.service';
 import { RegisterAgencyDto } from './dto/register-agency.dto';
@@ -42,7 +42,7 @@ export class AgenciesService {
 
     return this.agencyModel.create({
       legalName: dto.legalName,
-      owner: owner._id,
+      owner: owner.id,
       contactEmail: dto.contactEmail,
       contactPhone: dto.contactPhone,
       address: dto.address,
@@ -51,9 +51,7 @@ export class AgenciesService {
   }
 
   async findByOwnerOrFail(ownerId: string): Promise<AgencyDocument> {
-    const agency = await this.agencyModel
-      .findOne({ owner: new Types.ObjectId(ownerId) })
-      .exec();
+    const agency = await this.agencyModel.findOne({ owner: ownerId }).exec();
     if (!agency) {
       throw new NotFoundException('Agence introuvable');
     }
@@ -85,7 +83,7 @@ export class AgenciesService {
   async approve(id: string, adminId: string): Promise<AgencyDocument> {
     const agency = await this.findByIdOrFail(id);
     agency.validationStatus = AgencyValidationStatus.APPROVED;
-    agency.validatedBy = new Types.ObjectId(adminId);
+    agency.validatedBy = adminId;
     agency.validatedAt = new Date();
     agency.rejectionReason = undefined;
     return agency.save();
@@ -98,7 +96,7 @@ export class AgenciesService {
   ): Promise<AgencyDocument> {
     const agency = await this.findByIdOrFail(id);
     agency.validationStatus = AgencyValidationStatus.REJECTED;
-    agency.validatedBy = new Types.ObjectId(adminId);
+    agency.validatedBy = adminId;
     agency.validatedAt = new Date();
     agency.rejectionReason = reason;
     return agency.save();

@@ -9,6 +9,7 @@
 // generate` n'a pas besoin d'une URL valide ; seules les commandes migrate/
 // studio en ont besoin, et échoueront alors normalement si DATABASE_URL
 // n'est pas configurée dans .env.
+import 'dotenv/config';
 import { defineConfig } from 'prisma/config';
 
 export default defineConfig({

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { SyncRiteProgressDto } from './dto/sync-rite-progress.dto';
 import {
   RiteProgress,
@@ -15,9 +15,7 @@ export class RiteProgressService {
   ) {}
 
   findMine(pilgrimId: string): Promise<RiteProgressDocument[]> {
-    return this.riteProgressModel
-      .find({ pilgrim: new Types.ObjectId(pilgrimId) })
-      .exec();
+    return this.riteProgressModel.find({ pilgrim: pilgrimId }).exec();
   }
 
   // Synchronisation par lot depuis l'app mobile — "local-first, sync-later"
@@ -33,7 +31,7 @@ export class RiteProgressService {
       // eslint-disable-next-line no-await-in-loop
       const existing = await this.riteProgressModel
         .findOne({
-          pilgrim: new Types.ObjectId(pilgrimId),
+          pilgrim: pilgrimId,
           riteKey: item.riteKey,
         })
         .exec();
@@ -49,7 +47,7 @@ export class RiteProgressService {
       // eslint-disable-next-line no-await-in-loop
       const updated = await this.riteProgressModel
         .findOneAndUpdate(
-          { pilgrim: new Types.ObjectId(pilgrimId), riteKey: item.riteKey },
+          { pilgrim: pilgrimId, riteKey: item.riteKey },
           {
             $set: {
               ...(item.completed !== undefined
@@ -79,7 +77,7 @@ export class RiteProgressService {
   ): Promise<RiteProgressDocument> {
     return this.riteProgressModel
       .findOneAndUpdate(
-        { pilgrim: new Types.ObjectId(pilgrimId), riteKey },
+        { pilgrim: pilgrimId, riteKey },
         { $set: { tawafCount: 0, saiCount: 0, clientUpdatedAt: new Date() } },
         { upsert: true, new: true },
       )

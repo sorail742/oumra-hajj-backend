@@ -24,8 +24,9 @@ export class PilgrimDocument {
   @Prop({ type: Types.ObjectId, ref: 'Booking', required: true, index: true })
   booking!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
-  pilgrim!: Types.ObjectId;
+  // Id Postgres (UUID) depuis la migration Prisma de users/auth (ADR 0013).
+  @Prop({ required: true, index: true })
+  pilgrim!: string;
 
   @Prop({ type: String, enum: PilgrimDocumentType, required: true })
   type!: PilgrimDocumentType;

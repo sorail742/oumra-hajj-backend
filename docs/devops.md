@@ -17,9 +17,15 @@ Déclenché sur chaque Merge Request et sur les push vers `develop`/`main`.
 
 Image `node:20`+ (pas `-alpine`) : nécessaire pour les modules natifs
 (`bcrypt`) et le binaire `mongod` téléchargé par `mongodb-memory-server`
-pendant la période de transition Mongoose → Prisma (voir ADR 0013 —
-une fois tous les modules migrés, `mongodb-memory-server` disparaît et un
-service `postgres:` sera ajouté au pipeline à la place).
+pendant la période de transition Mongoose → Prisma (voir ADR 0013).
+
+Le job `e2e-tests` a un service `postgres:` depuis la migration du premier
+module (`users`/`auth`) : dès qu'un module tourne sur Prisma, ses tests e2e
+ont besoin d'un Postgres atteignable, pas seulement une fois **tous** les
+modules migrés. `mongodb-memory-server` reste utilisé en parallèle pour les
+modules pas encore migrés — les deux coexistent dans le pipeline pendant
+toute la transition. Seul `mongodb-memory-server` disparaîtra à la fin
+(dernier module migré), le service `postgres:` restant.
 
 ## Branches protégées
 
@@ -44,8 +50,9 @@ seules les Merge Requests fusionnées par un Maintainer la modifient — voir
   `SONAR_HOST_URL`/`SONAR_TOKEN` dans les paramètres CI/CD du projet.
 - Confirmer l'ADR 0012 (`proposé` → `accepté`) une fois ces deux points
   tranchés.
-- Ajouter un service `postgres:` au pipeline une fois la migration Prisma
-  terminée sur tous les modules.
+- Retirer `mongodb-memory-server` et le service Mongo (s'il est ajouté) du
+  pipeline une fois la migration Prisma terminée sur tous les modules — le
+  service `postgres:` reste, lui, depuis la migration du premier module.
 
 ## Variables CI/CD
 

@@ -4,8 +4,8 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import { UserShape } from '../../types/user.types';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { UserDocument } from './schemas/user.schema';
 import { UsersService } from './users.service';
 
 @ApiBearerAuth()
@@ -15,7 +15,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
-  getProfile(@CurrentUser() user: JwtPayload): Promise<UserDocument> {
+  getProfile(@CurrentUser() user: JwtPayload): Promise<UserShape> {
     return this.usersService.findByIdOrFail(user.sub);
   }
 
@@ -23,7 +23,7 @@ export class UsersController {
   updateProfile(
     @CurrentUser() user: JwtPayload,
     @Body() dto: UpdateProfileDto,
-  ): Promise<UserDocument> {
+  ): Promise<UserShape> {
     return this.usersService.updateProfile(user.sub, dto);
   }
 
@@ -34,19 +34,19 @@ export class UsersController {
   listByRole(
     @Query('role') role: Role,
     @Query('agencyId') agencyId?: string,
-  ): Promise<UserDocument[]> {
+  ): Promise<UserShape[]> {
     return this.usersService.findByRole(role, agencyId);
   }
 
   @Roles(Role.ADMIN)
   @Patch(':id/suspend')
-  suspend(@Param('id') id: string): Promise<UserDocument> {
+  suspend(@Param('id') id: string): Promise<UserShape> {
     return this.usersService.setActive(id, false);
   }
 
   @Roles(Role.ADMIN)
   @Patch(':id/reactivate')
-  reactivate(@Param('id') id: string): Promise<UserDocument> {
+  reactivate(@Param('id') id: string): Promise<UserShape> {
     return this.usersService.setActive(id, true);
   }
 }

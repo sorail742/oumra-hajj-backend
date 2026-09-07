@@ -42,7 +42,7 @@ export class DocumentsService {
 
     return this.documentModel.create({
       booking: booking._id,
-      pilgrim: new Types.ObjectId(pilgrimId),
+      pilgrim: pilgrimId,
       type: dto.type,
       storageRef: dto.storageRef,
       status: PilgrimDocumentStatus.PENDING,
@@ -51,9 +51,7 @@ export class DocumentsService {
 
   async findMine(pilgrimId: string): Promise<PilgrimDocumentDocument[]> {
     this.accessLogger.log(`Lecture (propriétaire) — pèlerin=${pilgrimId}`);
-    return this.documentModel
-      .find({ pilgrim: new Types.ObjectId(pilgrimId) })
-      .exec();
+    return this.documentModel.find({ pilgrim: pilgrimId }).exec();
   }
 
   async findByBooking(

@@ -1,0 +1,20 @@
+# Postgres local pour le développement (ADR 0013) — usage :
+#   docker compose up -d postgres
+# Les identifiants matchent la valeur par défaut de DATABASE_URL dans
+# .env.example. Ne sert pas les tests e2e (voir test/utils/postgres-test-db.ts,
+# qui démarre sa propre instance éphémère par fichier de test).
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: oumra_hadj
+      POSTGRES_PASSWORD: oumra_hadj_dev
+      POSTGRES_DB: oumra_hadj_dev
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

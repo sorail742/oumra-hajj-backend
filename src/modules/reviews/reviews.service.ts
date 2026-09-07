@@ -42,7 +42,7 @@ export class ReviewsService {
     }
 
     return this.reviewModel.create({
-      pilgrim: new Types.ObjectId(pilgrimId),
+      pilgrim: pilgrimId,
       agency: booking.agency,
       booking: booking._id,
       rating: dto.rating,
@@ -58,8 +58,6 @@ export class ReviewsService {
   }
 
   findMine(pilgrimId: string): Promise<ReviewDocument[]> {
-    return this.reviewModel
-      .find({ pilgrim: new Types.ObjectId(pilgrimId) })
-      .exec();
+    return this.reviewModel.find({ pilgrim: pilgrimId }).exec();
   }
 }

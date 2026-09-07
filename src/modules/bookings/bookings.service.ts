@@ -37,7 +37,7 @@ export class BookingsService {
     await this.packagesService.reserveSeat(dto.packageId);
 
     return this.bookingModel.create({
-      pilgrim: new Types.ObjectId(pilgrimId),
+      pilgrim: pilgrimId,
       package: pkg._id,
       agency: pkg.agency,
     });
@@ -56,9 +56,7 @@ export class BookingsService {
   }
 
   findMine(pilgrimId: string): Promise<BookingDocument[]> {
-    return this.bookingModel
-      .find({ pilgrim: new Types.ObjectId(pilgrimId) })
-      .exec();
+    return this.bookingModel.find({ pilgrim: pilgrimId }).exec();
   }
 
   async findByAgency(ownerId: string): Promise<BookingDocument[]> {
