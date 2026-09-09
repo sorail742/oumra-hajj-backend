@@ -1,7 +1,8 @@
 # 0012 — CI/CD et environnements
 
-- **Statut** : proposé
+- **Statut** : accepté
 - **Date** : 2026-09-02
+- **Décideurs** : Sory KEITA
 
 ## Contexte
 
@@ -42,10 +43,23 @@ hébergeur. Le projet veut aussi une analyse de qualité de code continue.
 
 ## Conséquences
 
-- Nécessite de choisir un hébergeur (VPS, cloud) et d'écrire les jobs de
-  déploiement GitLab CI correspondants — décision à confirmer avant la phase
-  6 ; cet ADR passera alors de `proposé` à `accepté` avec les détails
-  d'hébergement précisés.
-- Nécessite de provisionner un serveur SonarQube (ou SonarCloud) et de
-  configurer `SONAR_HOST_URL`/`SONAR_TOKEN` dans les paramètres CI/CD du
-  projet GitLab pour que l'analyse qualité soit effective.
+- Nécessite d'écrire les jobs de déploiement GitLab CI vers Render (voir
+  Validation ci-dessous) pour staging et production.
+- Nécessite de créer le projet SonarQube Cloud et de configurer
+  `SONAR_HOST_URL`/`SONAR_TOKEN` dans les paramètres CI/CD du projet GitLab
+  pour que l'analyse qualité devienne bloquante (`allow_failure: true` à
+  retirer une fois fait).
+
+## Validation
+
+Confirmé le 2026-09-09 par Sory KEITA :
+
+- **Hébergeur** : Render — PaaS managé, prix fixes, Postgres managé inclus,
+  région Frankfurt. Choisi pour minimiser la charge opérationnelle pendant la
+  phase pilote (phase 6) plutôt que d'opérer soi-même l'infrastructure.
+- **SonarQube** : SonarQube Cloud (ex-SonarCloud) — le volume de code actuel
+  reste sous le seuil gratuit (50k lignes), évite de provisionner un serveur
+  supplémentaire.
+- Le job `postgres:` déjà présent dans `.gitlab-ci.yml` reste réservé aux
+  tests e2e (éphémère) — Render fournira l'instance Postgres persistante de
+  staging/production séparément, ce n'est pas la même base.

@@ -109,19 +109,24 @@ Request revue.
 
 ## Ouvert — à trancher avant la suite
 
-Voir issues #15 à #19 (ouvertes) pour le détail :
-
-- **#15** Compléter la couverture de tests (`users`, `notifications`, `reviews`)
-- **#16** Confirmer l'ADR 0012 (CI/CD), provisionner SonarQube, choisir
-  l'hébergeur de production
+- **#15** ✅ Couverture de tests (`users`, `notifications`, `reviews`) complétée.
+- **#16** ✅ Tranché — [ADR 0012](adr/0012-ci-cd-environnements.md) `accepté`
+  (Render + SonarQube Cloud). Reste à faire, hors décision : créer les comptes
+  Render/SonarQube Cloud, écrire les jobs de déploiement GitLab CI, configurer
+  `SONAR_HOST_URL`/`SONAR_TOKEN`.
 - **#17** Rédiger et faire valider les vraies fiches de rites (contenu
-  religieux — aucune fiche réelle en base actuellement)
-- **#18** Choisir les fournisseurs SMS/OTP, paiement Mobile Money et FCM
-  (ADR 0006 non tranché)
-- **#19** Implémenter la messagerie pèlerin ↔ agence/guide — module
-  `messaging`, deux fils privés (agence / guide), Socket.IO + persistance
-  serveur ([ADR 0014](adr/0014-messagerie-agence-guide.md), `accepté`).
-  Prêt à démarrer.
+  religieux — aucune fiche réelle en base actuellement, brouillon non commité
+  dans `docs/brouillon-fiches-rites.md`). **Seul point encore réellement
+  ouvert** — nécessite une validation par une personne qualifiée (voir
+  `CLAUDE.md`, section "Contenu religieux"), pas seulement une décision de
+  l'utilisateur.
+- **#18** ✅ Tranché — [ADR 0006](adr/0006-gestion-paiements.md) `accepté`
+  (CinetPay pour Mobile Money, Africa's Talking pour SMS/OTP et secours, FCM
+  déjà accepté sans changement). Reste à faire, hors décision : devis réel
+  Africa's Talking, comptes marchands/API keys, branchement des clés réelles
+  en variables d'environnement.
+- **#19** ✅ Messagerie pèlerin ↔ agence/guide implémentée (module `messaging`,
+  [ADR 0014](adr/0014-messagerie-agence-guide.md)).
 
 ## Prochaines phases (cahier des charges §10, hors backend)
 
@@ -131,11 +136,11 @@ uniquement, voir `README.md`), utile pour situer où s'arrête ce dépôt :
 | Phase | Contenu | Statut |
 |---|---|---|
 | 1 — Cadrage & UX | Personas, maquettes | Externe à ce dépôt |
-| 2 — Backend & données | Ce dépôt | En cours (voir issues #15 à #19) |
-| 3 — App mobile pèlerin | Flutter, dépôt séparé | Démarré côté maquettes (Stitch) — dépend du contrat API (`openapi.json`, `api-versioning.md`) et de l'ADR 0014 pour l'écran messagerie |
+| 2 — Backend & données | Ce dépôt | En cours — seul #17 (contenu religieux) reste ouvert |
+| 3 — App mobile pèlerin | Flutter, dépôt séparé | Démarré (Stitch + implémentation) — API/messagerie disponibles |
 | 4 — Espace agence & admin | Back-office web React | Non démarré |
-| 5 — Intégrations & tests | Mobile Money, push, géoloc | Bloqué par issue #18 |
-| 6 — Pilote & déploiement | Agence pilote, prod | Bloqué par issue #16 |
+| 5 — Intégrations & tests | Mobile Money (CinetPay), SMS (Africa's Talking), push (FCM) | Fournisseurs tranchés (ADR 0006) — mise en œuvre (comptes, clés) à faire |
+| 6 — Pilote & déploiement | Agence pilote, prod | Hébergeur tranché (ADR 0012, Render) — mise en œuvre (déploiement CI) à faire |
 
 ## Politique de dépréciation API
 

@@ -1,7 +1,8 @@
 # 0006 — Gestion des paiements (Mobile Money & carte)
 
-- **Statut** : proposé
+- **Statut** : accepté
 - **Date** : 2026-09-02
+- **Décideurs** : Sory KEITA
 
 ## Contexte
 
@@ -25,8 +26,24 @@ paiements doivent être fiables (traçabilité, réconciliation agence) et sécu
 
 ## Conséquences
 
-- Nécessite un compte marchand / API key par provider Mobile Money, à obtenir
-  avant la phase 5 du plan de développement (intégrations & tests).
-- Le choix précis du ou des agrégateurs Mobile Money reste à confirmer — ce
-  point devra être re-statué (ADR passant de "proposé" à "accepté") une fois le
-  ou les partenaires choisis.
+- Nécessite un compte marchand / API key par provider, à obtenir avant la
+  phase 5 du plan de développement (intégrations & tests).
+
+## Validation
+
+Confirmé le 2026-09-09 par Sory KEITA :
+
+- **Mobile Money** : CinetPay (agrégateur) — une seule intégration pour
+  Orange Money, MTN et carte, plutôt que deux intégrations directes séparées.
+  Présence confirmée en Guinée. Commission d'agrégateur acceptée en échange
+  d'une seule API à maintenir.
+- **SMS/OTP + SMS de secours** (mutualisés, voir [ADR 0009](0009-notifications.md)) :
+  Africa's Talking — acteur focalisé Afrique, Guinée listée parmi les marchés
+  couverts. Tarif exact non confirmé par la recherche initiale
+  (`docs/fournisseurs-paiement-notifications.md`) : à obtenir par devis direct
+  avant intégration, sans remettre en cause le choix de fournisseur.
+- Notifications push : FCM déjà accepté sans changement (ADR 0009).
+- Implémentation à suivre comme étape à part entière de `docs/roadmap.md`
+  (module `payments` déjà écrit pour ce modèle quel que soit le fournisseur —
+  reste à brancher les clés réelles via variables d'environnement, jamais
+  commitées, voir `docs/secrets-management.md`).
