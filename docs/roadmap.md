@@ -114,12 +114,14 @@ Request revue.
   (Render + SonarQube Cloud). Reste à faire, hors décision : créer les comptes
   Render/SonarQube Cloud, écrire les jobs de déploiement GitLab CI, configurer
   `SONAR_HOST_URL`/`SONAR_TOKEN`.
-- **#17** Rédiger et faire valider les vraies fiches de rites (contenu
-  religieux — aucune fiche réelle en base actuellement, brouillon non commité
-  dans `docs/brouillon-fiches-rites.md`). **Seul point encore réellement
-  ouvert** — nécessite une validation par une personne qualifiée (voir
-  `CLAUDE.md`, section "Contenu religieux"), pas seulement une décision de
-  l'utilisateur.
+- **#17** 🟡 Brouillon des 13 fiches de rites committé
+  (`docs/brouillon-fiches-rites.md`, badge "à valider" sur chaque fiche) pour
+  débloquer le développement de l'écran mobile correspondant. **Reste
+  réellement ouvert** : la validation par une personne qualifiée (voir
+  `CLAUDE.md`, section "Contenu religieux") n'a pas eu lieu —
+  `RiteSheet.isValidated` doit rester `false` pour toutes ces fiches tant que
+  cette validation n'est pas faite, et aucune ne doit être intégrée en base
+  ni présentée comme finale avant la mise en production.
 - **#18** ✅ Tranché — [ADR 0006](adr/0006-gestion-paiements.md) `accepté`
   (CinetPay pour Mobile Money, Africa's Talking pour SMS/OTP et secours, FCM
   déjà accepté sans changement). Reste à faire, hors décision : devis réel
