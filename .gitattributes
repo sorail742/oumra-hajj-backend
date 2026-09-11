@@ -1,0 +1,5 @@
+# Force LF partout, quel que soit le core.autocrlf de chaque poste de
+# travail (Windows en particulier). Sans ça, un checkout convertit les
+# fichiers en CRLF, que Prettier/ESLint rejette ensuite systematiquement —
+# source de faux positifs "Delete `\r`" repetes sur ce depot.
+* text=auto eol=lf
