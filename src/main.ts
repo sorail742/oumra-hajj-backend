@@ -22,7 +22,12 @@ async function bootstrap(): Promise<void> {
   }
 
   const port = configService.get('port', { infer: true });
-  await app.listen(port);
+  // Écoute explicitement sur toutes les interfaces IPv4 : `app.listen(port)`
+  // seul se liait ici uniquement en IPv6 (`::`), ce qui rendait le serveur
+  // injoignable via `127.0.0.1`/adb reverse (IPv4) depuis un appareil
+  // mobile — un autre service local pouvait alors occuper le port 3000 en
+  // IPv4 sans conflit apparent, et le mobile lui parlait par erreur.
+  await app.listen(port, '0.0.0.0');
   Logger.log(
     `API démarrée sur http://localhost:${port}/${apiPrefix}/v1`,
     'Bootstrap',

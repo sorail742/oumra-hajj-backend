@@ -18,8 +18,10 @@ npx prisma migrate deploy       # applique le schéma Postgres
 npm run start:dev
 ```
 
-L'API démarre sur `http://localhost:3000/api/v1`, la documentation Swagger
-est disponible sur `http://localhost:3000/api/docs` (hors production).
+L'API démarre sur `http://localhost:${PORT}/api/v1` (`PORT` dans `.env`,
+`3333` par défaut dans `.env.example` — `3000` est souvent déjà pris par un
+autre projet local), la documentation Swagger est disponible sur
+`http://localhost:${PORT}/api/docs` (hors production).
 
 ## Commandes utiles
 
