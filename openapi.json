@@ -1275,7 +1275,7 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/UploadDocumentDto"
               }
@@ -2266,15 +2266,11 @@
               "flight_ticket",
               "vaccination_certificate"
             ]
-          },
-          "storageRef": {
-            "type": "string"
           }
         },
         "required": [
           "bookingId",
-          "type",
-          "storageRef"
+          "type"
         ]
       },
       "RejectDocumentDto": {
