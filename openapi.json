@@ -1342,6 +1342,34 @@
         ]
       }
     },
+    "/api/v1/documents/{id}/access-url": {
+      "get": {
+        "operationId": "DocumentsController_getAccessUrl",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/documents/{id}/validate": {
       "patch": {
         "operationId": "DocumentsController_validate",
