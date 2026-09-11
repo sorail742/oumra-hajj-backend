@@ -21,6 +21,12 @@ Statuts : `proposé` · `accepté` · `déprécié` · `remplacé`
 | [0012](0012-ci-cd-environnements.md) | CI/CD et environnements | accepté |
 | [0013](0013-migration-postgresql-prisma.md) | Migration de MongoDB/Mongoose vers PostgreSQL/Prisma (remplace 0004) | accepté |
 | [0014](0014-messagerie-agence-guide.md) | Messagerie pèlerin ↔ agence/guide | accepté |
+| [0015](0015-role-gouvernemental-partage-donnees.md) | Rôle gouvernemental et partage de données publiques | proposé |
+| [0016](0016-api-publique-partenaires.md) | API publique pour partenaires (widget de réservation) | proposé |
+| [0017](0017-kyc-renforce-agences.md) | Vérification d'identité renforcée (KYC) des agences | proposé |
+| [0018](0018-canal-sms-ussd.md) | Canal SMS/USSD (mode dégradé sans smartphone) | proposé |
+| [0019](0019-assurance-voyage-integree.md) | Assurance voyage intégrée au tunnel de réservation | proposé |
+| [0020](0020-microfinance-partenaire.md) | Microfinance / crédit pèlerin partenaire | proposé |
 
 Les ADR marqués `proposé` doivent être confirmés (passage à `accepté`) avant le
 début de la phase du plan de développement à laquelle ils se rattachent.
