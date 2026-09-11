@@ -1,5 +1,6 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -17,6 +18,11 @@ import { PilgrimDocumentShape } from '../../types/document.types';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { UploadDocumentDto } from './dto/upload-document.dto';
+import {
+  StorageProvider,
+  StoredFile,
+  STORAGE_PROVIDER,
+} from './storage/storage-provider.interface';
 
 const REQUIRED_TYPES = Object.values(PilgrimDocumentType);
 
@@ -41,23 +47,31 @@ export class DocumentsService {
     private readonly prisma: PrismaService,
     private readonly bookingsService: BookingsService,
     private readonly agenciesService: AgenciesService,
+    @Inject(STORAGE_PROVIDER) private readonly storageProvider: StorageProvider,
   ) {}
 
   async upload(
     pilgrimId: string,
     dto: UploadDocumentDto,
+    file: StoredFile,
   ): Promise<PilgrimDocumentShape> {
     const booking = await this.bookingsService.findByIdOrFail(dto.bookingId);
     if (booking.pilgrimId !== pilgrimId) {
       throw new ForbiddenException('Cette réservation ne vous appartient pas');
     }
 
+    const { storageRef } = await this.storageProvider.store(
+      pilgrimId,
+      dto.type,
+      file,
+    );
+
     const doc = await this.prisma.pilgrimDocument.create({
       data: {
         bookingId: booking.id,
         pilgrimId,
         type: dto.type as unknown as PrismaPilgrimDocumentType,
-        storageRef: dto.storageRef,
+        storageRef,
         status:
           PilgrimDocumentStatus.PENDING as unknown as PrismaPilgrimDocumentStatus,
       },

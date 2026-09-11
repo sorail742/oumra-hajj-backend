@@ -25,3 +25,7 @@ npm-debug.log*
 
 # caches d'outils locaux (binaires téléchargés, etc.)
 node_modules/.cache
+
+# stockage local de dev (LocalDiskStorageProvider, voir ADR 0008) — jamais de
+# documents pèlerins réels dans le dépôt
+/uploads
