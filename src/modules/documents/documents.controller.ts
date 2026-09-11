@@ -21,6 +21,7 @@ import { PilgrimDocumentShape } from '../../types/document.types';
 import { DocumentsService } from './documents.service';
 import { RejectDocumentDto } from './dto/reject-document.dto';
 import { UploadDocumentDto } from './dto/upload-document.dto';
+import { AccessUrl } from './storage/storage-provider.interface';
 
 const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024; // 10 Mo — passeport/visa/billet scannés.
 
@@ -67,6 +68,16 @@ export class DocumentsController {
   ): Promise<PilgrimDocumentShape[]> {
     const role = user.role === Role.AGENCY ? 'agency' : 'pilgrim';
     return this.documentsService.findByBooking(user.sub, role, bookingId);
+  }
+
+  @Roles(Role.PILGRIM, Role.AGENCY)
+  @Get(':id/access-url')
+  getAccessUrl(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<AccessUrl> {
+    const role = user.role === Role.AGENCY ? 'agency' : 'pilgrim';
+    return this.documentsService.getAccessUrl(user.sub, role, id);
   }
 
   @Roles(Role.AGENCY)

@@ -10,26 +10,32 @@ import { STORAGE_PROVIDER } from './storage/storage-provider.interface';
 describe("DocumentsService — contrôle d'accès aux documents sensibles", () => {
   let service: DocumentsService;
   let prisma: {
-    pilgrimDocument: { findMany: jest.Mock; create: jest.Mock };
+    pilgrimDocument: {
+      findMany: jest.Mock;
+      create: jest.Mock;
+      findUnique: jest.Mock;
+    };
   };
   let bookingsService: { findByIdOrFail: jest.Mock };
   let agenciesService: { findByOwnerOrFail: jest.Mock };
-  let storageProvider: { store: jest.Mock };
+  let storageProvider: { store: jest.Mock; getAccessUrl: jest.Mock };
 
   const otherAgencyId = 'other-agency';
   const ownAgencyId = 'own-agency';
   const bookingId = 'booking-1';
+  const documentId = 'doc-1';
 
   beforeEach(async () => {
     prisma = {
       pilgrimDocument: {
         findMany: jest.fn().mockResolvedValue([]),
         create: jest.fn(),
+        findUnique: jest.fn(),
       },
     };
     bookingsService = { findByIdOrFail: jest.fn() };
     agenciesService = { findByOwnerOrFail: jest.fn() };
-    storageProvider = { store: jest.fn() };
+    storageProvider = { store: jest.fn(), getAccessUrl: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -148,5 +154,94 @@ describe("DocumentsService — contrôle d'accès aux documents sensibles", () =
     expect(result.storageRef).toBe(
       'local://documents/pilgrim-1-passport-abc.jpg',
     );
+  });
+
+  describe('getAccessUrl', () => {
+    const storedDoc = {
+      id: documentId,
+      bookingId,
+      pilgrimId: 'pilgrim-1',
+      type: PilgrimDocumentType.PASSPORT,
+      storageRef: 'local://documents/pilgrim-1-passport-abc.jpg',
+      status: 'pending',
+      rejectionReason: null,
+    };
+
+    it("refuse à un pèlerin l'accès à un document qui ne lui appartient pas", async () => {
+      prisma.pilgrimDocument.findUnique.mockResolvedValue(storedDoc);
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId: 'pilgrim-1',
+        agencyId: ownAgencyId,
+      });
+
+      await expect(
+        service.getAccessUrl('pilgrim-2', 'pilgrim', documentId),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(storageProvider.getAccessUrl).not.toHaveBeenCalled();
+    });
+
+    it("refuse à une agence l'accès à un document d'une autre agence", async () => {
+      prisma.pilgrimDocument.findUnique.mockResolvedValue(storedDoc);
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId: 'pilgrim-1',
+        agencyId: otherAgencyId,
+      });
+      agenciesService.findByOwnerOrFail.mockResolvedValue({ id: ownAgencyId });
+
+      await expect(
+        service.getAccessUrl('agency-owner-1', 'agency', documentId),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(storageProvider.getAccessUrl).not.toHaveBeenCalled();
+    });
+
+    it('délègue au StorageProvider pour le pèlerin propriétaire', async () => {
+      prisma.pilgrimDocument.findUnique.mockResolvedValue(storedDoc);
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId: 'pilgrim-1',
+        agencyId: ownAgencyId,
+      });
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+      storageProvider.getAccessUrl.mockResolvedValue({
+        url: '/api/v1/documents/files/token',
+        expiresAt,
+      });
+
+      const result = await service.getAccessUrl(
+        'pilgrim-1',
+        'pilgrim',
+        documentId,
+      );
+
+      expect(storageProvider.getAccessUrl).toHaveBeenCalledWith(
+        storedDoc.storageRef,
+      );
+      expect(result).toEqual({
+        url: '/api/v1/documents/files/token',
+        expiresAt,
+      });
+    });
+
+    it("délègue au StorageProvider pour l'agence propriétaire de la réservation", async () => {
+      prisma.pilgrimDocument.findUnique.mockResolvedValue(storedDoc);
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId: 'pilgrim-1',
+        agencyId: ownAgencyId,
+      });
+      agenciesService.findByOwnerOrFail.mockResolvedValue({ id: ownAgencyId });
+      storageProvider.getAccessUrl.mockResolvedValue({
+        url: '/api/v1/documents/files/token',
+        expiresAt: new Date(),
+      });
+
+      await service.getAccessUrl('agency-owner-1', 'agency', documentId);
+
+      expect(storageProvider.getAccessUrl).toHaveBeenCalledWith(
+        storedDoc.storageRef,
+      );
+    });
   });
 });
