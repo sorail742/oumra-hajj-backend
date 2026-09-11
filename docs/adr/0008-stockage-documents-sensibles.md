@@ -29,3 +29,15 @@ confiance des utilisateurs et des agences.
   avant la phase 3 (app mobile pèlerin).
 - Impose une revue de sécurité spécifique avant mise en production (accès,
   logs, purge des documents en cas de suppression de compte).
+
+## Note (2026-09-10)
+
+Provider de stockage objet confirmé par Sory KEITA : **Firebase Storage**,
+parmi les options évoquées dans la décision initiale ci-dessus. En attendant
+l'intégration réelle (projet Firebase et identifiants de service à créer),
+`LocalDiskStorageProvider` (`src/modules/documents/storage/`) sert
+d'implémentation de développement — jamais utilisable en production (aucun
+chiffrement au repos, aucune haute disponibilité), voir son commentaire de
+code. Le chiffrement au repos et les URLs signées à durée de vie courte,
+déjà exigés ci-dessus, restent à vérifier explicitement une fois
+l'intégration Firebase Storage réelle branchée.
