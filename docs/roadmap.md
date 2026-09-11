@@ -149,3 +149,11 @@ uniquement, voir `README.md`), utile pour situer où s'arrête ce dépôt :
 Non encore formalisée (voir point ouvert dans `api-versioning.md` /
 [ADR 0005](adr/0005-versionnement-api.md)) — à définir avant que l'app mobile
 Flutter (Phase 3) ne commence à dépendre de l'API en production.
+
+## Backlog "Cent Fonctionnalités"
+
+Brainstorm de 100 idées (pèlerins, agences, gouvernement, transverses), non
+priorisées — voir `docs/backlog-100-fonctionnalites.md` pour le détail et le
+fichier CSV prêt à importer comme issues GitLab. Six idées structurantes ont
+chacune un ADR `proposé` associé (0015 à 0020) à faire trancher avant toute
+implémentation ; les 94 autres n'ont pas de préalable architectural.

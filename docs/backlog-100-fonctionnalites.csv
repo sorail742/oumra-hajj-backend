@@ -1,0 +1,1166 @@
+title,description
+"[Pèlerins] #1 — Plan d'épargne progressif","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #1**
+
+Objectif = prix du forfait, épargne automatique par prélèvement Mobile Money, rappels doux plutôt que des relances agressives.
+
+**ADR concerné :** ADR 0006
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Pèlerins] #2 — Simulateur de budget total","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #2**
+
+Forfait + argent de poche + cadeaux + assurance — le prix affiché n'est jamais le coût réel du voyage.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Pèlerins] #3 — Checklist de préparation","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #3**
+
+Documents, vaccins, bagages — rappels échelonnés sur plusieurs mois, pas une liste unique écrasante.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Pèlerins] #4 — Micro-cours ""Préparer sa Oumra/Hadj""","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #4**
+
+Vidéos courtes téléchargeables à l'avance, consultables hors-ligne pendant le voyage.
+
+**ADR concerné :** ADR 0007
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Fiabilité : reste utilisable hors-ligne si l'usage le justifie (ADR 0007, pattern local-first puis sync par lot)"
+"[Pèlerins] #5 — Communauté pré-départ","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #5**
+
+Forum privé du groupe/agence pour se rencontrer avant de partir — moins d'anxiété à l'arrivée.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Pèlerins] #6 — Quiz des rites","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #6**
+
+Tester ses connaissances avant de partir, en s'amusant un peu — complément au guide des rites.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Conformité : badge ""à valider par une personne qualifiée"" tant que non validé (CLAUDE.md, section Contenu religieux)
+- [ ] Fiabilité : jamais présenté comme définitif sans validation explicite, même en brouillon avancé"
+"[Pèlerins] #7 — Guide santé du voyageur","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #7**
+
+Vaccins obligatoires/recommandés, gestion de la chaleur, hydratation, trousse à pharmacie type.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Pèlerins] #8 — Convertisseur + budget quotidien","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #8**
+
+Combien dépenser par jour sur place selon le budget total restant, en riyals et en devise locale.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Pèlerins] #9 — Assurance voyage intégrée","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #9**
+
+Santé, bagages, annulation — proposée directement dans le tunnel de réservation, pas en dehors de l'app.
+
+**ADR concerné :** ADR 0019 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Pèlerins] #10 — Recommandation de forfait personnalisée","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #10**
+
+Selon budget, dates possibles, composition familiale — plutôt qu'une liste brute à filtrer soi-même.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Pèlerins] #11 — Traducteur vocal hors-ligne","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #11**
+
+Arabe ↔ français/langues locales pour les besoins essentiels (pharmacie, transport, urgence).
+
+**ADR concerné :** ADR 0007
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Fiabilité : reste utilisable hors-ligne si l'usage le justifie (ADR 0007, pattern local-first puis sync par lot)"
+"[Pèlerins] #12 — Carte hors-ligne La Mecque/Médine","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #12**
+
+Mosquée, hôtel, pharmacies, toilettes, postes de secours — téléchargée avant le départ.
+
+**ADR concerné :** ADR 0007
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Fiabilité : reste utilisable hors-ligne si l'usage le justifie (ADR 0007, pattern local-first puis sync par lot)"
+"[Pèlerins] #13 — Alertes de zones de forte affluence","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #13**
+
+Éviter les mouvements de foule dangereux aux heures de pointe, si des données de fréquentation existent.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Pèlerins] #14 — ""Je suis perdu"" en un geste","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #14**
+
+Variante plus douce du SOS : partage la dernière position connue au guide sans déclencher une alerte majeure.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Pèlerins] #15 — Rappels santé sur place","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #15**
+
+Prise de médicament, alerte déshydratation/coup de chaleur — public cible souvent âgé.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini
+- [ ] Cohérence UX : respecte les principes déjà retenus (sobriété, accessibilité, faible connectivité — cahier des charges §5.1)"
+"[Pèlerins] #16 — Carnet de bord numérique","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #16**
+
+Photos et notes spirituelles privées du voyage, horodatées automatiquement par étape.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Pèlerins] #17 — Album photo privé pour la famille","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #17**
+
+Partage sécurisé, pas un réseau social public — juste les proches autorisés.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Pèlerins] #18 — Azan téléchargeable hors-ligne","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #18**
+
+Complète la Qibla/horaires déjà prévus : le son de l'appel à la prière sans dépendre du réseau.
+
+**ADR concerné :** ADR 0007
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Fiabilité : reste utilisable hors-ligne si l'usage le justifie (ADR 0007, pattern local-first puis sync par lot)
+- [ ] Conformité : badge ""à valider par une personne qualifiée"" tant que non validé (CLAUDE.md, section Contenu religieux)
+- [ ] Fiabilité : jamais présenté comme définitif sans validation explicite, même en brouillon avancé"
+"[Pèlerins] #19 — Mode économie de données","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #19**
+
+Version allégée de l'app pour les zones où même la 2G sature.
+
+**ADR concerné :** ADR 0007
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Fiabilité : reste utilisable hors-ligne si l'usage le justifie (ADR 0007, pattern local-first puis sync par lot)"
+"[Pèlerins] #20 — Créneaux suggérés pour le Tawaf","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #20**
+
+Recommander des heures plus calmes si des données de fréquentation deviennent disponibles un jour.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Pèlerins] #21 — Numéros d'urgence préchargés","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #21**
+
+Police, hôpital, ambassade — selon le pays d'origine du pèlerin, pas une liste générique.
+
+**ADR concerné :** ADR 0007
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Fiabilité : reste utilisable hors-ligne si l'usage le justifie (ADR 0007, pattern local-first puis sync par lot)"
+"[Pèlerins] #22 — Lecture assistée des panneaux","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #22**
+
+Photo d'un panneau/consigne en arabe → traduction simple, pour les non-arabophones.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Pèlerins] #23 — Livret souvenir généré automatiquement","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #23**
+
+Photos + étapes + Duas complétées, exportable ou imprimable — objet à garder, pas juste un historique dans l'app.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini
+- [ ] Conformité : badge ""à valider par une personne qualifiée"" tant que non validé (CLAUDE.md, section Contenu religieux)
+- [ ] Fiabilité : jamais présenté comme définitif sans validation explicite, même en brouillon avancé"
+"[Pèlerins] #24 — Mentorat pèlerin → futur pèlerin","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #24**
+
+Ceux qui sont déjà partis conseillent ceux qui préparent leur voyage l'année suivante.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Pèlerins] #25 — Suivi santé post-voyage","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #25**
+
+Rappel de vaccins de suivi, fatigue post-Hadj — souvent négligé alors que le corps a été mis à rude épreuve.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Pèlerins] #26 — Dons/sadaqa vérifiés","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #26**
+
+Espace de don vers des associations caritatives locales vérifiées — extension naturelle du modèle économique.
+
+**ADR concerné :** ADR 0006 (nouveau flux de paiement à cadrer)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Pèlerins] #27 — Parrainage récompensé","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #27**
+
+Réduction pour le pèlerin qui recommande l'agence à un proche — fidélisation à coût marketing nul.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Pèlerins] #28 — Espace famille simplifié","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #28**
+
+Suivi position et notifications sans avoir à gérer un vrai compte pèlerin — pensé pour un parent peu digitalisé.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini
+- [ ] Cohérence UX : respecte les principes déjà retenus (sobriété, accessibilité, faible connectivité — cahier des charges §5.1)"
+"[Pèlerins] #29 — Notification au contact d'urgence","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #29**
+
+Chaque étape clé notifiée directement à la famille, pas seulement visible dans l'app du pèlerin.
+
+**ADR concerné :** ADR 0009
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Pèlerins] #30 — Ligne d'assistance téléphonique famille","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #30**
+
+Canal humain pour les familles qui n'utiliseront jamais l'app elles-mêmes.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Cohérence UX : respecte les principes déjà retenus (sobriété, accessibilité, faible connectivité — cahier des charges §5.1)"
+"[Pèlerins] #31 — Mode grand texte / contraste élevé","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #31**
+
+Public cible souvent âgé — l'accessibilité n'est pas optionnelle ici, voir le principe ""Accessibilité"" du cahier des charges.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Cohérence UX : respecte les principes déjà retenus (sobriété, accessibilité, faible connectivité — cahier des charges §5.1)"
+"[Pèlerins] #32 — Lecture audio de l'interface","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #32**
+
+Pour l'analphabétisme numérique ou fonctionnel, pas seulement le handicap visuel.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Cohérence UX : respecte les principes déjà retenus (sobriété, accessibilité, faible connectivité — cahier des charges §5.1)"
+"[Pèlerins] #33 — Assistance vidéo pour PMR","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #33**
+
+Signalement des besoins d'accompagnement physique dès la réservation, transmis à l'agence et au guide.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini
+- [ ] Cohérence UX : respecte les principes déjà retenus (sobriété, accessibilité, faible connectivité — cahier des charges §5.1)"
+"[Pèlerins] #34 — Compagnon de voyage suggéré","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #34**
+
+Mise en relation opt-in entre pèlerins seuls du même groupe souhaitant s'entraider sur place.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Pèlerins] #35 — Rappels vocaux plutôt qu'écrits","**Bénéficiaire :** Pèlerins
+**Issue du brainstorm ""Cent Fonctionnalités"" #35**
+
+Notifications critiques (paiement, dossier) doublées d'un message vocal simple pour les moins à l'aise à l'écrit.
+
+**ADR concerné :** ADR 0009
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Cohérence UX : respecte les principes déjà retenus (sobriété, accessibilité, faible connectivité — cahier des charges §5.1)"
+"[Agences] #36 — CRM intégré","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #36**
+
+Suivi des prospects, relances automatiques, historique complet par client — pas de tableur externe.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Agences] #37 — Contrats/factures générés automatiquement","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #37**
+
+Un document conforme par réservation, sans ressaisie manuelle.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Agences] #38 — Trésorerie prévisionnelle","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #38**
+
+Projection des encaissements selon les échéanciers de paiement en cours, pas juste l'historique.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Agences] #39 — Gestion des partenaires hôtels/transporteurs","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #39**
+
+Contrats, disponibilités, tarifs négociés centralisés côté agence.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #40 — Allotement de chambres","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #40**
+
+Blocs réservés à l'avance auprès des hôtels, vendus progressivement aux pèlerins.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #41 — Listes de groupe automatiques","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #41**
+
+Export prêt pour visa/douanes/compagnies aériennes, généré depuis les données déjà en base.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Agences] #42 — Planning des guides/Mutawif","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #42**
+
+Affectations, disponibilités, évaluations après chaque saison.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #43 — Module RH saisonnier","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #43**
+
+Contrats courts des guides, paie, disponibilité d'une saison à l'autre.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Agences] #44 — Multi-utilisateurs par agence","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #44**
+
+Rôles comptable/commercial/opérations — aujourd'hui un seul compte propriétaire fait tout.
+
+**ADR concerné :** ADR 0003 (extension du modèle de rôles)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #45 — Import/export en masse","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #45**
+
+CSV de forfaits et de pèlerins pour les agences à fort volume, sans ressaisie écran par écran.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Agences] #46 — Landing pages de forfait personnalisables","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #46**
+
+Page de vente prête à partager sur les réseaux sociaux, générée depuis la fiche forfait.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #47 — Programme de fidélité pèlerins","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #47**
+
+Réductions récurrentes pour les clients revenant ou parrainant.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Agences] #48 — Simulateur de rentabilité par forfait","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #48**
+
+Coût réel vs prix de vente vs commission plateforme, avant de publier une offre.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Agences] #49 — Devis personnalisé groupes/entreprises","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #49**
+
+Hadj d'entreprise ou de mosquée, avec conditions spécifiques négociables.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Agences] #50 — Widget de réservation embarquable","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #50**
+
+API publique pour les agences ayant leur propre site web, sans dupliquer le catalogue.
+
+**ADR concerné :** ADR 0016 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #51 — Groupement d'achat inter-agences","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #51**
+
+Négociation collective avec les hôtels pour les petites agences isolées.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Agences] #52 — Tarification dynamique simple","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #52**
+
+Ajuster le prix selon le taux de remplissage et le délai avant départ, sans complexité excessive.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Agences] #53 — Prévision de la demande","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #53**
+
+Basée sur l'historique de l'agence, aide à dimensionner les forfaits de la saison suivante.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #54 — Covoiturage/transport local groupé","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #54**
+
+Aéroport-hôtel organisé par l'agence directement dans l'app, pas par messages WhatsApp épars.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Agences] #55 — Comparateur sectoriel anonymisé","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #55**
+
+Benchmarking taux de remplissage/avis moyen du secteur, sans exposer les données d'une agence précise.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #56 — Alertes de conformité documentaire","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #56**
+
+Documents légaux arrivant à expiration, à revalider avant qu'ils ne bloquent une opération.
+
+**ADR concerné :** ADR 0008
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Agences] #57 — Export comptable local","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #57**
+
+Format compatible Sage/Excel structuré, pas juste un CSV brut à retravailler.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Agences] #58 — Règles de remboursement configurables","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #58**
+
+Barème clair au lieu de décisions au cas par cas génératrices de litiges.
+
+**ADR concerné :** ADR 0006
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Agences] #59 — Vérification croisée des documents","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #59**
+
+Dates d'expiration passeport comparées automatiquement aux dates du voyage.
+
+**ADR concerné :** ADR 0008
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Agences] #60 — KYC renforcé à l'inscription","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #60**
+
+Vérification d'identité de l'agence pour limiter la fraude dès l'entrée sur la plateforme.
+
+**ADR concerné :** ADR 0017 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Agences] #61 — Badge de certification qualité","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #61**
+
+Affiché aux pèlerins : agence vérifiée, historique de litiges propre.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #62 — Workflow de médiation structuré","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #62**
+
+Étape de dialogue pèlerin-agence avant toute escalade vers l'admin plateforme.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Agences] #63 — Astreinte 24/7 pendant le voyage","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #63**
+
+Rotation d'équipe visible dans l'app, pas un numéro qui ne répond jamais le week-end.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #64 — Rapport de satisfaction exportable","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #64**
+
+Utile pour les bailleurs/partenaires financiers de l'agence en fin de saison.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #65 — Archivage comparatif inter-saisons","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #65**
+
+Voir l'évolution d'une année sur l'autre sans reconstituer les chiffres à la main.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #66 — Chat support technique intégré","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #66**
+
+Avec l'équipe plateforme, directement depuis l'espace agence.
+
+**ADR concerné :** ADR 0014 (même pattern messagerie)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Agences] #67 — Relances de paiement préventives","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #67**
+
+Avant l'échéance, pas seulement après un retard déjà constaté.
+
+**ADR concerné :** ADR 0009
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Agences] #68 — Simulateur de capacité","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #68**
+
+Combien de pèlerins l'agence peut réellement gérer avec son staff actuel.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Agences] #69 — Suivi des besoins spéciaux par pèlerin","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #69**
+
+PMR, régime alimentaire, accompagnement médical — visible par l'agence et le guide, pas perdu dans un email.
+
+**ADR concerné :** ADR 0008
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Agences] #70 — Calendrier partagé des échéances clés","**Bénéficiaire :** Agences
+**Issue du brainstorm ""Cent Fonctionnalités"" #70**
+
+Synchronisable Google/Outlook pour ne rater aucune date critique de la saison.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Gouvernement] #71 — Registre national des agences agréées","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #71**
+
+Consultable publiquement, pour que tout pèlerin puisse vérifier une agence avant de payer.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini"
+"[Gouvernement] #72 — Tableau de bord statistique national","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #72**
+
+Nombre de pèlerins/an, répartition régionale, saisonnalité — pour le ministère concerné.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini"
+"[Gouvernement] #73 — Suivi du quota Hadj","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #73**
+
+Allocation des places par accords saoudiens, places restantes visibles en temps réel.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini"
+"[Gouvernement] #74 — Certification numérique des agences","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #74**
+
+Agrément et renouvellement en ligne, plutôt qu'une procédure papier séparée de la plateforme.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini"
+"[Gouvernement] #75 — Portail de plainte citoyenne","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #75**
+
+Contre une agence, avec suivi de traitement visible par le plaignant.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Gouvernement] #76 — Score de transparence des commissions","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #76**
+
+Protection du consommateur : que facture réellement chaque agence, de façon comparable.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini"
+"[Gouvernement] #77 — Reporting sanitaire agrégé","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #77**
+
+Statut vaccination agrégé et anonymisé, alertes épidémiologiques éventuelles.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Gouvernement] #78 — Registre de coordination consulaire","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #78**
+
+En cas de crise (catastrophe, rapatriement), savoir immédiatement qui est sur place et où.
+
+**ADR concerné :** ADR 0015 (accès nominatif, cadre de crise à définir avant tout code)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Gouvernement] #79 — Escalade SOS vers l'ambassade","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #79**
+
+Le bouton SOS existant peut, en cas gravissime, remonter jusqu'au consulat, pas seulement au guide.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Gouvernement] #80 — Campagnes de prévention officielles","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #80**
+
+Diffusées via la plateforme (santé, sécurité) avec la légitimité d'une source publique.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini"
+"[Gouvernement] #81 — Coordination inter-agences en cas d'incident","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #81**
+
+Surbooking hôtel, annulation de vol — piloté par le régulateur plutôt que chaque agence isolément.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini"
+"[Gouvernement] #82 — Suivi agrégé des transferts Mobile Money","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #82**
+
+Conformité changes et lutte anti-blanchiment, à un niveau statistique, pas individuel.
+
+**ADR concerné :** ADR 0015 + ADR 0006
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Gouvernement] #83 — Reporting fiscal automatisé","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #83**
+
+TVA et commissions déclarées, généré depuis les données déjà enregistrées par les agences.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Gouvernement] #84 — Rapport d'impact économique du secteur","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #84**
+
+Emplois créés, devises échangées — utile pour les statistiques nationales du tourisme religieux.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini"
+"[Gouvernement] #85 — Piste d'audit exportable","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #85**
+
+Pour les autorités de régulation financière, sans accès direct à la base de production.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini"
+"[Gouvernement] #86 — Veille réglementaire Nusuk/Arabie saoudite","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #86**
+
+Diffusée automatiquement aux agences dès qu'une exigence officielle change.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini"
+"[Gouvernement] #87 — Programme d'aide aux pèlerins à faible revenu","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #87**
+
+Subventions publiques et suivi des bénéficiaires, module social distinct du commercial.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Gouvernement] #88 — Suivi des accords de transport aérien","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #88**
+
+Quotas de vols, compagnies autorisées pour la période du Hadj.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini"
+"[Gouvernement] #89 — Validation religieuse centralisée","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #89**
+
+Une autorité nationale unique certifie le contenu des rites plutôt que chaque agence/plateforme séparément.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini
+- [ ] Conformité : badge ""à valider par une personne qualifiée"" tant que non validé (CLAUDE.md, section Contenu religieux)
+- [ ] Fiabilité : jamais présenté comme définitif sans validation explicite, même en brouillon avancé"
+"[Gouvernement] #90 — Interconnexion état civil","**Bénéficiaire :** Gouvernement
+**Issue du brainstorm ""Cent Fonctionnalités"" #90**
+
+Vérification passeport/identité en temps réel, si une API officielle existe un jour.
+
+**ADR concerné :** ADR 0015 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Nécessite ADR 0015 accepté avant toute implémentation (nouveau rôle, base légale du partage de données)
+- [ ] Traçabilité renforcée : accès nominatif journalisé de façon inaltérable, jamais un accès permanent de consultation
+- [ ] Fiabilité : données statistiques toujours agrégées/anonymisées sauf cadre de crise explicitement défini
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Transverses] #91 — Langues locales guinéennes","**Bénéficiaire :** Transverses
+**Issue du brainstorm ""Cent Fonctionnalités"" #91**
+
+Soussou, Peul, Malinké — pas seulement français/arabe, pour vraiment couvrir la population cible.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Cohérence UX : respecte les principes déjà retenus (sobriété, accessibilité, faible connectivité — cahier des charges §5.1)"
+"[Transverses] #92 — Mode dégradé SMS/USSD","**Bénéficiaire :** Transverses
+**Issue du brainstorm ""Cent Fonctionnalités"" #92**
+
+Pour les pèlerins sans smartphone — une part significative du marché visé par le cahier des charges.
+
+**ADR concerné :** ADR 0018 (à accepter avant implémentation)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Cohérence UX : respecte les principes déjà retenus (sobriété, accessibilité, faible connectivité — cahier des charges §5.1)"
+"[Transverses] #93 — Ambassadeurs locaux dans les mosquées","**Bénéficiaire :** Transverses
+**Issue du brainstorm ""Cent Fonctionnalités"" #93**
+
+Adoption portée par des figures de confiance communautaires plutôt que par la seule publicité numérique.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Transverses] #94 — Parrainage inter-agences en zone rurale","**Bénéficiaire :** Transverses
+**Issue du brainstorm ""Cent Fonctionnalités"" #94**
+
+Couvrir les zones sans agence locale via un partenariat plutôt que d'exclure ces pèlerins.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur"
+"[Transverses] #95 — Inscriptions collectives via associations religieuses","**Bénéficiaire :** Transverses
+**Issue du brainstorm ""Cent Fonctionnalités"" #95**
+
+Une mosquée peut inscrire un groupe de fidèles en une seule démarche.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Transverses] #96 — Score de confiance agence combiné","**Bénéficiaire :** Transverses
+**Issue du brainstorm ""Cent Fonctionnalités"" #96**
+
+Avis + ponctualité + taux de litiges en un seul indicateur lisible pour un pèlerin non expert.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Transverses] #97 — Formation certifiante des guides","**Bénéficiaire :** Transverses
+**Issue du brainstorm ""Cent Fonctionnalités"" #97**
+
+Badge de compétence Mutawif reconnu sur toute la plateforme, pas propre à une seule agence.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Transverses] #98 — Microfinance pèlerin partenaire","**Bénéficiaire :** Transverses
+**Issue du brainstorm ""Cent Fonctionnalités"" #98**
+
+Option de crédit encadrée pour éviter le surendettement plutôt que de l'ignorer.
+
+**ADR concerné :** ADR 0020 (à accepter avant implémentation — vérifier faisabilité juridique d'abord)
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
+"[Transverses] #99 — Veille concurrentielle régionale","**Bénéficiaire :** Transverses
+**Issue du brainstorm ""Cent Fonctionnalités"" #99**
+
+Comparaison avec les offres Sénégal, Mali, Côte d'Ivoire pour rester compétitif.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)"
+"[Transverses] #100 — Bilan de santé pré-départ à tarif préférentiel","**Bénéficiaire :** Transverses
+**Issue du brainstorm ""Cent Fonctionnalités"" #100**
+
+Partenariat avec des cliniques locales, complément concret au guide santé du voyageur.
+
+**À vérifier avant/pendant l'implémentation :**
+- [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
+- [ ] Maintenabilité : pas de logique métier dans les contrôleurs ; tests avant merge si le module touche paiement/documents/SOS (CLAUDE.md)
+- [ ] Sécurité : aucune donnée de paiement en clair côté serveur (ADR 0006) ; statut confirmé uniquement par callback serveur-à-serveur
+- [ ] Traçabilité : toute opération financière journalisée (qui, quand, montant, référence)
+- [ ] Fiabilité : montant et devise jamais recalculés côté client, toujours revalidés côté serveur
+- [ ] Sécurité : chiffrement au repos si donnée de santé/identité stockée (voir ADR 0008)
+- [ ] Sécurité : contrôle d'accès strict par rôle — un utilisateur ne voit que ses propres données
+- [ ] Traçabilité : journalisation de tout accès en lecture à une donnée sensible
+- [ ] Fiabilité : minimisation — ne stocker que le strict nécessaire, purge après un délai défini"
