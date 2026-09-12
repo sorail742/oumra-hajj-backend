@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Review as PrismaReview } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AgencyValidationStatus } from '../../common/enums/agency-validation-status.enum';
 import { BookingStatus } from '../../common/enums/booking-status.enum';
 import { AgencyTrustScoreShape } from '../../types/agency.types';
 import { ReviewShape } from '../../types/review.types';
@@ -20,6 +21,11 @@ const REVIEWABLE_STATUSES = [BookingStatus.CONFIRMED, BookingStatus.COMPLETED];
 // des données disponibles aujourd'hui.
 const REVIEW_WEIGHT = 0.6;
 const COMPLETION_WEIGHT = 0.4;
+
+// Badge de certification qualité (idée #61) : "confiance" exige un minimum
+// d'avis pour ne pas être débloqué par un seul avis à 5 étoiles.
+const TRUSTED_SCORE_THRESHOLD = 70;
+const MIN_REVIEWS_FOR_TRUSTED_BADGE = 3;
 
 function toReviewShape(review: PrismaReview): ReviewShape {
   return {
@@ -87,7 +93,7 @@ export class ReviewsService {
   }
 
   async getTrustScore(agencyId: string): Promise<AgencyTrustScoreShape> {
-    await this.agenciesService.findByIdOrFail(agencyId);
+    const agency = await this.agenciesService.findByIdOrFail(agencyId);
 
     const [reviewStats, bookingCounts] = await Promise.all([
       this.prisma.review.aggregate({
@@ -120,13 +126,30 @@ export class ReviewsService {
       score = completionRate * 100;
     }
 
+    const roundedScore = score !== undefined ? Math.round(score) : undefined;
+
+    // Idée #61 : "vérifiée" reflète juste la validation admin déjà en place
+    // (ADR implicite d'AgenciesService.approve) ; "confiance" ajoute une
+    // exigence de score ET de volume d'avis, pour ne pas récompenser une
+    // agence tout juste approuvée et jamais évaluée.
+    let badge: AgencyTrustScoreShape['badge'] = null;
+    if (agency.validationStatus === AgencyValidationStatus.APPROVED) {
+      badge =
+        roundedScore !== undefined &&
+        roundedScore >= TRUSTED_SCORE_THRESHOLD &&
+        reviewCount >= MIN_REVIEWS_FOR_TRUSTED_BADGE
+          ? 'trusted'
+          : 'verified';
+    }
+
     return {
       agencyId,
-      score: score !== undefined ? Math.round(score) : undefined,
+      score: roundedScore,
       reviewAverage,
       reviewCount,
       completionRate,
       concludedBookingsCount,
+      badge,
     };
   }
 }
