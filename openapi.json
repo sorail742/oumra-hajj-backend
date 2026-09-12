@@ -1726,6 +1726,29 @@
         ]
       }
     },
+    "/api/v1/reviews/agency/{agencyId}/trust-score": {
+      "get": {
+        "operationId": "ReviewsController_getTrustScore",
+        "parameters": [
+          {
+            "name": "agencyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reviews"
+        ]
+      }
+    },
     "/api/v1/messaging/bookings/{bookingId}/conversations/{channel}": {
       "get": {
         "operationId": "MessagingController_getOrCreateConversation",
