@@ -1,16 +1,30 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus } from '../../common/enums/booking-status.enum';
+import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { ReviewsService } from './reviews.service';
 
 describe('ReviewsService', () => {
   let service: ReviewsService;
   let prisma: {
-    review: { findUnique: jest.Mock; create: jest.Mock; findMany: jest.Mock };
+    review: {
+      findUnique: jest.Mock;
+      create: jest.Mock;
+      findMany: jest.Mock;
+      aggregate: jest.Mock;
+    };
   };
-  let bookingsService: { findByIdOrFail: jest.Mock };
+  let bookingsService: {
+    findByIdOrFail: jest.Mock;
+    countByAgencyAndStatus: jest.Mock;
+  };
+  let agenciesService: { findByIdOrFail: jest.Mock };
 
   const pilgrimId = 'pilgrim-1';
   const agencyId = 'agency-1';
@@ -26,21 +40,34 @@ describe('ReviewsService', () => {
     ...overrides,
   });
 
+  const zeroBookingCounts = (): Record<BookingStatus, number> => ({
+    [BookingStatus.PENDING_PAYMENT]: 0,
+    [BookingStatus.CONFIRMED]: 0,
+    [BookingStatus.CANCELLED]: 0,
+    [BookingStatus.COMPLETED]: 0,
+  });
+
   beforeEach(async () => {
     prisma = {
       review: {
         findUnique: jest.fn(),
         create: jest.fn(),
         findMany: jest.fn(),
+        aggregate: jest.fn(),
       },
     };
-    bookingsService = { findByIdOrFail: jest.fn() };
+    bookingsService = {
+      findByIdOrFail: jest.fn(),
+      countByAgencyAndStatus: jest.fn(),
+    };
+    agenciesService = { findByIdOrFail: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReviewsService,
         { provide: PrismaService, useValue: prisma },
         { provide: BookingsService, useValue: bookingsService },
+        { provide: AgenciesService, useValue: agenciesService },
       ],
     }).compile();
 
@@ -156,6 +183,96 @@ describe('ReviewsService', () => {
         where: { pilgrimId },
       });
       expect(reviews).toHaveLength(1);
+    });
+  });
+
+  describe('getTrustScore', () => {
+    it("rejette si l'agence est introuvable", async () => {
+      agenciesService.findByIdOrFail.mockRejectedValue(
+        new NotFoundException('Agence introuvable'),
+      );
+
+      await expect(service.getTrustScore(agencyId)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it("renvoie un score indéfini quand aucune donnée n'est disponible (nouvelle agence)", async () => {
+      agenciesService.findByIdOrFail.mockResolvedValue({ id: agencyId });
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: null },
+        _count: { rating: 0 },
+      });
+      bookingsService.countByAgencyAndStatus.mockResolvedValue(
+        zeroBookingCounts(),
+      );
+
+      const result = await service.getTrustScore(agencyId);
+
+      expect(result.score).toBeUndefined();
+      expect(result.reviewAverage).toBeUndefined();
+      expect(result.completionRate).toBeUndefined();
+      expect(result.reviewCount).toBe(0);
+      expect(result.concludedBookingsCount).toBe(0);
+    });
+
+    it("se base uniquement sur les avis si aucune réservation n'est encore conclue", async () => {
+      agenciesService.findByIdOrFail.mockResolvedValue({ id: agencyId });
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: 4 },
+        _count: { rating: 10 },
+      });
+      bookingsService.countByAgencyAndStatus.mockResolvedValue({
+        ...zeroBookingCounts(),
+        [BookingStatus.CONFIRMED]: 3,
+      });
+
+      const result = await service.getTrustScore(agencyId);
+
+      // 4/5 * 100 = 80, aucune pondération de complétion appliquée seule.
+      expect(result.score).toBe(80);
+      expect(result.completionRate).toBeUndefined();
+    });
+
+    it("se base uniquement sur le taux de complétion si aucun avis n'existe", async () => {
+      agenciesService.findByIdOrFail.mockResolvedValue({ id: agencyId });
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: null },
+        _count: { rating: 0 },
+      });
+      bookingsService.countByAgencyAndStatus.mockResolvedValue({
+        ...zeroBookingCounts(),
+        [BookingStatus.COMPLETED]: 8,
+        [BookingStatus.CANCELLED]: 2,
+      });
+
+      const result = await service.getTrustScore(agencyId);
+
+      // 8 / (8+2) = 0.8 -> 80.
+      expect(result.score).toBe(80);
+      expect(result.reviewAverage).toBeUndefined();
+      expect(result.completionRate).toBe(0.8);
+      expect(result.concludedBookingsCount).toBe(10);
+    });
+
+    it('combine avis et taux de complétion (60/40) quand les deux sont disponibles', async () => {
+      agenciesService.findByIdOrFail.mockResolvedValue({ id: agencyId });
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: 5 },
+        _count: { rating: 4 },
+      });
+      bookingsService.countByAgencyAndStatus.mockResolvedValue({
+        ...zeroBookingCounts(),
+        [BookingStatus.COMPLETED]: 5,
+        [BookingStatus.CANCELLED]: 5,
+      });
+
+      const result = await service.getTrustScore(agencyId);
+
+      // (5/5*100)*0.6 + (0.5*100)*0.4 = 60 + 20 = 80.
+      expect(result.score).toBe(80);
+      expect(result.reviewAverage).toBe(5);
+      expect(result.completionRate).toBe(0.5);
     });
   });
 });
