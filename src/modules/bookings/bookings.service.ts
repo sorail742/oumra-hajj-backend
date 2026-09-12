@@ -14,11 +14,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus } from '../../common/enums/booking-status.enum';
 import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
 import { DossierStepStatus } from '../../common/enums/dossier-step-status.enum';
+import { NotificationType } from '../../common/enums/notification-type.enum';
 import { Role } from '../../common/enums/role.enum';
 import { BookingShape } from '../../types/booking.types';
 import { AgenciesService } from '../agencies/agencies.service';
 import { GroupsService } from '../groups/groups.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PackagesService } from '../packages/packages.service';
+import { UsersService } from '../users/users.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
 
@@ -31,6 +34,16 @@ const DEFAULT_STEPS: DossierStepKey[] = [
   DossierStepKey.VACCINATION,
   DossierStepKey.DOCUMENTS,
 ];
+
+// Libellés lisibles pour les notifications d'étape — cahier des charges
+// §3.1 ("Notifications d'étapes : dossier validé...").
+const STEP_LABELS: Record<DossierStepKey, string> = {
+  [DossierStepKey.PAYMENT]: 'Paiement',
+  [DossierStepKey.VISA]: 'Visa',
+  [DossierStepKey.FLIGHT]: "Billet d'avion",
+  [DossierStepKey.VACCINATION]: 'Vaccination',
+  [DossierStepKey.DOCUMENTS]: 'Documents',
+};
 
 type BookingRecord = PrismaBooking & { steps: PrismaBookingStep[] };
 
@@ -57,6 +70,8 @@ export class BookingsService {
     private readonly packagesService: PackagesService,
     private readonly agenciesService: AgenciesService,
     private readonly groupsService: GroupsService,
+    private readonly notificationsService: NotificationsService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(
@@ -174,7 +189,11 @@ export class BookingsService {
         throw new NotFoundException('Étape de dossier introuvable');
       });
 
-    return this.maybeConfirm(booking.id);
+    const updated = await this.maybeConfirm(booking.id);
+    if (dto.status === DossierStepStatus.DONE) {
+      await this.notifyStepDone(updated, dto.key);
+    }
+    return updated;
   }
 
   // Appelé par le module payments lorsqu'une tranche solde le forfait.
@@ -193,7 +212,9 @@ export class BookingsService {
         status: DossierStepStatus.DONE as unknown as PrismaDossierStepStatus,
       },
     });
-    return this.maybeConfirm(bookingId);
+    const updated = await this.maybeConfirm(bookingId);
+    await this.notifyStepDone(updated, key);
+    return updated;
   }
 
   async assignGroup(
@@ -250,7 +271,13 @@ export class BookingsService {
 
   private async maybeConfirm(bookingId: string): Promise<BookingShape> {
     const booking = await this.findByIdOrFail(bookingId);
-    if (booking.steps.every((s) => s.status === DossierStepStatus.DONE)) {
+    const allDone = booking.steps.every(
+      (s) => s.status === DossierStepStatus.DONE,
+    );
+    // `!== CONFIRMED` : ne notifie que sur une vraie transition, pas à
+    // chaque appel une fois le dossier déjà confirmé (ex. une étape
+    // revalidée après coup).
+    if (allDone && booking.status !== BookingStatus.CONFIRMED) {
       const updated = await this.prisma.booking.update({
         where: { id: bookingId },
         data: {
@@ -258,9 +285,61 @@ export class BookingsService {
         },
         include: BOOKING_INCLUDE,
       });
-      return toBookingShape(updated);
+      const shape = toBookingShape(updated);
+      await this.notifyConfirmed(shape);
+      return shape;
     }
     return booking;
+  }
+
+  // Cahier des charges §3.1 ("Notifications d'étapes : dossier validé...").
+  private async notifyStepDone(
+    booking: BookingShape,
+    key: DossierStepKey,
+  ): Promise<void> {
+    await this.notifyPilgrimAndFamily(
+      booking.pilgrimId,
+      `Étape « ${STEP_LABELS[key]} » validée`,
+      `L'étape « ${STEP_LABELS[key]} » de votre dossier vient d'être validée.`,
+      false,
+    );
+  }
+
+  private async notifyConfirmed(booking: BookingShape): Promise<void> {
+    await this.notifyPilgrimAndFamily(
+      booking.pilgrimId,
+      'Dossier confirmé',
+      'Toutes les étapes de votre dossier sont validées — votre réservation est confirmée.',
+      true,
+    );
+  }
+
+  // Idée #29 (backlog "Cent Fonctionnalités") : notifie aussi le contact
+  // d'urgence par SMS direct, même pattern que le SOS
+  // (voir GroupsService.triggerSos) — la famille restée au pays n'a
+  // aujourd'hui aucun autre moyen fiable de suivre le dossier (cahier des
+  // charges §1.2).
+  private async notifyPilgrimAndFamily(
+    pilgrimId: string,
+    title: string,
+    content: string,
+    isCritical: boolean,
+  ): Promise<void> {
+    await this.notificationsService.send({
+      recipientIds: [pilgrimId],
+      type: NotificationType.BOOKING_STATUS,
+      title,
+      content,
+      isCritical,
+    });
+
+    const pilgrim = await this.usersService.findByIdOrFail(pilgrimId);
+    if (pilgrim.emergencyContact?.phone) {
+      await this.notificationsService.sendRawSms(
+        pilgrim.emergencyContact.phone,
+        `${pilgrim.fullName} — ${content}`,
+      );
+    }
   }
 
   private async assertAgencyOwnership(
