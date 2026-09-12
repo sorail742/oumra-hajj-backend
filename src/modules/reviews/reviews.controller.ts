@@ -5,6 +5,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import { AgencyTrustScoreShape } from '../../types/agency.types';
 import { ReviewShape } from '../../types/review.types';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { ReviewsService } from './reviews.service';
@@ -35,5 +36,14 @@ export class ReviewsController {
   @Get('agency/:agencyId')
   listByAgency(@Param('agencyId') agencyId: string): Promise<ReviewShape[]> {
     return this.reviewsService.listByAgency(agencyId);
+  }
+
+  // Score de confiance agence — idée #96 du backlog "Cent Fonctionnalités".
+  @Public()
+  @Get('agency/:agencyId/trust-score')
+  getTrustScore(
+    @Param('agencyId') agencyId: string,
+  ): Promise<AgencyTrustScoreShape> {
+    return this.reviewsService.getTrustScore(agencyId);
   }
 }
