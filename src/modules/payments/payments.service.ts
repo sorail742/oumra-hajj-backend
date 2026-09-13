@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -10,13 +11,16 @@ import {
   PaymentStatus as PrismaPaymentStatus,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { BookingStatus } from '../../common/enums/booking-status.enum';
 import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
+import { NotificationType } from '../../common/enums/notification-type.enum';
 import { PaymentMethod } from '../../common/enums/payment-method.enum';
 import { PaymentStatus } from '../../common/enums/payment-status.enum';
 import { Role } from '../../common/enums/role.enum';
 import { PaymentShape } from '../../types/payment.types';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PackagesService } from '../packages/packages.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
@@ -26,6 +30,17 @@ import {
 } from './providers/payment-provider.interface';
 
 const DEFAULT_CURRENCY = 'GNF';
+
+// Idée #58 (backlog "Cent Fonctionnalités") : "Barème clair au lieu de
+// décisions au cas par cas génératrices de litiges" — le taux éligible
+// dépend uniquement du statut de la réservation au moment de la demande,
+// jamais d'une appréciation de l'agence.
+const REFUND_POLICY: Record<BookingStatus, number> = {
+  [BookingStatus.PENDING_PAYMENT]: 1, // rien n'est encore engagé côté agence
+  [BookingStatus.CONFIRMED]: 0.5, // visa/hôtel déjà engagés par l'agence
+  [BookingStatus.CANCELLED]: 0,
+  [BookingStatus.COMPLETED]: 0, // voyage déjà effectué
+};
 
 function toPaymentShape(payment: PrismaPayment): PaymentShape {
   return {
@@ -39,6 +54,8 @@ function toPaymentShape(payment: PrismaPayment): PaymentShape {
     providerReference: payment.providerReference,
     receiptRef: payment.receiptRef ?? undefined,
     confirmedAt: payment.confirmedAt ?? undefined,
+    refundedAmount: payment.refundedAmount ?? undefined,
+    refundedAt: payment.refundedAt ?? undefined,
   };
 }
 
@@ -49,6 +66,7 @@ export class PaymentsService {
     private readonly bookingsService: BookingsService,
     private readonly packagesService: PackagesService,
     private readonly agenciesService: AgenciesService,
+    private readonly notificationsService: NotificationsService,
     @Inject(PAYMENT_PROVIDER) private readonly paymentProvider: PaymentProvider,
   ) {}
 
@@ -171,6 +189,66 @@ export class PaymentsService {
     }
 
     return toPaymentShape(payment);
+  }
+
+  // Idée #58 (backlog "Cent Fonctionnalités") : remboursement selon le
+  // barème REFUND_POLICY, jamais une négociation au cas par cas.
+  async requestRefund(
+    requesterId: string,
+    requesterRole: Role,
+    paymentId: string,
+  ): Promise<PaymentShape> {
+    const payment = await this.findAuthorizedOrFail(
+      requesterId,
+      requesterRole,
+      paymentId,
+    );
+    if (payment.status !== PaymentStatus.SUCCEEDED) {
+      throw new ConflictException(
+        'Seul un paiement confirmé peut être remboursé',
+      );
+    }
+
+    const booking = await this.bookingsService.findByIdOrFail(
+      payment.bookingId,
+    );
+    const eligibleRate = REFUND_POLICY[booking.status];
+    if (eligibleRate === 0) {
+      throw new ConflictException(
+        "Ce paiement n'est plus remboursable au statut actuel de la réservation",
+      );
+    }
+
+    const refundedAmount =
+      Math.round(payment.amount * eligibleRate * 100) / 100;
+    await this.paymentProvider.refund(
+      payment.providerReference,
+      refundedAmount,
+    );
+
+    const updated = await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: PaymentStatus.REFUNDED as unknown as PrismaPaymentStatus,
+        refundedAmount,
+        refundedAt: new Date(),
+      },
+    });
+
+    // Même pattern que les notifications d'étapes (idée #29) : le pèlerin
+    // doit savoir combien lui revient réellement, pas juste "remboursé".
+    await this.notificationsService.send({
+      recipientIds: [booking.pilgrimId],
+      type: NotificationType.PAYMENT,
+      title: 'Remboursement traité',
+      content:
+        eligibleRate < 1
+          ? `Remboursement partiel de ${refundedAmount} ${updated.currency} (${Math.round(eligibleRate * 100)}% du paiement, selon le statut de votre dossier).`
+          : `Remboursement intégral de ${refundedAmount} ${updated.currency}.`,
+      isCritical: false,
+    });
+
+    return toPaymentShape(updated);
   }
 
   // Supervision des paiements — cahier des charges §3.4.

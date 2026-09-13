@@ -66,4 +66,16 @@ export class PaymentsController {
   ): Promise<PaymentShape> {
     return this.paymentsService.findAuthorizedOrFail(user.sub, user.role, id);
   }
+
+  // Idée #58 (backlog "Cent Fonctionnalités") — barème clair, voir
+  // PaymentsService.requestRefund.
+  @ApiBearerAuth()
+  @Roles(Role.PILGRIM, Role.AGENCY, Role.ADMIN)
+  @Post(':id/refund')
+  requestRefund(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<PaymentShape> {
+    return this.paymentsService.requestRefund(user.sub, user.role, id);
+  }
 }

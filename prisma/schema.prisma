@@ -74,6 +74,7 @@ enum PaymentStatus {
   pending
   succeeded
   failed
+  refunded
 }
 
 enum PilgrimDocumentType {
@@ -397,6 +398,12 @@ model Payment {
   providerReference String        @unique
   receiptRef        String?
   confirmedAt       DateTime?
+  // Idée #58 (backlog "Cent Fonctionnalités") — barème de remboursement,
+  // voir PaymentsService.REFUND_POLICY. refundedAmount peut être inférieur
+  // à amount (remboursement partiel selon le statut de la réservation au
+  // moment de la demande).
+  refundedAmount    Float?
+  refundedAt        DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
