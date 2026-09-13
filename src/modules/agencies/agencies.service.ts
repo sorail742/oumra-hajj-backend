@@ -1,6 +1,9 @@
 import {
   ConflictException,
+  ForbiddenException,
+  Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -12,12 +15,27 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AgencyValidationStatus } from '../../common/enums/agency-validation-status.enum';
 import { Role } from '../../common/enums/role.enum';
-import { AgencyShape } from '../../types/agency.types';
+import {
+  AgencyShape,
+  LegalDocumentAlertShape,
+  LegalDocumentComplianceStatus,
+} from '../../types/agency.types';
+import {
+  AccessUrl,
+  StorageProvider,
+  StoredFile,
+  STORAGE_PROVIDER,
+} from '../storage/storage-provider.interface';
 import { UsersService } from '../users/users.service';
+import { AddLegalDocumentDto } from './dto/add-legal-document.dto';
 import { RegisterAgencyDto } from './dto/register-agency.dto';
 import { UpdateAgencyDto } from './dto/update-agency.dto';
 
 const SALT_ROUNDS = 12;
+// Idée #56 : document signalé "à revalider bientôt" à partir de cette
+// fenêtre avant expiration — évite qu'il ne bloque une opération le jour J.
+const COMPLIANCE_ALERT_WINDOW_DAYS = 30;
+const LEGAL_DOCUMENT_TYPE = 'agency_legal_document';
 
 type AgencyRecord = PrismaAgency & {
   legalDocuments: PrismaAgencyLegalDocument[];
@@ -37,9 +55,11 @@ function toAgencyShape(agency: AgencyRecord): AgencyShape {
     contactPhone: agency.contactPhone,
     address: agency.address ?? undefined,
     legalDocuments: agency.legalDocuments.map((doc) => ({
+      id: doc.id,
       label: doc.label,
       storageRef: doc.storageRef,
       uploadedAt: doc.uploadedAt,
+      expiresAt: doc.expiresAt ?? undefined,
     })),
     validationStatus:
       agency.validationStatus as unknown as AgencyValidationStatus,
@@ -59,9 +79,13 @@ function toAgencyShape(agency: AgencyRecord): AgencyShape {
 
 @Injectable()
 export class AgenciesService {
+  // Journalisation des accès aux documents légaux agence — voir ADR 0008.
+  private readonly accessLogger = new Logger('AgencyLegalDocumentAccess');
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
+    @Inject(STORAGE_PROVIDER) private readonly storageProvider: StorageProvider,
   ) {}
 
   async register(dto: RegisterAgencyDto): Promise<AgencyShape> {
@@ -210,5 +234,80 @@ export class AgenciesService {
         "L'agence n'est pas encore validée par l'administrateur",
       );
     }
+  }
+
+  // Idée #56 (backlog "Cent Fonctionnalités") : ajout d'un document légal
+  // (registre de commerce, agrément, assurance...) avec date d'expiration
+  // optionnelle, pour permettre les alertes de conformité ci-dessous.
+  async addLegalDocument(
+    ownerId: string,
+    dto: AddLegalDocumentDto,
+    file: StoredFile,
+  ): Promise<AgencyShape> {
+    const owned = await this.findByOwnerOrFail(ownerId);
+
+    const { storageRef } = await this.storageProvider.store(
+      owned.id,
+      LEGAL_DOCUMENT_TYPE,
+      file,
+    );
+
+    await this.prisma.agencyLegalDocument.create({
+      data: {
+        agencyId: owned.id,
+        label: dto.label,
+        storageRef,
+        expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
+      },
+    });
+
+    return this.findByIdOrFail(owned.id);
+  }
+
+  // Ne remonte que les documents nécessitant une action — jamais de statut
+  // fabriqué pour un document sans date d'expiration connue.
+  async getComplianceAlerts(
+    ownerId: string,
+  ): Promise<LegalDocumentAlertShape[]> {
+    const owned = await this.findByOwnerOrFail(ownerId);
+    const now = Date.now();
+    const alertThreshold =
+      now + COMPLIANCE_ALERT_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+
+    return owned.legalDocuments
+      .filter((doc): doc is typeof doc & { expiresAt: Date } =>
+        Boolean(doc.expiresAt),
+      )
+      .map((doc) => {
+        const status: LegalDocumentComplianceStatus =
+          doc.expiresAt.getTime() < now ? 'expired' : 'expiring_soon';
+        return {
+          id: doc.id,
+          label: doc.label,
+          expiresAt: doc.expiresAt,
+          status,
+        };
+      })
+      .filter(
+        (alert) =>
+          alert.status === 'expired' ||
+          alert.expiresAt.getTime() <= alertThreshold,
+      );
+  }
+
+  async getLegalDocumentAccessUrl(
+    ownerId: string,
+    documentId: string,
+  ): Promise<AccessUrl> {
+    const owned = await this.findByOwnerOrFail(ownerId);
+    const doc = owned.legalDocuments.find((d) => d.id === documentId);
+    if (!doc) {
+      throw new ForbiddenException('Ce document ne vous appartient pas');
+    }
+
+    this.accessLogger.log(
+      `Génération URL d'accès — agence=${owned.id} document=${documentId}`,
+    );
+    return this.storageProvider.getAccessUrl(doc.storageRef);
   }
 }

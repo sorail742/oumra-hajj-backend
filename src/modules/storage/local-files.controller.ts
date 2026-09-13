@@ -8,7 +8,7 @@ import {
 import { ApiExcludeController } from '@nestjs/swagger';
 import { createReadStream } from 'fs';
 import { join } from 'path';
-import { Public } from '../../../common/decorators/public.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { LocalDiskStorageProvider } from './local-disk-storage-provider.service';
 
 const UPLOAD_ROOT = join(process.cwd(), 'uploads', 'documents');
