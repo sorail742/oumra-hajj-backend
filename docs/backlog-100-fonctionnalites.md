@@ -60,6 +60,8 @@ Les 94 autres idées ne nécessitent aucune décision d'architecture préalable
 
 - ✅ **#96** Score de confiance agence (`GET /reviews/agency/:id/trust-score`)
 - ✅ **#29** Notification pèlerin + contact d'urgence aux étapes clés du dossier
+- ✅ **#61** Badge de certification qualité (champ `badge` du trust-score)
+- ✅ **#58** Règles de remboursement configurables (`POST /payments/:id/refund`)
 
 ## Priorité suggérée pour la suite
 
@@ -71,8 +73,6 @@ préclassées à 92 rangs près.
 
 | # | Idée | Pourquoi maintenant |
 |---|---|---|
-| 61 | Badge de certification qualité | Quasi gratuit une fois #96 fait — même donnée, juste affichée en badge |
-| 58 | Règles de remboursement configurables | Confiance paiement, cœur de l'ADR 0006 déjà accepté |
 | 23 | Livret souvenir généré automatiquement | Donnée déjà en base (étapes, Duas complétées), pas de nouveau schéma |
 | 56 | Alertes de conformité documentaire | Un seul champ à ajouter (`expiresAt` sur `AgencyLegalDocument`) |
 | 2 | Simulateur de budget total | Pas de backend nécessaire au départ (calcul côté mobile sur données déjà exposées) |
