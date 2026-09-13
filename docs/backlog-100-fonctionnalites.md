@@ -68,6 +68,7 @@ Les 93 autres idées ne nécessitent aucune décision d'architecture préalable
 - ✅ **#58** Règles de remboursement configurables (`POST /payments/:id/refund`)
 - ✅ **#23** Livret souvenir de voyage (`GET /trip-summary/:bookingId`)
 - ✅ **#56** Alertes de conformité documentaire (`GET /agencies/me/legal-documents/alerts`)
+- ✅ **#10** Recommandation de forfait personnalisée (`GET /packages?maxBudget=&familySize=&startDateFrom=&startDateTo=`)
 
 ## Priorité suggérée pour la suite
 
@@ -79,7 +80,6 @@ préclassées à 92 rangs près.
 
 | # | Idée | Pourquoi maintenant |
 |---|---|---|
-| 10 | Recommandation de forfait personnalisée | Valeur pèlerin directe, filtre sur données déjà exposées (`GET /packages`) |
 | 26 | Dons/sadaqa vérifiés | Réutilise `PaymentProvider` tel quel, nouveau flux plutôt que nouveau système |
 
 ## Idées écartées de l'implémentation directe
