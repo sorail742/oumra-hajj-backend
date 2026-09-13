@@ -71,6 +71,7 @@ Les 92 autres idées ne nécessitent aucune décision d'architecture préalable
 - ✅ **#23** Livret souvenir de voyage (`GET /trip-summary/:bookingId`)
 - ✅ **#56** Alertes de conformité documentaire (`GET /agencies/me/legal-documents/alerts`)
 - ✅ **#10** Recommandation de forfait personnalisée (`GET /packages?maxBudget=&familySize=&startDateFrom=&startDateTo=`)
+- ✅ **#64** Rapport de satisfaction exportable (`GET /reviews/agency/me/satisfaction-report[/csv]`)
 
 ## Priorité suggérée pour la suite
 
@@ -78,10 +79,11 @@ La liste initiale de cinq idées (#23, #56, #2, #44, #10, #26) a été traitée
 en intégralité — trois implémentées (#23, #56, #10), trois écartées de
 l'implémentation directe avec justification ci-dessous (#2 : pas de backend
 nécessaire ; #44 et #26 : nécessitent une ADR au préalable, désormais
-proposées sous 0021 et 0022). Prochaine étape : reprendre dans le CSV
-complet plutôt que sur une liste préclassée, avec les mêmes critères (pas
-d'ADR bloquant, valeur confiance/sécurité en priorité, effort réutilisant au
-maximum l'existant).
+proposées sous 0021 et 0022). Depuis, reprise directement dans le CSV
+complet avec les mêmes critères (pas d'ADR bloquant, valeur
+confiance/sécurité en priorité, effort réutilisant au maximum l'existant) :
+**#64** (rapport de satisfaction exportable) traitée ensuite, en réutilisant
+`ReviewsService` déjà enrichi par #96/#61.
 
 ## Idées écartées de l'implémentation directe
 
