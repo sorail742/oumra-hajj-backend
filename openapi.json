@@ -348,6 +348,82 @@
         ]
       }
     },
+    "/api/v1/agencies/me/legal-documents": {
+      "post": {
+        "operationId": "AgenciesController_addLegalDocument",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AddLegalDocumentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agencies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/agencies/me/legal-documents/alerts": {
+      "get": {
+        "operationId": "AgenciesController_getComplianceAlerts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agencies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/agencies/me/legal-documents/{id}/access-url": {
+      "get": {
+        "operationId": "AgenciesController_getLegalDocumentAccessUrl",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agencies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/agencies": {
       "get": {
         "operationId": "AgenciesController_list",
@@ -2070,6 +2146,20 @@
             "type": "object"
           }
         }
+      },
+      "AddLegalDocumentDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "label"
+        ]
       },
       "RejectAgencyDto": {
         "type": "object",
