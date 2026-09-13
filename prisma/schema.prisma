@@ -204,6 +204,12 @@ model Agency {
   bankAccountName   String?
   bankAccountNumber String?
   bankName          String?
+  // Idée #70 (backlog "Cent Fonctionnalités") : jeton opaque et non expirant
+  // pour l'URL d'abonnement au calendrier ICS des échéances (Google/Outlook
+  // ne peuvent pas envoyer d'en-tête Authorization sur une URL
+  // d'abonnement) — révocable via régénération, jamais le seul mécanisme
+  // d'authentification agence.
+  calendarToken     String?                @unique
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
 

@@ -12,11 +12,13 @@ import {
   AgencyValidationStatus as PrismaAgencyValidationStatus,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AgencyValidationStatus } from '../../common/enums/agency-validation-status.enum';
 import { Role } from '../../common/enums/role.enum';
 import {
   AgencyShape,
+  CalendarSubscriptionShape,
   LegalDocumentAlertShape,
   LegalDocumentComplianceStatus,
 } from '../../types/agency.types';
@@ -40,6 +42,16 @@ const LEGAL_DOCUMENT_TYPE = 'agency_legal_document';
 type AgencyRecord = PrismaAgency & {
   legalDocuments: PrismaAgencyLegalDocument[];
 };
+
+// Chemin en dur comme LocalDiskStorageProvider.getAccessUrl — le client
+// compose avec sa propre base, cohérent avec l'existant plutôt qu'une
+// nouvelle façon de résoudre l'URL publique de l'API.
+function toCalendarSubscriptionShape(token: string): CalendarSubscriptionShape {
+  return {
+    token,
+    subscriptionUrl: `/api/v1/calendar/agency/${token}/calendar.ics`,
+  };
+}
 
 function toAgencyShape(agency: AgencyRecord): AgencyShape {
   const hasBankDetails =
@@ -309,5 +321,47 @@ export class AgenciesService {
       `Génération URL d'accès — agence=${owned.id} document=${documentId}`,
     );
     return this.storageProvider.getAccessUrl(doc.storageRef);
+  }
+
+  // Idée #70 (backlog "Cent Fonctionnalités") : jeton opaque et non expirant
+  // — Google/Outlook ne peuvent pas envoyer d'en-tête Authorization sur une
+  // URL d'abonnement calendrier, contrairement aux URL de documents signées
+  // à courte durée de vie (ADR 0008) qui restent, elles, inchangées.
+  async getOrCreateCalendarSubscription(
+    ownerId: string,
+  ): Promise<CalendarSubscriptionShape> {
+    const raw = await this.prisma.agency.findUnique({ where: { ownerId } });
+    if (!raw) {
+      throw new NotFoundException('Agence introuvable');
+    }
+    if (raw.calendarToken) {
+      return toCalendarSubscriptionShape(raw.calendarToken);
+    }
+    return this.regenerateCalendarSubscription(ownerId);
+  }
+
+  // Révoque l'ancienne URL d'abonnement (si le jeton a fuité) en la
+  // remplaçant par une nouvelle.
+  async regenerateCalendarSubscription(
+    ownerId: string,
+  ): Promise<CalendarSubscriptionShape> {
+    const owned = await this.findByOwnerOrFail(ownerId);
+    const token = randomBytes(24).toString('hex');
+    await this.prisma.agency.update({
+      where: { id: owned.id },
+      data: { calendarToken: token },
+    });
+    return toCalendarSubscriptionShape(token);
+  }
+
+  async findByCalendarTokenOrFail(token: string): Promise<AgencyShape> {
+    const agency = await this.prisma.agency.findUnique({
+      where: { calendarToken: token },
+      include: { legalDocuments: true },
+    });
+    if (!agency) {
+      throw new NotFoundException('Lien de calendrier invalide');
+    }
+    return toAgencyShape(agency);
   }
 }

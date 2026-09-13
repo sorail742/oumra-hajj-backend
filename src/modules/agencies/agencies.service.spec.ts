@@ -361,4 +361,90 @@ describe('AgenciesService — inscription et validation des agences', () => {
       expect(storageProvider.getAccessUrl).not.toHaveBeenCalled();
     });
   });
+
+  // Idée #70 (backlog "Cent Fonctionnalités") — calendrier des échéances.
+  describe('getOrCreateCalendarSubscription', () => {
+    it('renvoie le jeton existant sans le régénérer', async () => {
+      prisma.agency.findUnique.mockResolvedValue({
+        ...baseAgency,
+        calendarToken: 'jeton-existant',
+      });
+
+      const result = await service.getOrCreateCalendarSubscription('owner-1');
+
+      expect(result.token).toBe('jeton-existant');
+      expect(result.subscriptionUrl).toBe(
+        '/api/v1/calendar/agency/jeton-existant/calendar.ics',
+      );
+      expect(prisma.agency.update).not.toHaveBeenCalled();
+    });
+
+    it("génère un jeton si l'agence n'en a pas encore", async () => {
+      prisma.agency.findUnique.mockResolvedValueOnce({
+        ...baseAgency,
+        calendarToken: null,
+      });
+      // Second appel : celui de regenerateCalendarSubscription -> findByOwnerOrFail.
+      prisma.agency.findUnique.mockResolvedValueOnce(baseAgency);
+      prisma.agency.update.mockResolvedValue(baseAgency);
+
+      const result = await service.getOrCreateCalendarSubscription('owner-1');
+
+      expect(result.token).toEqual(expect.any(String));
+      expect(result.token.length).toBeGreaterThan(0);
+      expect(prisma.agency.update).toHaveBeenCalledWith({
+        where: { id: 'agency-1' },
+        data: { calendarToken: result.token },
+      });
+    });
+
+    it("lève NotFoundException si l'agence n'existe pas", async () => {
+      prisma.agency.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.getOrCreateCalendarSubscription('owner-inconnu'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('regenerateCalendarSubscription', () => {
+    it('remplace le jeton par un nouveau (révocation de l’ancienne URL)', async () => {
+      prisma.agency.findUnique.mockResolvedValue({
+        ...baseAgency,
+        calendarToken: 'ancien-jeton',
+      });
+      prisma.agency.update.mockResolvedValue(baseAgency);
+
+      const result = await service.regenerateCalendarSubscription('owner-1');
+
+      expect(result.token).not.toBe('ancien-jeton');
+      expect(prisma.agency.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'agency-1' },
+          data: { calendarToken: result.token },
+        }),
+      );
+    });
+  });
+
+  describe('findByCalendarTokenOrFail', () => {
+    it("renvoie l'agence correspondant au jeton", async () => {
+      prisma.agency.findUnique.mockResolvedValue(baseAgency);
+
+      const result = await service.findByCalendarTokenOrFail('un-jeton');
+
+      expect(prisma.agency.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { calendarToken: 'un-jeton' } }),
+      );
+      expect(result.id).toBe('agency-1');
+    });
+
+    it('rejette un jeton invalide ou révoqué', async () => {
+      prisma.agency.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.findByCalendarTokenOrFail('jeton-invalide'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
 });

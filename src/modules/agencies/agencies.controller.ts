@@ -19,7 +19,11 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { AgencyValidationStatus } from '../../common/enums/agency-validation-status.enum';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
-import { AgencyShape, LegalDocumentAlertShape } from '../../types/agency.types';
+import {
+  AgencyShape,
+  CalendarSubscriptionShape,
+  LegalDocumentAlertShape,
+} from '../../types/agency.types';
 import { AccessUrl } from '../storage/storage-provider.interface';
 import { AgenciesService } from './agencies.service';
 import { AddLegalDocumentDto } from './dto/add-legal-document.dto';
@@ -100,6 +104,27 @@ export class AgenciesController {
     @Param('id') id: string,
   ): Promise<AccessUrl> {
     return this.agenciesService.getLegalDocumentAccessUrl(user.sub, id);
+  }
+
+  // Idée #70 (backlog "Cent Fonctionnalités") — calendrier des échéances
+  // clés, synchronisable Google/Outlook (CalendarModule sert le flux ICS
+  // lui-même à partir de ce jeton).
+  @ApiBearerAuth()
+  @Roles(Role.AGENCY)
+  @Get('me/calendar-subscription')
+  getCalendarSubscription(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<CalendarSubscriptionShape> {
+    return this.agenciesService.getOrCreateCalendarSubscription(user.sub);
+  }
+
+  @ApiBearerAuth()
+  @Roles(Role.AGENCY)
+  @Post('me/calendar-subscription/regenerate')
+  regenerateCalendarSubscription(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<CalendarSubscriptionShape> {
+    return this.agenciesService.regenerateCalendarSubscription(user.sub);
   }
 
   // Validation des agences — cahier des charges §3.4.
