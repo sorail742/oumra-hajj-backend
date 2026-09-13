@@ -72,6 +72,7 @@ Les 92 autres idées ne nécessitent aucune décision d'architecture préalable
 - ✅ **#56** Alertes de conformité documentaire (`GET /agencies/me/legal-documents/alerts`)
 - ✅ **#10** Recommandation de forfait personnalisée (`GET /packages?maxBudget=&familySize=&startDateFrom=&startDateTo=`)
 - ✅ **#64** Rapport de satisfaction exportable (`GET /reviews/agency/me/satisfaction-report[/csv]`)
+- ✅ **#70** Calendrier partagé des échéances clés, synchronisable Google/Outlook (`GET /calendar/agency/:token/calendar.ics`)
 
 ## Priorité suggérée pour la suite
 
@@ -83,7 +84,11 @@ proposées sous 0021 et 0022). Depuis, reprise directement dans le CSV
 complet avec les mêmes critères (pas d'ADR bloquant, valeur
 confiance/sécurité en priorité, effort réutilisant au maximum l'existant) :
 **#64** (rapport de satisfaction exportable) traitée ensuite, en réutilisant
-`ReviewsService` déjà enrichi par #96/#61.
+`ReviewsService` déjà enrichi par #96/#61, puis **#70** (calendrier des
+échéances) — a nécessité un jeton non expirant dédié (`Agency.calendarToken`),
+distinct des URL signées à courte durée de vie déjà en place pour les
+documents (ADR 0008), car les clients calendrier ne peuvent pas envoyer
+d'en-tête d'authentification sur une URL d'abonnement.
 
 ## Idées écartées de l'implémentation directe
 
