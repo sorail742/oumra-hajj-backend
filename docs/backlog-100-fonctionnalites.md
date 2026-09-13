@@ -34,7 +34,7 @@ l'interface GitLab si besoin (ex. `brainstorm`, `pelerin`/`agence`/
 
 ## ADR à trancher avant certaines de ces idées
 
-Six ADR ont été proposés pour les groupes d'idées qui touchent un nouveau
+Sept ADR ont été proposés pour les groupes d'idées qui touchent un nouveau
 pattern d'architecture ou un nouveau service externe (voir
 `docs/adr/README.md`) :
 
@@ -46,13 +46,17 @@ pattern d'architecture ou un nouveau service externe (voir
 | [0018](adr/0018-canal-sms-ussd.md) | Canal SMS/USSD | #92 |
 | [0019](adr/0019-assurance-voyage-integree.md) | Assurance voyage intégrée | #9 |
 | [0020](adr/0020-microfinance-partenaire.md) | Microfinance partenaire | #98 |
+| [0021](adr/0021-multi-utilisateurs-agence.md) | Multi-utilisateurs par agence (rôles internes) | #44 |
 
 Toutes restent au statut `proposé` — aucune n'a été validée par l'utilisateur,
 contrairement aux ADR 0006/0012/0014 tranchées cette même nuit. Ne pas
 commencer l'implémentation d'une idée qui en référence une avant qu'elle ne
-passe à `accepté`.
+passe à `accepté`. L'ADR 0021 a été ajoutée en cours de route : #44 a été
+écartée de l'implémentation directe une fois découvert qu'elle touche le
+modèle d'autorisation tranché par l'ADR 0003 (accepté) — voir le contexte de
+l'ADR 0021 pour le détail.
 
-Les 94 autres idées ne nécessitent aucune décision d'architecture préalable
+Les 93 autres idées ne nécessitent aucune décision d'architecture préalable
 — elles réutilisent des patterns déjà en place (modules NestJS existants,
 `PaymentProvider`, `StorageProvider`, ADR 0007 hors-ligne, etc.).
 
@@ -75,7 +79,16 @@ préclassées à 92 rangs près.
 
 | # | Idée | Pourquoi maintenant |
 |---|---|---|
-| 2 | Simulateur de budget total | Pas de backend nécessaire au départ (calcul côté mobile sur données déjà exposées) |
-| 44 | Multi-utilisateurs par agence | Un seul compte propriétaire fait tout aujourd'hui — limite réelle rencontrée à l'usage |
 | 10 | Recommandation de forfait personnalisée | Valeur pèlerin directe, filtre sur données déjà exposées (`GET /packages`) |
 | 26 | Dons/sadaqa vérifiés | Réutilise `PaymentProvider` tel quel, nouveau flux plutôt que nouveau système |
+
+## Idées écartées de l'implémentation directe
+
+- **#2** Simulateur de budget total — pas de backend nécessaire : le prix du
+  forfait est déjà exposé (`GET /packages`), le reste (argent de poche,
+  cadeaux, assurance) est soit une estimation propre au pèlerin, soit
+  bloqué par l'ADR 0019 (assurance voyage, toujours `proposé`). Reste un
+  calcul côté client.
+- **#44** Multi-utilisateurs par agence — touche le modèle d'autorisation
+  tranché par l'ADR 0003 (accepté) ; nécessite l'acceptation de la nouvelle
+  ADR 0021 avant toute implémentation (voir tableau ci-dessus).

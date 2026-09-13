@@ -477,7 +477,7 @@ Contrats courts des guides, paie, disponibilité d'une saison à l'autre.
 
 Rôles comptable/commercial/opérations — aujourd'hui un seul compte propriétaire fait tout.
 
-**ADR concerné :** ADR 0003 (extension du modèle de rôles)
+**ADR concerné :** ADR 0021 (étend l'ADR 0003, accepté, sans le remplacer)
 
 **À vérifier avant/pendant l'implémentation :**
 - [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
