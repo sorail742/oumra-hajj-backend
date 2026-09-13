@@ -146,6 +146,10 @@ export class PackagesService {
     return toPackageShape(pkg);
   }
 
+  // Idée #10 (backlog "Cent Fonctionnalités") : recommandation plutôt que
+  // liste brute — filtre sur budget, fenêtre de dates et taille du groupe,
+  // triée par prix croissant dès qu'un budget est donné (le forfait le
+  // moins cher dans le budget est mis en avant en premier).
   async listPublic(query: QueryPackagesDto): Promise<PackageShape[]> {
     const pkgs = await this.prisma.package.findMany({
       where: {
@@ -154,11 +158,31 @@ export class PackagesService {
           type: query.type as unknown as PrismaPilgrimageType,
         }),
         ...(query.agencyId && { agencyId: query.agencyId }),
+        ...(query.maxBudget !== undefined && {
+          price: { lte: query.maxBudget },
+        }),
+        ...((query.startDateFrom || query.startDateTo) && {
+          startDate: {
+            ...(query.startDateFrom && { gte: new Date(query.startDateFrom) }),
+            ...(query.startDateTo && { lte: new Date(query.startDateTo) }),
+          },
+        }),
       },
-      orderBy: { startDate: 'asc' },
+      orderBy:
+        query.maxBudget !== undefined ? { price: 'asc' } : { startDate: 'asc' },
       include: WITH_STAGES,
     });
-    return pkgs.map(toPackageShape);
+
+    // Places restantes = capacity - seatsTaken : pas une comparaison
+    // directe entre deux colonnes exprimable dans un `where` Prisma, donc
+    // filtrée après coup plutôt que par une requête SQL brute pour un
+    // volume de forfaits qui reste modeste.
+    const filtered =
+      query.familySize !== undefined
+        ? pkgs.filter((p) => p.capacity - p.seatsTaken >= query.familySize!)
+        : pkgs;
+
+    return filtered.map(toPackageShape);
   }
 
   async listMine(ownerId: string): Promise<PackageShape[]> {
