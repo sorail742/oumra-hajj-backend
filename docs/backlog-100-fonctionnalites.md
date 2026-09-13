@@ -62,6 +62,7 @@ Les 94 autres idées ne nécessitent aucune décision d'architecture préalable
 - ✅ **#29** Notification pèlerin + contact d'urgence aux étapes clés du dossier
 - ✅ **#61** Badge de certification qualité (champ `badge` du trust-score)
 - ✅ **#58** Règles de remboursement configurables (`POST /payments/:id/refund`)
+- ✅ **#23** Livret souvenir de voyage (`GET /trip-summary/:bookingId`)
 
 ## Priorité suggérée pour la suite
 
@@ -73,7 +74,6 @@ préclassées à 92 rangs près.
 
 | # | Idée | Pourquoi maintenant |
 |---|---|---|
-| 23 | Livret souvenir généré automatiquement | Donnée déjà en base (étapes, Duas complétées), pas de nouveau schéma |
 | 56 | Alertes de conformité documentaire | Un seul champ à ajouter (`expiresAt` sur `AgencyLegalDocument`) |
 | 2 | Simulateur de budget total | Pas de backend nécessaire au départ (calcul côté mobile sur données déjà exposées) |
 | 44 | Multi-utilisateurs par agence | Un seul compte propriétaire fait tout aujourd'hui — limite réelle rencontrée à l'usage |
