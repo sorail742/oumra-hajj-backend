@@ -1843,6 +1843,44 @@
         ]
       }
     },
+    "/api/v1/reviews/agency/me/satisfaction-report": {
+      "get": {
+        "operationId": "ReviewsController_getSatisfactionReport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reviews"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reviews/agency/me/satisfaction-report/csv": {
+      "get": {
+        "operationId": "ReviewsController_getSatisfactionReportCsv",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reviews"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/reviews/agency/{agencyId}": {
       "get": {
         "operationId": "ReviewsController_listByAgency",
