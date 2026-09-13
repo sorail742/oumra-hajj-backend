@@ -569,6 +569,42 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "maxBudget",
+            "required": false,
+            "in": "query",
+            "description": "Budget maximum, dans la devise du forfait",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "familySize",
+            "required": false,
+            "in": "query",
+            "description": "Nombre de pèlerins du groupe — filtre sur les places restantes",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "startDateFrom",
+            "required": false,
+            "in": "query",
+            "description": "Date de départ au plus tôt acceptable",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDateTo",
+            "required": false,
+            "in": "query",
+            "description": "Date de départ au plus tard acceptable",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
