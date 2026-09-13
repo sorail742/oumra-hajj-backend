@@ -424,6 +424,44 @@
         ]
       }
     },
+    "/api/v1/agencies/me/calendar-subscription": {
+      "get": {
+        "operationId": "AgenciesController_getCalendarSubscription",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agencies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/agencies/me/calendar-subscription/regenerate": {
+      "post": {
+        "operationId": "AgenciesController_regenerateCalendarSubscription",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agencies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/agencies": {
       "get": {
         "operationId": "AgenciesController_list",
