@@ -92,6 +92,15 @@ export class ReviewsService {
     return reviews.map(toReviewShape);
   }
 
+  // Utilisé par TripSummaryService (idée #23) — un avis par réservation
+  // (Review.bookingId @unique), null si aucun avis déposé.
+  async findByBooking(bookingId: string): Promise<ReviewShape | null> {
+    const review = await this.prisma.review.findUnique({
+      where: { bookingId },
+    });
+    return review ? toReviewShape(review) : null;
+  }
+
   async getTrustScore(agencyId: string): Promise<AgencyTrustScoreShape> {
     const agency = await this.agenciesService.findByIdOrFail(agencyId);
 

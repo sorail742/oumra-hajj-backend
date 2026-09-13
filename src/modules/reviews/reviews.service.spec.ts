@@ -351,4 +351,28 @@ describe('ReviewsService', () => {
       expect(result.badge).toBe('trusted');
     });
   });
+
+  describe('findByBooking', () => {
+    it("renvoie null si aucun avis n'existe pour la réservation", async () => {
+      prisma.review.findUnique.mockResolvedValue(null);
+
+      await expect(service.findByBooking(bookingId)).resolves.toBeNull();
+    });
+
+    it("renvoie l'avis s'il existe", async () => {
+      prisma.review.findUnique.mockResolvedValue({
+        id: 'review-1',
+        pilgrimId,
+        agencyId,
+        bookingId,
+        rating: 4,
+        comment: null,
+        createdAt: new Date('2026-01-01'),
+      });
+
+      const result = await service.findByBooking(bookingId);
+
+      expect(result?.rating).toBe(4);
+    });
+  });
 });
