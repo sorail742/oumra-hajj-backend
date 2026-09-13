@@ -28,6 +28,7 @@ Statuts : `proposé` · `accepté` · `déprécié` · `remplacé`
 | [0019](0019-assurance-voyage-integree.md) | Assurance voyage intégrée au tunnel de réservation | proposé |
 | [0020](0020-microfinance-partenaire.md) | Microfinance / crédit pèlerin partenaire | proposé |
 | [0021](0021-multi-utilisateurs-agence.md) | Multi-utilisateurs par agence (rôles internes) | proposé |
+| [0022](0022-dons-sadaqa-verifies.md) | Dons / sadaqa vérifiés vers associations caritatives | proposé |
 
 Les ADR marqués `proposé` doivent être confirmés (passage à `accepté`) avant le
 début de la phase du plan de développement à laquelle ils se rattachent.
