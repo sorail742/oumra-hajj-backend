@@ -1,11 +1,18 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
+import { BookingStatus } from '../../common/enums/booking-status.enum';
 import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
 import { PaymentMethod } from '../../common/enums/payment-method.enum';
 import { PaymentStatus } from '../../common/enums/payment-status.enum';
+import { Role } from '../../common/enums/role.enum';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PackagesService } from '../packages/packages.service';
 import { PaymentsService } from './payments.service';
 import { PAYMENT_PROVIDER } from './providers/payment-provider.interface';
@@ -24,7 +31,9 @@ describe('PaymentsService', () => {
   };
   let bookingsService: { findByIdOrFail: jest.Mock; markStepDone: jest.Mock };
   let packagesService: { findByIdOrFail: jest.Mock };
-  let paymentProvider: { initiate: jest.Mock };
+  let agenciesService: { findByOwnerOrFail: jest.Mock };
+  let notificationsService: { send: jest.Mock };
+  let paymentProvider: { initiate: jest.Mock; refund: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
@@ -39,7 +48,9 @@ describe('PaymentsService', () => {
     };
     bookingsService = { findByIdOrFail: jest.fn(), markStepDone: jest.fn() };
     packagesService = { findByIdOrFail: jest.fn() };
-    paymentProvider = { initiate: jest.fn() };
+    agenciesService = { findByOwnerOrFail: jest.fn() };
+    notificationsService = { send: jest.fn().mockResolvedValue([]) };
+    paymentProvider = { initiate: jest.fn(), refund: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -47,7 +58,8 @@ describe('PaymentsService', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: BookingsService, useValue: bookingsService },
         { provide: PackagesService, useValue: packagesService },
-        { provide: AgenciesService, useValue: {} },
+        { provide: AgenciesService, useValue: agenciesService },
+        { provide: NotificationsService, useValue: notificationsService },
         { provide: PAYMENT_PROVIDER, useValue: paymentProvider },
       ],
     }).compile();
@@ -240,6 +252,131 @@ describe('PaymentsService', () => {
       });
 
       expect(bookingsService.markStepDone).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('requestRefund (idée #58 — barème clair)', () => {
+    const paymentId = 'payment-1';
+    const bookingId = 'booking-1';
+    const pilgrimId = 'pilgrim-1';
+
+    const buildSucceededPayment = (
+      overrides: Partial<{ amount: number; currency: string }> = {},
+    ) => ({
+      id: paymentId,
+      bookingId,
+      amount: 1000,
+      currency: 'GNF',
+      installmentNumber: 1,
+      method: 'mobile_money_orange',
+      status: 'succeeded',
+      providerReference: 'dev-abc-123',
+      receiptRef: 'RCPT-1',
+      confirmedAt: new Date(),
+      refundedAmount: null,
+      refundedAt: null,
+      ...overrides,
+    });
+
+    it("refuse de rembourser un paiement qui n'a jamais réussi", async () => {
+      prisma.payment.findUnique.mockResolvedValue({
+        ...buildSucceededPayment(),
+        status: 'pending',
+      });
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId,
+        status: BookingStatus.PENDING_PAYMENT,
+      });
+
+      await expect(
+        service.requestRefund(pilgrimId, Role.PILGRIM, paymentId),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(paymentProvider.refund).not.toHaveBeenCalled();
+    });
+
+    it('refuse un remboursement une fois le voyage terminé (barème à 0%)', async () => {
+      prisma.payment.findUnique.mockResolvedValue(buildSucceededPayment());
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId,
+        status: BookingStatus.COMPLETED,
+      });
+
+      await expect(
+        service.requestRefund(pilgrimId, Role.PILGRIM, paymentId),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(paymentProvider.refund).not.toHaveBeenCalled();
+    });
+
+    it('rembourse intégralement si la réservation est encore PENDING_PAYMENT (100%)', async () => {
+      prisma.payment.findUnique.mockResolvedValue(buildSucceededPayment());
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId,
+        status: BookingStatus.PENDING_PAYMENT,
+      });
+      paymentProvider.refund.mockResolvedValue({
+        providerRefundReference: 'dev-refund-1',
+      });
+      prisma.payment.update.mockResolvedValue({
+        ...buildSucceededPayment(),
+        status: 'refunded',
+        refundedAmount: 1000,
+        refundedAt: new Date(),
+      });
+
+      const result = await service.requestRefund(
+        pilgrimId,
+        Role.PILGRIM,
+        paymentId,
+      );
+
+      expect(paymentProvider.refund).toHaveBeenCalledWith('dev-abc-123', 1000);
+      expect(result.refundedAmount).toBe(1000);
+      expect(notificationsService.send).toHaveBeenCalledWith(
+        expect.objectContaining({ recipientIds: [pilgrimId] }),
+      );
+    });
+
+    it('rembourse à 50% si la réservation est déjà CONFIRMED', async () => {
+      prisma.payment.findUnique.mockResolvedValue(buildSucceededPayment());
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId,
+        status: BookingStatus.CONFIRMED,
+      });
+      paymentProvider.refund.mockResolvedValue({
+        providerRefundReference: 'dev-refund-1',
+      });
+      prisma.payment.update.mockResolvedValue({
+        ...buildSucceededPayment(),
+        status: 'refunded',
+        refundedAmount: 500,
+        refundedAt: new Date(),
+      });
+
+      await service.requestRefund(pilgrimId, Role.PILGRIM, paymentId);
+
+      expect(paymentProvider.refund).toHaveBeenCalledWith('dev-abc-123', 500);
+    });
+
+    it("refuse à une agence qui n'est pas propriétaire de la réservation", async () => {
+      prisma.payment.findUnique.mockResolvedValue(buildSucceededPayment());
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId,
+        agencyId: 'agency-1',
+        status: BookingStatus.PENDING_PAYMENT,
+      });
+      agenciesService.findByOwnerOrFail.mockResolvedValue({
+        id: 'other-agency',
+      });
+
+      await expect(
+        service.requestRefund('agency-owner-1', Role.AGENCY, paymentId),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(paymentProvider.refund).not.toHaveBeenCalled();
     });
   });
 });
