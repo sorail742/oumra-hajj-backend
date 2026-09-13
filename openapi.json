@@ -1895,6 +1895,34 @@
           }
         ]
       }
+    },
+    "/api/v1/trip-summary/{bookingId}": {
+      "get": {
+        "operationId": "TripSummaryController_getForBooking",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "trip-summary"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
