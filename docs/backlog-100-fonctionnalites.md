@@ -63,6 +63,7 @@ Les 94 autres idées ne nécessitent aucune décision d'architecture préalable
 - ✅ **#61** Badge de certification qualité (champ `badge` du trust-score)
 - ✅ **#58** Règles de remboursement configurables (`POST /payments/:id/refund`)
 - ✅ **#23** Livret souvenir de voyage (`GET /trip-summary/:bookingId`)
+- ✅ **#56** Alertes de conformité documentaire (`GET /agencies/me/legal-documents/alerts`)
 
 ## Priorité suggérée pour la suite
 
@@ -74,7 +75,6 @@ préclassées à 92 rangs près.
 
 | # | Idée | Pourquoi maintenant |
 |---|---|---|
-| 56 | Alertes de conformité documentaire | Un seul champ à ajouter (`expiresAt` sur `AgencyLegalDocument`) |
 | 2 | Simulateur de budget total | Pas de backend nécessaire au départ (calcul côté mobile sur données déjà exposées) |
 | 44 | Multi-utilisateurs par agence | Un seul compte propriétaire fait tout aujourd'hui — limite réelle rencontrée à l'usage |
 | 10 | Recommandation de forfait personnalisée | Valeur pèlerin directe, filtre sur données déjà exposées (`GET /packages`) |
