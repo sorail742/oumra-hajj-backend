@@ -3,8 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
 import { mkdir, writeFile } from 'fs/promises';
 import { extname, join } from 'path';
-import { AppConfig } from '../../../config/configuration';
-import { PilgrimDocumentType } from '../../../common/enums/pilgrim-document-type.enum';
+import { AppConfig } from '../../config/configuration';
 import {
   AccessUrl,
   StorageProvider,
@@ -38,13 +37,13 @@ export class LocalDiskStorageProvider implements StorageProvider {
   }
 
   async store(
-    pilgrimId: string,
-    type: PilgrimDocumentType,
+    ownerId: string,
+    type: string,
     file: StoredFile,
   ): Promise<{ storageRef: string }> {
     await mkdir(UPLOAD_ROOT, { recursive: true });
 
-    const fileName = `${pilgrimId}-${type}-${randomUUID()}${extname(file.originalName)}`;
+    const fileName = `${ownerId}-${type}-${randomUUID()}${extname(file.originalName)}`;
     await writeFile(join(UPLOAD_ROOT, fileName), file.buffer);
 
     this.logger.warn(

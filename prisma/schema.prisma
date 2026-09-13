@@ -219,12 +219,16 @@ model Agency {
 }
 
 model AgencyLegalDocument {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   agencyId   String
-  agency     Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  agency     Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
   label      String
   storageRef String
-  uploadedAt DateTime @default(now())
+  uploadedAt DateTime  @default(now())
+  // Idée #56 (backlog "Cent Fonctionnalités") : date d'expiration déclarée
+  // par l'agence (registre de commerce, agrément, assurance...) — absente si
+  // le document n'a pas de date d'expiration connue.
+  expiresAt  DateTime?
 
   @@map("agency_legal_documents")
 }

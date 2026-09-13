@@ -1,8 +1,13 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AgencyValidationStatus } from '../../common/enums/agency-validation-status.enum';
 import { Role } from '../../common/enums/role.enum';
+import { STORAGE_PROVIDER } from '../storage/storage-provider.interface';
 import { UsersService } from '../users/users.service';
 import { AgenciesService } from './agencies.service';
 
@@ -16,8 +21,12 @@ describe('AgenciesService — inscription et validation des agences', () => {
       update: jest.Mock;
       count: jest.Mock;
     };
+    agencyLegalDocument: {
+      create: jest.Mock;
+    };
   };
   let usersService: { findByEmail: jest.Mock; create: jest.Mock };
+  let storageProvider: { store: jest.Mock; getAccessUrl: jest.Mock };
 
   const baseAgency = {
     id: 'agency-1',
@@ -48,14 +57,19 @@ describe('AgenciesService — inscription et validation des agences', () => {
         update: jest.fn(),
         count: jest.fn().mockResolvedValue(0),
       },
+      agencyLegalDocument: {
+        create: jest.fn(),
+      },
     };
     usersService = { findByEmail: jest.fn(), create: jest.fn() };
+    storageProvider = { store: jest.fn(), getAccessUrl: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AgenciesService,
         { provide: PrismaService, useValue: prisma },
         { provide: UsersService, useValue: usersService },
+        { provide: STORAGE_PROVIDER, useValue: storageProvider },
       ],
     }).compile();
 
@@ -177,6 +191,174 @@ describe('AgenciesService — inscription et validation des agences', () => {
       await expect(
         service.approve('unknown', 'admin-1'),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  // Idée #56 (backlog "Cent Fonctionnalités") — alertes de conformité
+  // documentaire.
+  describe('addLegalDocument', () => {
+    it('stocke le fichier puis crée le document légal avec la date d’expiration fournie', async () => {
+      prisma.agency.findUnique.mockResolvedValue(baseAgency);
+      storageProvider.store.mockResolvedValue({
+        storageRef: 'local://documents/agency-1-agency_legal_document-x.jpg',
+      });
+      prisma.agencyLegalDocument.create.mockResolvedValue({});
+
+      const file = {
+        buffer: Buffer.from('contenu'),
+        originalName: 'registre-commerce.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      await service.addLegalDocument(
+        'owner-1',
+        {
+          label: 'Registre de commerce',
+          expiresAt: '2026-12-31T00:00:00.000Z',
+        },
+        file,
+      );
+
+      expect(storageProvider.store).toHaveBeenCalledWith(
+        'agency-1',
+        'agency_legal_document',
+        file,
+      );
+      expect(prisma.agencyLegalDocument.create).toHaveBeenCalledWith({
+        data: {
+          agencyId: 'agency-1',
+          label: 'Registre de commerce',
+          storageRef: 'local://documents/agency-1-agency_legal_document-x.jpg',
+          expiresAt: new Date('2026-12-31T00:00:00.000Z'),
+        },
+      });
+    });
+
+    it("n'invente pas de date d'expiration quand aucune n'est fournie", async () => {
+      prisma.agency.findUnique.mockResolvedValue(baseAgency);
+      storageProvider.store.mockResolvedValue({
+        storageRef: 'local://documents/agency-1-agency_legal_document-y.jpg',
+      });
+      prisma.agencyLegalDocument.create.mockResolvedValue({});
+
+      await service.addLegalDocument(
+        'owner-1',
+        { label: 'Statuts de société' },
+        {
+          buffer: Buffer.from('contenu'),
+          originalName: 'statuts.pdf',
+          mimeType: 'application/pdf',
+        },
+      );
+
+      expect(prisma.agencyLegalDocument.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ expiresAt: null }),
+        }),
+      );
+    });
+  });
+
+  describe('getComplianceAlerts', () => {
+    const now = new Date('2026-06-15T00:00:00.000Z');
+
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(now);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('signale un document déjà expiré et un document expirant sous 30 jours, ignore le reste', async () => {
+      prisma.agency.findUnique.mockResolvedValue({
+        ...baseAgency,
+        legalDocuments: [
+          {
+            id: 'doc-expired',
+            label: 'Agrément',
+            storageRef: 'ref-1',
+            uploadedAt: now,
+            expiresAt: new Date('2026-06-01T00:00:00.000Z'), // passé
+          },
+          {
+            id: 'doc-expiring-soon',
+            label: 'Assurance',
+            storageRef: 'ref-2',
+            uploadedAt: now,
+            expiresAt: new Date('2026-06-20T00:00:00.000Z'), // dans 5 jours
+          },
+          {
+            id: 'doc-far',
+            label: 'Registre de commerce',
+            storageRef: 'ref-3',
+            uploadedAt: now,
+            expiresAt: new Date('2027-01-01T00:00:00.000Z'), // loin
+          },
+          {
+            id: 'doc-no-expiry',
+            label: 'Statuts',
+            storageRef: 'ref-4',
+            uploadedAt: now,
+            expiresAt: null, // jamais présumé expiré
+          },
+        ],
+      });
+
+      const alerts = await service.getComplianceAlerts('owner-1');
+
+      expect(alerts).toEqual([
+        {
+          id: 'doc-expired',
+          label: 'Agrément',
+          expiresAt: new Date('2026-06-01T00:00:00.000Z'),
+          status: 'expired',
+        },
+        {
+          id: 'doc-expiring-soon',
+          label: 'Assurance',
+          expiresAt: new Date('2026-06-20T00:00:00.000Z'),
+          status: 'expiring_soon',
+        },
+      ]);
+    });
+  });
+
+  describe('getLegalDocumentAccessUrl', () => {
+    it("renvoie l'URL signée pour un document appartenant à l'agence", async () => {
+      prisma.agency.findUnique.mockResolvedValue({
+        ...baseAgency,
+        legalDocuments: [
+          {
+            id: 'doc-1',
+            label: 'Agrément',
+            storageRef: 'ref-1',
+            uploadedAt: new Date('2026-01-01'),
+            expiresAt: null,
+          },
+        ],
+      });
+      storageProvider.getAccessUrl.mockResolvedValue({
+        url: '/api/v1/documents/files/token',
+        expiresAt: new Date('2026-01-01T00:05:00.000Z'),
+      });
+
+      const result = await service.getLegalDocumentAccessUrl(
+        'owner-1',
+        'doc-1',
+      );
+
+      expect(storageProvider.getAccessUrl).toHaveBeenCalledWith('ref-1');
+      expect(result.url).toBe('/api/v1/documents/files/token');
+    });
+
+    it("refuse un document qui n'appartient pas à l'agence demandeuse", async () => {
+      prisma.agency.findUnique.mockResolvedValue(baseAgency); // legalDocuments: []
+
+      await expect(
+        service.getLegalDocumentAccessUrl('owner-1', 'doc-inconnu'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(storageProvider.getAccessUrl).not.toHaveBeenCalled();
     });
   });
 });

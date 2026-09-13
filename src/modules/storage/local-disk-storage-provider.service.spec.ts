@@ -1,8 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { rm } from 'fs/promises';
 import { join } from 'path';
-import { AppConfig } from '../../../config/configuration';
-import { PilgrimDocumentType } from '../../../common/enums/pilgrim-document-type.enum';
+import { AppConfig } from '../../config/configuration';
 import { LocalDiskStorageProvider } from './local-disk-storage-provider.service';
 
 function buildProvider(secret = 'test-secret'): LocalDiskStorageProvider {
@@ -21,15 +20,11 @@ describe("LocalDiskStorageProvider — URL d'accès signées (ADR 0008)", () => 
 
   it('génère un token vérifiable qui renvoie le bon nom de fichier', async () => {
     const provider = buildProvider();
-    const { storageRef } = await provider.store(
-      'pilgrim-1',
-      PilgrimDocumentType.PASSPORT,
-      {
-        buffer: Buffer.from('contenu'),
-        originalName: 'passeport.jpg',
-        mimeType: 'image/jpeg',
-      },
-    );
+    const { storageRef } = await provider.store('pilgrim-1', 'passport', {
+      buffer: Buffer.from('contenu'),
+      originalName: 'passeport.jpg',
+      mimeType: 'image/jpeg',
+    });
 
     const { url, expiresAt } = await provider.getAccessUrl(storageRef);
     const token = url.split('/').pop()!;

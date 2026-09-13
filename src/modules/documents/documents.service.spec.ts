@@ -5,7 +5,7 @@ import { PilgrimDocumentType } from '../../common/enums/pilgrim-document-type.en
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { DocumentsService } from './documents.service';
-import { STORAGE_PROVIDER } from './storage/storage-provider.interface';
+import { STORAGE_PROVIDER } from '../storage/storage-provider.interface';
 
 describe("DocumentsService — contrôle d'accès aux documents sensibles", () => {
   let service: DocumentsService;
