@@ -8,7 +8,12 @@ import { PackagesService } from './packages.service';
 describe('PackagesService — gestion des places (capacité forfait)', () => {
   let service: PackagesService;
   let prisma: {
-    package: { findUnique: jest.Mock; update: jest.Mock; create: jest.Mock };
+    package: {
+      findUnique: jest.Mock;
+      update: jest.Mock;
+      create: jest.Mock;
+      findMany: jest.Mock;
+    };
   };
   let agenciesService: {
     findByOwnerOrFail: jest.Mock;
@@ -49,7 +54,12 @@ describe('PackagesService — gestion des places (capacité forfait)', () => {
 
   beforeEach(async () => {
     prisma = {
-      package: { findUnique: jest.fn(), update: jest.fn(), create: jest.fn() },
+      package: {
+        findUnique: jest.fn(),
+        update: jest.fn(),
+        create: jest.fn(),
+        findMany: jest.fn(),
+      },
     };
     agenciesService = {
       findByOwnerOrFail: jest.fn(),
@@ -315,6 +325,66 @@ describe('PackagesService — gestion des places (capacité forfait)', () => {
           data: expect.not.objectContaining({ stages: expect.anything() }),
         }),
       );
+    });
+  });
+
+  // Idée #10 (backlog "Cent Fonctionnalités") — recommandation de forfait.
+  describe('listPublic — recommandation (budget, dates, taille du groupe)', () => {
+    it('filtre sur le budget maximum et trie par prix croissant', async () => {
+      prisma.package.findMany.mockResolvedValue([
+        buildPkg({ capacity: 10, seatsTaken: 0 }),
+      ]);
+
+      await service.listPublic({ maxBudget: 800 });
+
+      expect(prisma.package.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ price: { lte: 800 } }),
+          orderBy: { price: 'asc' },
+        }),
+      );
+    });
+
+    it('garde le tri chronologique par défaut sans budget renseigné', async () => {
+      prisma.package.findMany.mockResolvedValue([]);
+
+      await service.listPublic({});
+
+      expect(prisma.package.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: { startDate: 'asc' } }),
+      );
+    });
+
+    it('filtre sur la fenêtre de dates de départ', async () => {
+      prisma.package.findMany.mockResolvedValue([]);
+
+      await service.listPublic({
+        startDateFrom: '2027-03-01',
+        startDateTo: '2027-06-01',
+      });
+
+      expect(prisma.package.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            startDate: {
+              gte: new Date('2027-03-01'),
+              lte: new Date('2027-06-01'),
+            },
+          }),
+        }),
+      );
+    });
+
+    it('écarte après coup les forfaits sans assez de places restantes pour le groupe', async () => {
+      prisma.package.findMany.mockResolvedValue([
+        buildPkg({ capacity: 10, seatsTaken: 8 }), // 2 places restantes
+        buildPkg({ capacity: 10, seatsTaken: 2 }), // 8 places restantes
+      ]);
+
+      const result = await service.listPublic({ familySize: 5 });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].seatsTaken).toBe(2);
     });
   });
 });
