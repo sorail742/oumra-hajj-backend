@@ -354,18 +354,24 @@ model GroupMemberLocation {
 // ---------------------------------------------------------------------------
 
 model Booking {
-  id        String        @id @default(uuid())
-  pilgrimId String
-  pilgrim   User          @relation("BookingPilgrim", fields: [pilgrimId], references: [id])
-  packageId String
-  package   Package       @relation(fields: [packageId], references: [id])
-  agencyId  String
-  agency    Agency        @relation(fields: [agencyId], references: [id])
-  groupId   String?
-  group     Group?        @relation(fields: [groupId], references: [id])
-  status    BookingStatus @default(pending_payment)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id              String        @id @default(uuid())
+  pilgrimId       String
+  pilgrim         User          @relation("BookingPilgrim", fields: [pilgrimId], references: [id])
+  packageId       String
+  package         Package       @relation(fields: [packageId], references: [id])
+  agencyId        String
+  agency          Agency        @relation(fields: [agencyId], references: [id])
+  groupId         String?
+  group           Group?        @relation(fields: [groupId], references: [id])
+  status          BookingStatus @default(pending_payment)
+  // Idée #28 (backlog "Cent Fonctionnalités") : jeton opaque et non expirant
+  // pour un lien de suivi en lecture seule, partagé par le pèlerin à sa
+  // famille — pas de compte pèlerin à créer pour un proche peu digitalisé.
+  // Révocable via régénération, même principe que Agency.calendarToken
+  // (idée #70).
+  familyViewToken String?       @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   steps         BookingStep[]
   payments      Payment[]

@@ -4,7 +4,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
-import { BookingShape } from '../../types/booking.types';
+import { BookingShape, FamilyViewLinkShape } from '../../types/booking.types';
 import { BookingsService } from './bookings.service';
 import { AssignGroupDto } from './dto/assign-group.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -72,5 +72,26 @@ export class BookingsController {
     @Param('id') id: string,
   ): Promise<BookingShape> {
     return this.bookingsService.cancel(user.sub, id);
+  }
+
+  // Idée #28 (backlog "Cent Fonctionnalités") — espace famille simplifié.
+  // La consultation elle-même (GET /family-view/:token) est publique, voir
+  // FamilyViewModule.
+  @Roles(Role.PILGRIM)
+  @Get(':id/family-view-link')
+  getFamilyViewLink(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<FamilyViewLinkShape> {
+    return this.bookingsService.getOrCreateFamilyViewLink(user.sub, id);
+  }
+
+  @Roles(Role.PILGRIM)
+  @Post(':id/family-view-link/regenerate')
+  regenerateFamilyViewLink(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<FamilyViewLinkShape> {
+    return this.bookingsService.regenerateFamilyViewLink(user.sub, id);
   }
 }
