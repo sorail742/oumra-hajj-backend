@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { PilgrimDocumentType } from '../../common/enums/pilgrim-document-type.enum';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
+import { PackagesService } from '../packages/packages.service';
 import { DocumentsService } from './documents.service';
 import { STORAGE_PROVIDER } from '../storage/storage-provider.interface';
 
@@ -18,6 +19,7 @@ describe("DocumentsService — contrôle d'accès aux documents sensibles", () =
   };
   let bookingsService: { findByIdOrFail: jest.Mock };
   let agenciesService: { findByOwnerOrFail: jest.Mock };
+  let packagesService: { findByIdOrFail: jest.Mock };
   let storageProvider: { store: jest.Mock; getAccessUrl: jest.Mock };
 
   const otherAgencyId = 'other-agency';
@@ -35,6 +37,7 @@ describe("DocumentsService — contrôle d'accès aux documents sensibles", () =
     };
     bookingsService = { findByIdOrFail: jest.fn() };
     agenciesService = { findByOwnerOrFail: jest.fn() };
+    packagesService = { findByIdOrFail: jest.fn() };
     storageProvider = { store: jest.fn(), getAccessUrl: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -43,6 +46,7 @@ describe("DocumentsService — contrôle d'accès aux documents sensibles", () =
         { provide: PrismaService, useValue: prisma },
         { provide: BookingsService, useValue: bookingsService },
         { provide: AgenciesService, useValue: agenciesService },
+        { provide: PackagesService, useValue: packagesService },
         { provide: STORAGE_PROVIDER, useValue: storageProvider },
       ],
     }).compile();
@@ -242,6 +246,153 @@ describe("DocumentsService — contrôle d'accès aux documents sensibles", () =
       expect(storageProvider.getAccessUrl).toHaveBeenCalledWith(
         storedDoc.storageRef,
       );
+    });
+  });
+
+  // Idée #59 (backlog "Cent Fonctionnalités") — vérification croisée des
+  // dates d'expiration de documents avec les dates du voyage.
+  describe('getExpiryAlerts', () => {
+    const now = new Date('2027-01-01T00:00:00.000Z');
+    const packageId = 'package-1';
+
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(now);
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId: 'pilgrim-1',
+        agencyId: ownAgencyId,
+        packageId,
+      });
+      packagesService.findByIdOrFail.mockResolvedValue({
+        id: packageId,
+        endDate: new Date('2027-03-15T00:00:00.000Z'),
+      });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('signale un passeport déjà expiré, un visa expirant avant le retour, un passeport expirant trop tôt après le retour, et ignore le reste', async () => {
+      prisma.pilgrimDocument.findMany.mockResolvedValue([
+        {
+          id: 'doc-expired',
+          bookingId,
+          pilgrimId: 'pilgrim-1',
+          type: PilgrimDocumentType.PASSPORT,
+          storageRef: 'ref-1',
+          status: 'validated',
+          rejectionReason: null,
+          expiresAt: new Date('2026-12-01T00:00:00.000Z'), // passé
+        },
+        {
+          id: 'doc-before-trip',
+          bookingId,
+          pilgrimId: 'pilgrim-1',
+          type: PilgrimDocumentType.VISA,
+          storageRef: 'ref-2',
+          status: 'validated',
+          rejectionReason: null,
+          expiresAt: new Date('2027-03-01T00:00:00.000Z'), // avant la fin du voyage (15/03)
+        },
+        {
+          id: 'doc-passport-soon-after',
+          bookingId,
+          pilgrimId: 'pilgrim-1',
+          type: PilgrimDocumentType.PASSPORT,
+          storageRef: 'ref-3',
+          status: 'validated',
+          rejectionReason: null,
+          // Fin du voyage + ~1 mois, sous la marge de 6 mois exigée.
+          expiresAt: new Date('2027-04-15T00:00:00.000Z'),
+        },
+        {
+          id: 'doc-passport-far',
+          bookingId,
+          pilgrimId: 'pilgrim-1',
+          type: PilgrimDocumentType.PASSPORT,
+          storageRef: 'ref-4',
+          status: 'validated',
+          rejectionReason: null,
+          // Largement au-delà de la marge de 6 mois après le voyage.
+          expiresAt: new Date('2028-01-01T00:00:00.000Z'),
+        },
+        {
+          id: 'doc-no-expiry',
+          bookingId,
+          pilgrimId: 'pilgrim-1',
+          type: PilgrimDocumentType.FLIGHT_TICKET,
+          storageRef: 'ref-5',
+          status: 'validated',
+          rejectionReason: null,
+          expiresAt: null,
+        },
+      ]);
+
+      const alerts = await service.getExpiryAlerts(
+        'pilgrim-1',
+        'pilgrim',
+        bookingId,
+      );
+
+      expect(alerts).toEqual([
+        {
+          id: 'doc-expired',
+          type: PilgrimDocumentType.PASSPORT,
+          expiresAt: new Date('2026-12-01T00:00:00.000Z'),
+          status: 'expired',
+        },
+        {
+          id: 'doc-before-trip',
+          type: PilgrimDocumentType.VISA,
+          expiresAt: new Date('2027-03-01T00:00:00.000Z'),
+          status: 'expires_before_trip',
+        },
+        {
+          id: 'doc-passport-soon-after',
+          type: PilgrimDocumentType.PASSPORT,
+          expiresAt: new Date('2027-04-15T00:00:00.000Z'),
+          status: 'expires_soon_after_trip',
+        },
+      ]);
+    });
+
+    it("n'applique la marge des 6 mois qu'aux passeports, pas aux visas", async () => {
+      prisma.pilgrimDocument.findMany.mockResolvedValue([
+        {
+          id: 'doc-visa-soon-after',
+          bookingId,
+          pilgrimId: 'pilgrim-1',
+          type: PilgrimDocumentType.VISA,
+          storageRef: 'ref-1',
+          status: 'validated',
+          rejectionReason: null,
+          // Après la fin du voyage, mais un visa n'a pas de marge de 6 mois.
+          expiresAt: new Date('2027-04-15T00:00:00.000Z'),
+        },
+      ]);
+
+      const alerts = await service.getExpiryAlerts(
+        'pilgrim-1',
+        'pilgrim',
+        bookingId,
+      );
+
+      expect(alerts).toEqual([]);
+    });
+
+    it("propage le refus d'accès de findByBooking sans interroger le forfait", async () => {
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId: 'un-autre-pelerin',
+        agencyId: ownAgencyId,
+        packageId,
+      });
+
+      await expect(
+        service.getExpiryAlerts('pilgrim-1', 'pilgrim', bookingId),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(packagesService.findByIdOrFail).not.toHaveBeenCalled();
     });
   });
 });
