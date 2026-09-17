@@ -1520,6 +1520,34 @@
         ]
       }
     },
+    "/api/v1/documents/expiry-alerts": {
+      "get": {
+        "operationId": "DocumentsController_getExpiryAlerts",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/documents/{id}/access-url": {
       "get": {
         "operationId": "DocumentsController_getAccessUrl",
@@ -2576,6 +2604,9 @@
               "flight_ticket",
               "vaccination_certificate"
             ]
+          },
+          "expiresAt": {
+            "type": "string"
           }
         },
         "required": [
