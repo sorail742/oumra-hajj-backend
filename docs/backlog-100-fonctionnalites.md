@@ -73,6 +73,7 @@ Les 92 autres idées ne nécessitent aucune décision d'architecture préalable
 - ✅ **#10** Recommandation de forfait personnalisée (`GET /packages?maxBudget=&familySize=&startDateFrom=&startDateTo=`)
 - ✅ **#64** Rapport de satisfaction exportable (`GET /reviews/agency/me/satisfaction-report[/csv]`)
 - ✅ **#70** Calendrier partagé des échéances clés, synchronisable Google/Outlook (`GET /calendar/agency/:token/calendar.ics`)
+- ✅ **#59** Vérification croisée des documents (`GET /documents/expiry-alerts`)
 
 ## Priorité suggérée pour la suite
 
@@ -88,7 +89,11 @@ confiance/sécurité en priorité, effort réutilisant au maximum l'existant) :
 échéances) — a nécessité un jeton non expirant dédié (`Agency.calendarToken`),
 distinct des URL signées à courte durée de vie déjà en place pour les
 documents (ADR 0008), car les clients calendrier ne peuvent pas envoyer
-d'en-tête d'authentification sur une URL d'abonnement.
+d'en-tête d'authentification sur une URL d'abonnement. Puis **#59**
+(vérification croisée des documents) — `PilgrimDocument.expiresAt` déclaré à
+l'upload, croisé avec `Package.endDate` ; la marge de 6 mois exigée par de
+nombreux pays pour un passeport est documentée comme repère à confirmer avec
+l'agence/l'ambassade, jamais présentée comme une garantie légale.
 
 ## Idées écartées de l'implémentation directe
 
