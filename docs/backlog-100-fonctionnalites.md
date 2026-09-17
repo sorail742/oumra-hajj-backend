@@ -74,6 +74,7 @@ Les 92 autres idées ne nécessitent aucune décision d'architecture préalable
 - ✅ **#64** Rapport de satisfaction exportable (`GET /reviews/agency/me/satisfaction-report[/csv]`)
 - ✅ **#70** Calendrier partagé des échéances clés, synchronisable Google/Outlook (`GET /calendar/agency/:token/calendar.ics`)
 - ✅ **#59** Vérification croisée des documents (`GET /documents/expiry-alerts`)
+- ✅ **#28** Espace famille simplifié (`GET /family-view/:token`, lien généré via `bookings/:id/family-view-link`)
 
 ## Priorité suggérée pour la suite
 
@@ -93,7 +94,11 @@ d'en-tête d'authentification sur une URL d'abonnement. Puis **#59**
 (vérification croisée des documents) — `PilgrimDocument.expiresAt` déclaré à
 l'upload, croisé avec `Package.endDate` ; la marge de 6 mois exigée par de
 nombreux pays pour un passeport est documentée comme repère à confirmer avec
-l'agence/l'ambassade, jamais présentée comme une garantie légale.
+l'agence/l'ambassade, jamais présentée comme une garantie légale. Puis **#28**
+(espace famille simplifié) — même principe de jeton non expirant que #70
+(`Booking.familyViewToken`), agrégeant `BookingsService`,
+`GroupsService` (position partagée, itinéraire) et `PackagesService`, sans
+exposer documents ni paiements.
 
 ## Idées écartées de l'implémentation directe
 
