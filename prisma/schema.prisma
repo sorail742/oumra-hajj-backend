@@ -436,6 +436,10 @@ model PilgrimDocument {
   storageRef      String
   status          PilgrimDocumentStatus @default(pending)
   rejectionReason String?
+  // Idée #59 (backlog "Cent Fonctionnalités") : date d'expiration déclarée
+  // par le pèlerin à l'upload (passeport, visa...) — absente si le type de
+  // document n'en a pas (billet d'avion) ou si elle n'est pas connue.
+  expiresAt       DateTime?
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
 
