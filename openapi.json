@@ -1299,6 +1299,62 @@
         ]
       }
     },
+    "/api/v1/bookings/{id}/family-view-link": {
+      "get": {
+        "operationId": "BookingsController_getFamilyViewLink",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "bookings"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/{id}/family-view-link/regenerate": {
+      "post": {
+        "operationId": "BookingsController_regenerateFamilyViewLink",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "bookings"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/payments/initiate": {
       "post": {
         "operationId": "PaymentsController_initiate",
