@@ -10,13 +10,18 @@ import {
   DossierStepKey as PrismaDossierStepKey,
   DossierStepStatus as PrismaDossierStepStatus,
 } from '@prisma/client';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus } from '../../common/enums/booking-status.enum';
 import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
 import { DossierStepStatus } from '../../common/enums/dossier-step-status.enum';
 import { NotificationType } from '../../common/enums/notification-type.enum';
 import { Role } from '../../common/enums/role.enum';
-import { BookingShape } from '../../types/booking.types';
+import {
+  BookingShape,
+  FamilyViewLinkShape,
+  FamilyViewShape,
+} from '../../types/booking.types';
 import { AgenciesService } from '../agencies/agencies.service';
 import { GroupsService } from '../groups/groups.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -46,6 +51,12 @@ const STEP_LABELS: Record<DossierStepKey, string> = {
 };
 
 type BookingRecord = PrismaBooking & { steps: PrismaBookingStep[] };
+
+// Chemin en dur comme AgenciesService.toCalendarSubscriptionShape (idée
+// #70) — le client compose avec sa propre base.
+function toFamilyViewLinkShape(token: string): FamilyViewLinkShape {
+  return { token, viewUrl: `/api/v1/family-view/${token}` };
+}
 
 function toBookingShape(booking: BookingRecord): BookingShape {
   return {
@@ -252,6 +263,94 @@ export class BookingsService {
       include: BOOKING_INCLUDE,
     });
     return toBookingShape(updated);
+  }
+
+  // Idée #28 (backlog "Cent Fonctionnalités") — espace famille simplifié :
+  // un lien de suivi en lecture seule, sans compte pèlerin à créer pour un
+  // proche peu digitalisé. Seul le pèlerin propriétaire de la réservation
+  // peut générer ce lien — c'est un choix de partage personnel, pas une
+  // action que l'agence peut faire à sa place.
+  async getOrCreateFamilyViewLink(
+    pilgrimId: string,
+    bookingId: string,
+  ): Promise<FamilyViewLinkShape> {
+    const booking = await this.findByIdOrFail(bookingId);
+    if (booking.pilgrimId !== pilgrimId) {
+      throw new ForbiddenException('Cette réservation ne vous appartient pas');
+    }
+
+    const raw = await this.prisma.booking.findUniqueOrThrow({
+      where: { id: bookingId },
+    });
+    if (raw.familyViewToken) {
+      return toFamilyViewLinkShape(raw.familyViewToken);
+    }
+    return this.regenerateFamilyViewLink(pilgrimId, bookingId);
+  }
+
+  // Révoque l'ancien lien (si partagé au-delà de la famille voulue) en le
+  // remplaçant par un nouveau.
+  async regenerateFamilyViewLink(
+    pilgrimId: string,
+    bookingId: string,
+  ): Promise<FamilyViewLinkShape> {
+    const booking = await this.findByIdOrFail(bookingId);
+    if (booking.pilgrimId !== pilgrimId) {
+      throw new ForbiddenException('Cette réservation ne vous appartient pas');
+    }
+
+    const token = randomBytes(24).toString('hex');
+    await this.prisma.booking.update({
+      where: { id: booking.id },
+      data: { familyViewToken: token },
+    });
+    return toFamilyViewLinkShape(token);
+  }
+
+  // Vue publique, sans authentification — le jeton fait office
+  // d'autorisation (même principe que le calendrier agence, idée #70).
+  // N'expose jamais les documents ni les paiements.
+  async getFamilyView(token: string): Promise<FamilyViewShape> {
+    const raw = await this.prisma.booking.findUnique({
+      where: { familyViewToken: token },
+      include: BOOKING_INCLUDE,
+    });
+    if (!raw) {
+      throw new NotFoundException('Lien de suivi invalide');
+    }
+    const booking = toBookingShape(raw);
+
+    const [pkg, pilgrim, group] = await Promise.all([
+      this.packagesService.findByIdOrFail(booking.packageId),
+      this.usersService.findByIdOrFail(booking.pilgrimId),
+      booking.groupId
+        ? this.groupsService.findByIdOrFail(booking.groupId)
+        : Promise.resolve(undefined),
+    ]);
+
+    const myLocation = group?.locations.find(
+      (location) => location.userId === booking.pilgrimId,
+    );
+    const latestItineraryStep = group?.itinerary.length
+      ? [...group.itinerary].sort(
+          (a, b) => b.date.getTime() - a.date.getTime(),
+        )[0]
+      : undefined;
+
+    return {
+      pilgrimFullName: pilgrim.fullName,
+      packageTitle: pkg.title,
+      status: booking.status,
+      steps: booking.steps,
+      location: myLocation
+        ? {
+            lat: myLocation.lat,
+            lng: myLocation.lng,
+            updatedAt: myLocation.updatedAt,
+          }
+        : undefined,
+      latestItineraryStep,
+    };
   }
 
   // Statistiques globales admin — cahier des charges §3.4.
