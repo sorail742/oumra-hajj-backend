@@ -1,0 +1,700 @@
+// Schéma Prisma de départ — DarMeuble.
+//
+// Traduction du modèle de données du cahier des charges (§7) en un schéma
+// concret, augmenté des décisions actées dans docs/backend/ :
+// - `organizationId` sur chaque table métier (docs/backend/multi-tenant.md,
+//   ADR-0002) ;
+// - `deletedAt` sur les entités racines de catégorie A
+//   (docs/backend/soft-delete.md, ADR-0006) ;
+// - séparation `RentSchedule` (échéance attendue) / `Payment` (transaction
+//   réelle), parce que le cahier des charges (§5.4) les distingue
+//   explicitement — une échéance peut être partiellement payée par
+//   plusieurs transactions ;
+// - authentification access/refresh avec rotation (ADR-0004) : `UserSession`
+//   + `RefreshToken`, sur le modèle de smartsms-backend.
+//
+// **Rien ici n'est figé.** C'est un point de départ pour la Phase 0
+// (cadrage) du cahier des charges, à affiner avec l'équipe avant la
+// première migration réelle — en particulier les enums, qui reflètent une
+// lecture du cahier des charges, pas une validation métier.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma 7 : l'URL de connexion ne se déclare plus ici mais dans
+// `prisma.config.ts` (CLI/migrations) et via un driver adapter côté
+// `PrismaService` (runtime) — voir `code-templates/backend/prisma.config.ts`
+// et `code-templates/backend/prisma.service.ts`, repris tels quels
+// d'Oumra-hadj-project (ADR 0013 de ce projet frère). Vérifier la version
+// de Prisma réellement installée au moment de démarrer DarMeuble : si elle
+// diffère de la 7.x, ce point est à réévaluer contre la documentation
+// Prisma en vigueur à ce moment-là plutôt que de supposer que ce
+// commentaire reste exact indéfiniment.
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  super_admin
+  owner
+  manager
+  accountant
+  tenant
+}
+
+enum OrganizationStatus {
+  trialing
+  active
+  suspended
+  cancelled
+}
+
+enum UnitType {
+  apartment
+  room
+  studio
+  shop
+  warehouse
+}
+
+enum UnitStatus {
+  free
+  occupied
+  under_maintenance
+  reserved
+}
+
+enum RentPeriodicity {
+  monthly
+  quarterly
+  yearly
+}
+
+enum LeaseStatus {
+  active
+  terminated
+  // "expire bientôt" (design-system.md) est calculé à la lecture à partir
+  // de `endDate`, jamais stocké — un statut dérivé qui se recalcule au lieu
+  // de se synchroniser ne peut pas devenir incohérent.
+}
+
+enum InspectionType {
+  move_in
+  move_out
+}
+
+enum PaymentPurpose {
+  rent
+  deposit
+  advance
+  subscription
+}
+
+enum PaymentMethod {
+  djomy
+  cash
+  bank_transfer
+}
+
+// Statut d'une transaction elle-même — distinct de RentScheduleStatus, qui
+// décrit l'échéance qu'elle solde (voir le commentaire du modèle Payment).
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+enum RentScheduleStatus {
+  upcoming
+  pending
+  paid
+  overdue
+  partially_paid
+}
+
+enum ExpenseCategory {
+  water
+  electricity
+  security
+  maintenance
+  tax
+  other
+}
+
+enum ExpenseAllocationMethod {
+  surface_prorata
+  equal_split
+}
+
+enum MaintenanceStatus {
+  new
+  in_progress
+  resolved
+  cancelled
+}
+
+enum NotificationChannel {
+  in_app
+  sms
+  email
+}
+
+enum NotificationType {
+  rent_reminder
+  payment_overdue
+  lease_expiring
+  maintenance_status_change
+  announcement
+}
+
+enum DocumentType {
+  lease_contract
+  id_document
+  inspection_report
+  unit_photo
+  payment_receipt
+}
+
+enum SubscriptionPlanStatus {
+  active
+  deprecated
+}
+
+enum SubscriptionStatus {
+  trialing
+  active
+  past_due
+  cancelled
+}
+
+// ---------------------------------------------------------------------------
+// Organisations (tenants) & utilisateurs
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id          String             @id @default(uuid())
+  name        String
+  status      OrganizationStatus @default(trialing)
+  trialEndsAt DateTime?
+  // Catégorie A (docs/backend/soft-delete.md) : résiliation d'un client
+  // SaaS, jamais une perte de son historique de facturation.
+  deletedAt   DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  users               User[]
+  buildings           Building[]
+  tenants             Tenant[]
+  leases              Lease[]
+  payments            Payment[]
+  expenses            Expense[]
+  maintenanceRequests MaintenanceRequest[]
+  documents           Document[]
+  notifications       Notification[]
+  subscriptions       Subscription[]
+  activityLogs        ActivityLog[]
+  units               Unit[]
+
+  @@index([status])
+  @@map("organizations")
+}
+
+model User {
+  id             String        @id @default(uuid())
+  // Nullable : un super_admin n'appartient à aucune organisation
+  // (cahier des charges §4 — voir docs/backend/multi-tenant.md).
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  fullName       String
+  email          String?
+  phone          String?
+  passwordHash   String?
+  role           Role
+  isActive       Boolean       @default(true)
+  // Catégorie A : un compte désactivé n'est pas supprimé — les actions
+  // qu'il a effectuées restent attribuables (journal d'activité, §5.12).
+  deletedAt      DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  sessions         UserSession[]
+  managedBuildings BuildingManager[]
+  tenantProfile    Tenant?
+  activityLogs     ActivityLog[]
+  notifications    Notification[]
+
+  @@index([organizationId])
+  @@index([role])
+  @@map("users")
+}
+
+// Portée intra-organisation du "gestionnaire délégué" (cahier des charges
+// §4) — voir docs/backend/multi-tenant.md §"Portée intra-organisation".
+// Modélisé en jonction explicite plutôt qu'un many-to-many Prisma implicite
+// pour pouvoir tracer qui a assigné qui, plus tard si besoin.
+model BuildingManager {
+  id         String   @id @default(uuid())
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([buildingId, userId])
+  @@map("building_managers")
+}
+
+// ---------------------------------------------------------------------------
+// Authentification (ADR-0004 — access/refresh avec rotation)
+// ---------------------------------------------------------------------------
+
+model UserSession {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceInfo String?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  refreshTokens RefreshToken[]
+
+  @@index([userId])
+  @@map("user_sessions")
+}
+
+model RefreshToken {
+  id        String      @id @default(uuid())
+  sessionId String
+  session   UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  // Jamais la valeur en clair — voir docs/backend/adr/0004-*.md.
+  tokenHash String      @unique
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId])
+  @@map("refresh_tokens")
+}
+
+// Catégorie C (docs/backend/soft-delete.md) : cycle de vie propre
+// (expiration), pas une suppression au sens métier.
+model OtpCode {
+  id        String   @id @default(uuid())
+  phone     String
+  codeHash  String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+  @@map("otp_codes")
+}
+
+// ---------------------------------------------------------------------------
+// Immeubles & unités locatives (module 1 du cahier des charges)
+// ---------------------------------------------------------------------------
+
+model Building {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  address        String
+  city           String
+  floorsCount    Int?
+  photos         String[] // références de stockage, pas les fichiers eux-mêmes
+  deletedAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  units    Unit[]
+  managers BuildingManager[]
+  expenses Expense[]
+
+  @@index([organizationId])
+  @@map("buildings")
+}
+
+model Unit {
+  id              String          @id @default(uuid())
+  organizationId  String
+  organization    Organization    @relation(fields: [organizationId], references: [id])
+  buildingId      String
+  building        Building        @relation(fields: [buildingId], references: [id])
+  reference       String // ex. "A12" — voir la contrainte unique ci-dessous
+  type            UnitType
+  surfaceM2       Float?
+  roomsCount      Int?
+  amenities       String[]
+  baseRent        Float
+  currency        String          @default("GNF")
+  rentPeriodicity RentPeriodicity @default(monthly)
+  status          UnitStatus      @default(free)
+  deletedAt       DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  leases              Lease[]
+  maintenanceRequests MaintenanceRequest[]
+
+  // Contrainte à convertir en index unique partiel (WHERE deleted_at IS
+  // NULL) dans une migration SQL brute dès que le soft delete est en place
+  // — voir docs/backend/soft-delete.md §"Contraintes d'unicité". Prisma ne
+  // sait pas déclarer cette clause directement : cette ligne suffit pour
+  // développer avant que ce raffinement soit nécessaire, mais un
+  // appartement "A12" archivé bloquerait sinon la recréation d'un "A12"
+  // dans le même immeuble.
+  @@unique([buildingId, reference])
+  @@index([organizationId])
+  @@index([status])
+  @@map("units")
+}
+
+// ---------------------------------------------------------------------------
+// Locataires (module 2)
+// ---------------------------------------------------------------------------
+
+// Distinct de `User` : un locataire existe d'abord comme fiche (cahier des
+// charges §5.2), avant d'avoir éventuellement un compte pour se connecter —
+// voir docs/backend/socle-backend.md §3.
+model Tenant {
+  id                    String       @id @default(uuid())
+  organizationId        String
+  organization          Organization @relation(fields: [organizationId], references: [id])
+  fullName              String
+  phone                 String?
+  email                 String?
+  idDocumentRef         String? // référence de stockage de la pièce d'identité
+  photoRef              String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  // Rempli seulement si le locataire a créé/activé son propre compte
+  // (§5.2) — jamais l'inverse (un User ne référence pas son Tenant, c'est
+  // le Tenant qui référence son User optionnel).
+  userId                String?      @unique
+  user                  User?        @relation(fields: [userId], references: [id])
+  // "Liste noire" interne (§5.2), visible uniquement par l'organisation
+  // concernée — jamais partagée entre organisations.
+  isBlacklisted         Boolean      @default(false)
+  blacklistReason       String?
+  deletedAt             DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  leases              Lease[]
+  maintenanceRequests MaintenanceRequest[]
+
+  @@index([organizationId])
+  @@map("tenants")
+}
+
+// ---------------------------------------------------------------------------
+// Baux (module 3)
+// ---------------------------------------------------------------------------
+
+model Lease {
+  id                String          @id @default(uuid())
+  organizationId    String
+  organization      Organization    @relation(fields: [organizationId], references: [id])
+  unitId            String
+  unit              Unit            @relation(fields: [unitId], references: [id])
+  tenantId          String
+  tenant            Tenant          @relation(fields: [tenantId], references: [id])
+  startDate         DateTime
+  endDate           DateTime
+  rentAmount        Float
+  currency          String          @default("GNF")
+  periodicity       RentPeriodicity @default(monthly)
+  depositAmount     Float?
+  advanceAmount     Float?
+  status            LeaseStatus     @default(active)
+  terminationReason String?
+  terminationDate   DateTime?
+  // Acceptation en ligne (§5.3) — "validation simple, horodatée, sans
+  // valeur de signature électronique certifiée" (cahier des charges,
+  // hors périmètre v1). Ne jamais présenter ce champ comme une signature
+  // électronique qualifiée dans l'interface.
+  acceptedAt        DateTime?
+  deletedAt         DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  rentSchedules RentSchedule[]
+  payments      Payment[]
+  inspections   PropertyInspection[]
+
+  @@index([organizationId])
+  @@index([unitId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("leases")
+}
+
+// État des lieux d'entrée et de sortie (§5.3).
+model PropertyInspection {
+  id          String         @id @default(uuid())
+  leaseId     String
+  lease       Lease          @relation(fields: [leaseId], references: [id])
+  type        InspectionType
+  notes       String?
+  photos      String[]
+  performedAt DateTime
+  createdAt   DateTime       @default(now())
+
+  @@index([leaseId])
+  @@map("property_inspections")
+}
+
+// ---------------------------------------------------------------------------
+// Paiements & loyers (module 4) — voir docs/backend/paiements-djomy.md
+// ---------------------------------------------------------------------------
+
+// L'échéance attendue, distincte de la transaction qui la solde — le
+// cahier des charges (§5.4) les distingue explicitement ("échéancier" vs
+// "paiements"). Une échéance peut être réglée par plusieurs transactions
+// partielles (paiement en espèces + complément Djomy, par exemple).
+//
+// StatusBadge `kind="payment"` (docs/frontend/design-system.md) affiche
+// `RentSchedule.status`, pas `Payment.status` — c'est l'échéance qui
+// intéresse l'utilisateur, la ou les transactions qui la soldent sont un
+// détail consultable dans son historique.
+model RentSchedule {
+  id             String             @id @default(uuid())
+  leaseId        String
+  lease          Lease              @relation(fields: [leaseId], references: [id])
+  dueDate        DateTime
+  expectedAmount Float
+  currency       String             @default("GNF")
+  // Pénalité de retard, si configurée par l'organisation (§5.4) —
+  // calculée et appliquée par un job planifié, jamais recalculée côté
+  // client.
+  lateFeeAmount  Float              @default(0)
+  status         RentScheduleStatus @default(upcoming)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  payments Payment[]
+
+  @@index([leaseId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("rent_schedules")
+}
+
+// Une transaction réelle — jamais supprimée, son statut évolue
+// (catégorie D, docs/backend/soft-delete.md). Couvre trois origines
+// distinctes (loyer, dépôt/avance, abonnement SaaS) par
+// `purpose`/`method`, pas trois tables séparées : voir
+// docs/backend/paiements-djomy.md pour la garde de statut obligatoire sur
+// toute confirmation.
+model Payment {
+  id                String         @id @default(uuid())
+  organizationId    String
+  organization      Organization   @relation(fields: [organizationId], references: [id])
+  // L'un ou l'autre selon `purpose`, jamais les deux — un paiement de
+  // loyer/dépôt référence une échéance, un paiement d'abonnement
+  // référence une souscription.
+  rentScheduleId    String?
+  rentSchedule      RentSchedule?  @relation(fields: [rentScheduleId], references: [id])
+  leaseId           String?
+  lease             Lease?         @relation(fields: [leaseId], references: [id])
+  subscriptionId    String?
+  subscription      Subscription?  @relation(fields: [subscriptionId], references: [id])
+  purpose           PaymentPurpose
+  method            PaymentMethod
+  amount            Float
+  currency          String         @default("GNF")
+  status            PaymentStatus  @default(pending)
+  // Référence Djomy — unique globalement, absente pour un paiement
+  // manuel (espèces/virement).
+  providerReference String?        @unique
+  paidAt            DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([organizationId])
+  @@index([rentScheduleId])
+  @@index([subscriptionId])
+  @@index([status])
+  @@map("payments")
+}
+
+// ---------------------------------------------------------------------------
+// Charges & dépenses (module 6)
+// ---------------------------------------------------------------------------
+
+model Expense {
+  id               String                  @id @default(uuid())
+  organizationId   String
+  organization     Organization            @relation(fields: [organizationId], references: [id])
+  buildingId       String
+  building         Building                @relation(fields: [buildingId], references: [id])
+  category         ExpenseCategory
+  amount           Float
+  currency         String                  @default("GNF")
+  description      String?
+  // Méthode de répartition entre unités (§5.6) — toujours affichée à côté
+  // du résultat côté frontend (docs/frontend/design-system.md,
+  // `ExpenseAllocationTable`).
+  allocationMethod ExpenseAllocationMethod @default(equal_split)
+  incurredAt       DateTime
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  @@index([organizationId])
+  @@index([buildingId])
+  @@map("expenses")
+}
+
+// ---------------------------------------------------------------------------
+// Maintenance & interventions (module 7)
+// ---------------------------------------------------------------------------
+
+model MaintenanceRequest {
+  id                   String            @id @default(uuid())
+  organizationId       String
+  organization         Organization      @relation(fields: [organizationId], references: [id])
+  unitId               String
+  unit                 Unit              @relation(fields: [unitId], references: [id])
+  tenantId             String
+  tenant               Tenant            @relation(fields: [tenantId], references: [id])
+  description          String
+  photos               String[]
+  status               MaintenanceStatus @default(new)
+  assignedProviderName String?
+  resolvedAt           DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@index([organizationId])
+  @@index([unitId])
+  @@index([status])
+  @@map("maintenance_requests")
+}
+
+// ---------------------------------------------------------------------------
+// Notifications (module 8)
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id             String              @id @default(uuid())
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id])
+  // L'un ou l'autre selon le destinataire réel — voir la même remarque
+  // que Payment ci-dessus.
+  userId         String?
+  user           User?               @relation(fields: [userId], references: [id])
+  type           NotificationType
+  channel        NotificationChannel
+  content        String
+  sentAt         DateTime?
+  createdAt      DateTime            @default(now())
+
+  @@index([organizationId])
+  @@index([userId])
+  @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Gestion documentaire (module 10)
+// ---------------------------------------------------------------------------
+
+// Le cahier des charges (§7) décrit `Document` comme polymorphe (Lease,
+// Unit, Tenant, Building). Choix retenu : une clef étrangère nullable par
+// parent possible plutôt qu'une paire (type, id) sans contrainte — préserve
+// l'intégrité référentielle réelle. **Exactement une** des quatre clefs
+// doit être renseignée ; à vérifier au niveau service, Prisma ne l'impose
+// pas nativement (pas de contrainte CHECK multi-colonnes portable).
+model Document {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  type           DocumentType
+  storageRef     String
+  leaseId        String?
+  unitId         String?
+  tenantId       String?
+  buildingId     String?
+  uploadedAt     DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([leaseId])
+  @@index([unitId])
+  @@index([tenantId])
+  @@index([buildingId])
+  @@map("documents")
+}
+
+// ---------------------------------------------------------------------------
+// Abonnement SaaS & facturation plateforme (module 11)
+// ---------------------------------------------------------------------------
+
+// Catégorie D (docs/backend/soft-delete.md) : cycle de vie par statut, un
+// plan déprécié n'est pas supprimé tant qu'une organisation y est abonnée.
+model SubscriptionPlan {
+  id            String                 @id @default(uuid())
+  name          String
+  price         Float
+  currency      String                 @default("GNF")
+  periodicity   RentPeriodicity        @default(monthly)
+  // Limites — voir docs/backend/socle-backend.md §0bis, le modèle de
+  // tarification exact (par immeuble / par unité / par palier) n'est pas
+  // encore tranché par le porteur produit.
+  unitLimit     Int?
+  buildingLimit Int?
+  status        SubscriptionPlanStatus @default(active)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id               String             @id @default(uuid())
+  organizationId   String
+  organization     Organization       @relation(fields: [organizationId], references: [id])
+  planId           String
+  plan             SubscriptionPlan   @relation(fields: [planId], references: [id])
+  status           SubscriptionStatus @default(trialing)
+  currentPeriodEnd DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  payments Payment[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+// ---------------------------------------------------------------------------
+// Administration & paramètres (module 12) — journal d'activité
+// ---------------------------------------------------------------------------
+
+// Catégorie C (docs/backend/soft-delete.md) : c'est déjà un journal
+// d'audit, lui donner un `deletedAt` n'aurait pas de sens.
+model ActivityLog {
+  id             String        @id @default(uuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id])
+  action         String // ex. "lease.terminated", "payment.confirmed"
+  entityType     String?
+  entityId       String?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@map("activity_logs")
+}
