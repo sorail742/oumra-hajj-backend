@@ -17,7 +17,7 @@ import { NotificationType } from '../../common/enums/notification-type.enum';
 import { PaymentMethod } from '../../common/enums/payment-method.enum';
 import { PaymentStatus } from '../../common/enums/payment-status.enum';
 import { Role } from '../../common/enums/role.enum';
-import { PaymentShape } from '../../types/payment.types';
+import { PaymentShape, SavingsPlanShape } from '../../types/payment.types';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -276,5 +276,71 @@ export class PaymentsService {
         DossierStepKey.PAYMENT,
       );
     }
+  }
+
+  // --- Plan d'épargne (Ticket 1) ---
+
+  async findSavingsPlanByBooking(bookingId: string): Promise<SavingsPlanShape | null> {
+    const plan = await this.prisma.savingsPlan.findUnique({ where: { bookingId } });
+    if (!plan) return null;
+    return {
+      id: plan.id,
+      bookingId: plan.bookingId,
+      targetAmount: plan.targetAmount,
+      autoDeduct: plan.autoDeduct,
+      deductAmount: plan.deductAmount ?? undefined,
+      frequency: plan.frequency ?? undefined,
+      nextDeductDate: plan.nextDeductDate ?? undefined,
+    };
+  }
+
+  async setupSavingsPlan(
+    pilgrimId: string,
+    bookingId: string,
+    dto: import('./dto/setup-savings-plan.dto').SetupSavingsPlanDto,
+  ): Promise<SavingsPlanShape> {
+    const booking = await this.bookingsService.findByIdOrFail(bookingId);
+    if (booking.pilgrimId !== pilgrimId) {
+      throw new ForbiddenException('Cette réservation ne vous appartient pas');
+    }
+    const pkg = await this.packagesService.findByIdOrFail(booking.packageId);
+    
+    let nextDate: Date | undefined;
+    if (dto.autoDeduct && dto.frequency) {
+      nextDate = new Date();
+      if (dto.frequency === 'weekly') {
+        nextDate.setDate(nextDate.getDate() + 7);
+      } else if (dto.frequency === 'monthly') {
+        nextDate.setMonth(nextDate.getMonth() + 1);
+      }
+    }
+
+    const plan = await this.prisma.savingsPlan.upsert({
+      where: { bookingId },
+      update: {
+        autoDeduct: dto.autoDeduct,
+        deductAmount: dto.deductAmount,
+        frequency: dto.frequency,
+        nextDeductDate: nextDate,
+      },
+      create: {
+        bookingId,
+        targetAmount: pkg.price,
+        autoDeduct: dto.autoDeduct,
+        deductAmount: dto.deductAmount,
+        frequency: dto.frequency,
+        nextDeductDate: nextDate,
+      },
+    });
+
+    return {
+      id: plan.id,
+      bookingId: plan.bookingId,
+      targetAmount: plan.targetAmount,
+      autoDeduct: plan.autoDeduct,
+      deductAmount: plan.deductAmount ?? undefined,
+      frequency: plan.frequency ?? undefined,
+      nextDeductDate: plan.nextDeductDate ?? undefined,
+    };
   }
 }

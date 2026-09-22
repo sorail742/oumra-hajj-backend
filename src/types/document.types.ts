@@ -16,9 +16,7 @@ export interface PilgrimDocumentShape {
 // déclarée par le pèlerin avec les dates réelles du voyage — jamais une
 // alerte pour un document sans date d'expiration connue.
 export type DocumentExpiryStatus =
-  | 'expired'
-  | 'expires_before_trip'
-  | 'expires_soon_after_trip';
+  'expired' | 'expires_before_trip' | 'expires_soon_after_trip';
 
 export interface DocumentExpiryAlertShape {
   id: string;

@@ -78,4 +78,26 @@ export class PaymentsController {
   ): Promise<PaymentShape> {
     return this.paymentsService.requestRefund(user.sub, user.role, id);
   }
+
+  // --- Plan d'épargne (Ticket 1) ---
+
+  @ApiBearerAuth()
+  @Roles(Role.PILGRIM)
+  @Get('bookings/:bookingId/savings-plan')
+  getSavingsPlan(
+    @Param('bookingId') bookingId: string,
+  ): Promise<import('../../types/payment.types').SavingsPlanShape | null> {
+    return this.paymentsService.findSavingsPlanByBooking(bookingId);
+  }
+
+  @ApiBearerAuth()
+  @Roles(Role.PILGRIM)
+  @Post('bookings/:bookingId/savings-plan')
+  setupSavingsPlan(
+    @CurrentUser() user: JwtPayload,
+    @Param('bookingId') bookingId: string,
+    @Body() dto: import('./dto/setup-savings-plan.dto').SetupSavingsPlanDto,
+  ): Promise<import('../../types/payment.types').SavingsPlanShape> {
+    return this.paymentsService.setupSavingsPlan(user.sub, bookingId, dto);
+  }
 }
