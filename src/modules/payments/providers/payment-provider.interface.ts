@@ -13,6 +13,10 @@ export interface InitiatedPayment {
   providerReference: string;
 }
 
+export interface RefundedPayment {
+  providerRefundReference: string;
+}
+
 // Abstraction du prestataire de paiement — voir ADR 0006. CinetPay retenu
 // (validation du 2026-09-09) comme agrégateur Mobile Money, intégration
 // réelle à brancher ici une fois le compte marchand et les identifiants
@@ -22,4 +26,9 @@ export interface InitiatedPayment {
 // ADR 0006, "Point d'architecture".
 export interface PaymentProvider {
   initiate(request: PaymentInitiationRequest): Promise<InitiatedPayment>;
+
+  // Idée #58 (backlog "Cent Fonctionnalités") : montant déjà calculé par
+  // PaymentsService selon le barème (RefundPolicy) — ce provider ne fait
+  // qu'exécuter le remboursement, jamais décider du montant éligible.
+  refund(providerReference: string, amount: number): Promise<RefundedPayment>;
 }

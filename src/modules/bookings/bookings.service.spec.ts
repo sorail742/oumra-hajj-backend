@@ -3,10 +3,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus } from '../../common/enums/booking-status.enum';
 import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
+import { DossierStepStatus } from '../../common/enums/dossier-step-status.enum';
 import { Role } from '../../common/enums/role.enum';
 import { AgenciesService } from '../agencies/agencies.service';
 import { GroupsService } from '../groups/groups.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PackagesService } from '../packages/packages.service';
+import { UsersService } from '../users/users.service';
 import { BookingsService } from './bookings.service';
 
 describe('BookingsService', () => {
@@ -28,6 +31,8 @@ describe('BookingsService', () => {
   };
   let agenciesService: { findByOwnerOrFail: jest.Mock };
   let groupsService: { addMember: jest.Mock };
+  let notificationsService: { send: jest.Mock; sendRawSms: jest.Mock };
+  let usersService: { findByIdOrFail: jest.Mock };
 
   const pilgrimId = 'pilgrim-1';
   const agencyId = 'agency-1';
@@ -83,6 +88,15 @@ describe('BookingsService', () => {
     };
     agenciesService = { findByOwnerOrFail: jest.fn() };
     groupsService = { addMember: jest.fn() };
+    notificationsService = {
+      send: jest.fn().mockResolvedValue([]),
+      sendRawSms: jest.fn().mockResolvedValue(undefined),
+    };
+    usersService = {
+      findByIdOrFail: jest
+        .fn()
+        .mockResolvedValue({ id: pilgrimId, fullName: 'Pèlerin Test' }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -91,6 +105,8 @@ describe('BookingsService', () => {
         { provide: PackagesService, useValue: packagesService },
         { provide: AgenciesService, useValue: agenciesService },
         { provide: GroupsService, useValue: groupsService },
+        { provide: NotificationsService, useValue: notificationsService },
+        { provide: UsersService, useValue: usersService },
       ],
     }).compile();
 
@@ -171,6 +187,42 @@ describe('BookingsService', () => {
     });
   });
 
+  describe('updateStep', () => {
+    const ownerId = 'agency-owner-1';
+
+    it('notifie le pèlerin quand une agence marque une étape comme terminée', async () => {
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ agencyId, steps: allStepsButOneDone() }),
+      );
+      agenciesService.findByOwnerOrFail.mockResolvedValue({ id: agencyId });
+      prisma.bookingStep.update.mockResolvedValue({});
+
+      await service.updateStep(ownerId, bookingId, {
+        key: DossierStepKey.PAYMENT,
+        status: DossierStepStatus.DONE,
+      });
+
+      expect(notificationsService.send).toHaveBeenCalledWith(
+        expect.objectContaining({ recipientIds: [pilgrimId] }),
+      );
+    });
+
+    it("ne notifie pas pour un changement de statut qui ne termine pas l'étape", async () => {
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ agencyId, steps: allStepsButOneDone() }),
+      );
+      agenciesService.findByOwnerOrFail.mockResolvedValue({ id: agencyId });
+      prisma.bookingStep.update.mockResolvedValue({});
+
+      await service.updateStep(ownerId, bookingId, {
+        key: DossierStepKey.VISA,
+        status: DossierStepStatus.IN_PROGRESS,
+      });
+
+      expect(notificationsService.send).not.toHaveBeenCalled();
+    });
+  });
+
   describe('markStepDone — passage automatique en CONFIRMED', () => {
     it('passe la réservation à CONFIRMED quand la dernière étape se termine', async () => {
       prisma.bookingStep.update.mockResolvedValue({});
@@ -202,6 +254,88 @@ describe('BookingsService', () => {
 
       expect(result.status).toBe(BookingStatus.PENDING_PAYMENT);
       expect(prisma.booking.update).not.toHaveBeenCalled();
+    });
+
+    it('notifie le pèlerin à chaque étape validée (cahier des charges §3.1)', async () => {
+      prisma.bookingStep.update.mockResolvedValue({});
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ steps: allStepsButOneDone() }),
+      );
+
+      await service.markStepDone(bookingId, DossierStepKey.PAYMENT);
+
+      expect(notificationsService.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipientIds: [pilgrimId],
+          isCritical: false,
+        }),
+      );
+    });
+
+    it("notifie aussi le contact d'urgence par SMS (idée #29) s'il est renseigné", async () => {
+      prisma.bookingStep.update.mockResolvedValue({});
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ steps: allStepsButOneDone() }),
+      );
+      usersService.findByIdOrFail.mockResolvedValue({
+        id: pilgrimId,
+        fullName: 'Pèlerin Test',
+        emergencyContact: { fullName: 'Proche', phone: '+224600000000' },
+      });
+
+      await service.markStepDone(bookingId, DossierStepKey.PAYMENT);
+
+      expect(notificationsService.sendRawSms).toHaveBeenCalledWith(
+        '+224600000000',
+        expect.stringContaining('Pèlerin Test'),
+      );
+    });
+
+    it("n'envoie pas de SMS famille si aucun contact d'urgence n'est renseigné", async () => {
+      prisma.bookingStep.update.mockResolvedValue({});
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ steps: allStepsButOneDone() }),
+      );
+      usersService.findByIdOrFail.mockResolvedValue({
+        id: pilgrimId,
+        fullName: 'Pèlerin Test',
+      });
+
+      await service.markStepDone(bookingId, DossierStepKey.PAYMENT);
+
+      expect(notificationsService.sendRawSms).not.toHaveBeenCalled();
+    });
+
+    it('envoie une notification critique de confirmation quand toutes les étapes sont terminées', async () => {
+      prisma.bookingStep.update.mockResolvedValue({});
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ steps: allStepsDone() }),
+      );
+      prisma.booking.update.mockResolvedValue(
+        buildBooking({ steps: allStepsDone(), status: 'confirmed' }),
+      );
+
+      await service.markStepDone(bookingId, DossierStepKey.DOCUMENTS);
+
+      expect(notificationsService.send).toHaveBeenCalledWith(
+        expect.objectContaining({ isCritical: true }),
+      );
+    });
+
+    it('ne renotifie pas la confirmation si le dossier était déjà confirmé', async () => {
+      prisma.bookingStep.update.mockResolvedValue({});
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ steps: allStepsDone(), status: 'confirmed' }),
+      );
+
+      await service.markStepDone(bookingId, DossierStepKey.DOCUMENTS);
+
+      expect(prisma.booking.update).not.toHaveBeenCalled();
+      // Toujours notifiée pour l'étape elle-même, jamais une 2e fois "confirmé".
+      expect(notificationsService.send).toHaveBeenCalledTimes(1);
+      expect(notificationsService.send).toHaveBeenCalledWith(
+        expect.objectContaining({ isCritical: false }),
+      );
     });
   });
 

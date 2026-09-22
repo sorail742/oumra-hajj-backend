@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AgencyValidationStatus } from '../../common/enums/agency-validation-status.enum';
 import { BookingStatus } from '../../common/enums/booking-status.enum';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
@@ -273,6 +274,105 @@ describe('ReviewsService', () => {
       expect(result.score).toBe(80);
       expect(result.reviewAverage).toBe(5);
       expect(result.completionRate).toBe(0.5);
+    });
+  });
+
+  describe('getTrustScore — badge (idée #61)', () => {
+    it("n'attribue aucun badge à une agence non validée par l'admin", async () => {
+      agenciesService.findByIdOrFail.mockResolvedValue({
+        id: agencyId,
+        validationStatus: AgencyValidationStatus.PENDING,
+      });
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: 5 },
+        _count: { rating: 10 },
+      });
+      bookingsService.countByAgencyAndStatus.mockResolvedValue(
+        zeroBookingCounts(),
+      );
+
+      const result = await service.getTrustScore(agencyId);
+
+      expect(result.badge).toBeNull();
+    });
+
+    it("attribue 'verified' à une agence validée mais sans historique suffisant", async () => {
+      agenciesService.findByIdOrFail.mockResolvedValue({
+        id: agencyId,
+        validationStatus: AgencyValidationStatus.APPROVED,
+      });
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: null },
+        _count: { rating: 0 },
+      });
+      bookingsService.countByAgencyAndStatus.mockResolvedValue(
+        zeroBookingCounts(),
+      );
+
+      const result = await service.getTrustScore(agencyId);
+
+      expect(result.badge).toBe('verified');
+    });
+
+    it("n'attribue pas 'trusted' avec un bon score mais trop peu d'avis", async () => {
+      agenciesService.findByIdOrFail.mockResolvedValue({
+        id: agencyId,
+        validationStatus: AgencyValidationStatus.APPROVED,
+      });
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: 5 },
+        _count: { rating: 1 },
+      });
+      bookingsService.countByAgencyAndStatus.mockResolvedValue(
+        zeroBookingCounts(),
+      );
+
+      const result = await service.getTrustScore(agencyId);
+
+      expect(result.score).toBe(100);
+      expect(result.badge).toBe('verified');
+    });
+
+    it("attribue 'trusted' à une agence validée, avec un bon score et assez d'avis", async () => {
+      agenciesService.findByIdOrFail.mockResolvedValue({
+        id: agencyId,
+        validationStatus: AgencyValidationStatus.APPROVED,
+      });
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: 4.5 },
+        _count: { rating: 5 },
+      });
+      bookingsService.countByAgencyAndStatus.mockResolvedValue(
+        zeroBookingCounts(),
+      );
+
+      const result = await service.getTrustScore(agencyId);
+
+      expect(result.badge).toBe('trusted');
+    });
+  });
+
+  describe('findByBooking', () => {
+    it("renvoie null si aucun avis n'existe pour la réservation", async () => {
+      prisma.review.findUnique.mockResolvedValue(null);
+
+      await expect(service.findByBooking(bookingId)).resolves.toBeNull();
+    });
+
+    it("renvoie l'avis s'il existe", async () => {
+      prisma.review.findUnique.mockResolvedValue({
+        id: 'review-1',
+        pilgrimId,
+        agencyId,
+        bookingId,
+        rating: 4,
+        comment: null,
+        createdAt: new Date('2026-01-01'),
+      });
+
+      const result = await service.findByBooking(bookingId);
+
+      expect(result?.rating).toBe(4);
     });
   });
 });

@@ -43,4 +43,8 @@ export interface AgencyTrustScoreShape {
   reviewCount: number;
   completionRate?: number; // 0-1
   concludedBookingsCount: number;
+  // Idée #61 : "verified" = agence validée par l'admin (ADR implicite
+  // d'AgenciesService.approve) ; "trusted" ajoute un score et un volume
+  // d'avis suffisants ; null = pas encore validée par l'admin.
+  badge: 'verified' | 'trusted' | null;
 }

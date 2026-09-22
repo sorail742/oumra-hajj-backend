@@ -12,4 +12,6 @@ export interface PaymentShape {
   providerReference: string;
   receiptRef?: string;
   confirmedAt?: Date;
+  refundedAmount?: number;
+  refundedAt?: Date;
 }

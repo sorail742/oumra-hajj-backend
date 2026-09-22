@@ -19,6 +19,7 @@ import { PackagesModule } from './modules/packages/packages.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { RitesModule } from './modules/rites/rites.module';
+import { TripSummaryModule } from './modules/trip-summary/trip-summary.module';
 import { UsersModule } from './modules/users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -47,6 +48,7 @@ import { PrismaModule } from './prisma/prisma.module';
     ReviewsModule,
     MessagingModule,
     AdminModule,
+    TripSummaryModule,
   ],
   providers: [
     {
