@@ -2,6 +2,7 @@ import { Module, ValidationPipe } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_PIPE, Reflector } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import configuration, { AppConfig } from './config/configuration';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -35,6 +36,7 @@ import { PrismaModule } from './prisma/prisma.module';
         return { throttlers: [{ ttl: ttlMs, limit }] };
       },
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     HealthModule,
     AuthModule,

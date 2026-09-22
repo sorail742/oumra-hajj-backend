@@ -377,6 +377,7 @@ model Booking {
   payments      Payment[]
   documents     PilgrimDocument[]
   review        Review?
+  savingsPlan   SavingsPlan?
   conversations Conversation[]
 
   @@index([pilgrimId])
@@ -426,6 +427,21 @@ model Payment {
   @@index([bookingId])
   @@index([status])
   @@map("payments")
+}
+
+model SavingsPlan {
+  id             String    @id @default(uuid())
+  bookingId      String    @unique
+  booking        Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  targetAmount   Float
+  autoDeduct     Boolean   @default(false)
+  deductAmount   Float?
+  frequency      String?   // "weekly", "monthly", "custom"
+  nextDeductDate DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("savings_plans")
 }
 
 // ---------------------------------------------------------------------------
