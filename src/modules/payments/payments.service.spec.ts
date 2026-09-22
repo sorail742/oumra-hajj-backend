@@ -1,12 +1,14 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
+import { PaymentMethod } from '../../common/enums/payment-method.enum';
 import { PaymentStatus } from '../../common/enums/payment-status.enum';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { PackagesService } from '../packages/packages.service';
 import { PaymentsService } from './payments.service';
+import { PAYMENT_PROVIDER } from './providers/payment-provider.interface';
 
 describe('PaymentsService', () => {
   let service: PaymentsService;
@@ -22,6 +24,7 @@ describe('PaymentsService', () => {
   };
   let bookingsService: { findByIdOrFail: jest.Mock; markStepDone: jest.Mock };
   let packagesService: { findByIdOrFail: jest.Mock };
+  let paymentProvider: { initiate: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
@@ -36,6 +39,7 @@ describe('PaymentsService', () => {
     };
     bookingsService = { findByIdOrFail: jest.fn(), markStepDone: jest.fn() };
     packagesService = { findByIdOrFail: jest.fn() };
+    paymentProvider = { initiate: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -44,10 +48,110 @@ describe('PaymentsService', () => {
         { provide: BookingsService, useValue: bookingsService },
         { provide: PackagesService, useValue: packagesService },
         { provide: AgenciesService, useValue: {} },
+        { provide: PAYMENT_PROVIDER, useValue: paymentProvider },
       ],
     }).compile();
 
     service = module.get(PaymentsService);
+  });
+
+  describe('initiate', () => {
+    const bookingId = 'booking-1';
+
+    it("refuse d'initier un paiement sur une réservation qui n'appartient pas au pèlerin", async () => {
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId: 'pilgrim-1',
+      });
+
+      await expect(
+        service.initiate('pilgrim-2', {
+          bookingId,
+          amount: 100,
+          method: PaymentMethod.MOBILE_MONEY_ORANGE,
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(paymentProvider.initiate).not.toHaveBeenCalled();
+    });
+
+    it('délègue au PaymentProvider puis persiste la référence obtenue', async () => {
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId: 'pilgrim-1',
+      });
+      paymentProvider.initiate.mockResolvedValue({
+        providerReference: 'dev-abc-123',
+      });
+      prisma.payment.create.mockResolvedValue({
+        id: 'payment-1',
+        bookingId,
+        amount: 100,
+        currency: 'GNF',
+        installmentNumber: 1,
+        method: PaymentMethod.MOBILE_MONEY_ORANGE,
+        status: 'pending',
+        providerReference: 'dev-abc-123',
+        receiptRef: null,
+        confirmedAt: null,
+      });
+
+      const result = await service.initiate('pilgrim-1', {
+        bookingId,
+        amount: 100,
+        method: PaymentMethod.MOBILE_MONEY_ORANGE,
+      });
+
+      expect(paymentProvider.initiate).toHaveBeenCalledWith({
+        bookingId,
+        amount: 100,
+        currency: 'GNF',
+        method: PaymentMethod.MOBILE_MONEY_ORANGE,
+      });
+      expect(prisma.payment.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            providerReference: 'dev-abc-123',
+            installmentNumber: 1,
+          }),
+        }),
+      );
+      expect(result.providerReference).toBe('dev-abc-123');
+    });
+
+    it('incrémente le numéro de tranche selon les paiements déjà existants', async () => {
+      bookingsService.findByIdOrFail.mockResolvedValue({
+        id: bookingId,
+        pilgrimId: 'pilgrim-1',
+      });
+      prisma.payment.count.mockResolvedValue(2);
+      paymentProvider.initiate.mockResolvedValue({
+        providerReference: 'dev-abc-123',
+      });
+      prisma.payment.create.mockResolvedValue({
+        id: 'payment-3',
+        bookingId,
+        amount: 100,
+        currency: 'GNF',
+        installmentNumber: 3,
+        method: PaymentMethod.MOBILE_MONEY_MTN,
+        status: 'pending',
+        providerReference: 'dev-abc-123',
+        receiptRef: null,
+        confirmedAt: null,
+      });
+
+      await service.initiate('pilgrim-1', {
+        bookingId,
+        amount: 100,
+        method: PaymentMethod.MOBILE_MONEY_MTN,
+      });
+
+      expect(prisma.payment.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ installmentNumber: 3 }),
+        }),
+      );
+    });
   });
 
   describe('handleWebhook', () => {

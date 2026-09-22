@@ -1275,7 +1275,7 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/UploadDocumentDto"
               }
@@ -1327,6 +1327,34 @@
       "get": {
         "operationId": "DocumentsController_listMine",
         "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/documents/{id}/access-url": {
+      "get": {
+        "operationId": "DocumentsController_getAccessUrl",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -1678,6 +1706,29 @@
     "/api/v1/reviews/agency/{agencyId}": {
       "get": {
         "operationId": "ReviewsController_listByAgency",
+        "parameters": [
+          {
+            "name": "agencyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reviews"
+        ]
+      }
+    },
+    "/api/v1/reviews/agency/{agencyId}/trust-score": {
+      "get": {
+        "operationId": "ReviewsController_getTrustScore",
         "parameters": [
           {
             "name": "agencyId",
@@ -2266,15 +2317,11 @@
               "flight_ticket",
               "vaccination_certificate"
             ]
-          },
-          "storageRef": {
-            "type": "string"
           }
         },
         "required": [
           "bookingId",
-          "type",
-          "storageRef"
+          "type"
         ]
       },
       "RejectDocumentDto": {

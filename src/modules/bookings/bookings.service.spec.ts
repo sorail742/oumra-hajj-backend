@@ -247,4 +247,20 @@ describe('BookingsService', () => {
       ).rejects.toBeInstanceOf(ForbiddenException);
     });
   });
+
+  describe('countByAgencyAndStatus', () => {
+    it('interroge le compte par statut avec agencyId, pas ownerId', async () => {
+      prisma.booking.count.mockImplementation(({ where }) =>
+        Promise.resolve(where.status === BookingStatus.COMPLETED ? 3 : 0),
+      );
+
+      const counts = await service.countByAgencyAndStatus(agencyId);
+
+      expect(prisma.booking.count).toHaveBeenCalledWith({
+        where: { agencyId, status: BookingStatus.COMPLETED },
+      });
+      expect(counts[BookingStatus.COMPLETED]).toBe(3);
+      expect(counts[BookingStatus.CANCELLED]).toBe(0);
+    });
+  });
 });

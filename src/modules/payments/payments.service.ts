@@ -1,5 +1,6 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,7 +9,6 @@ import {
   PaymentMethod as PrismaPaymentMethod,
   PaymentStatus as PrismaPaymentStatus,
 } from '@prisma/client';
-import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
 import { PaymentMethod } from '../../common/enums/payment-method.enum';
@@ -20,6 +20,12 @@ import { BookingsService } from '../bookings/bookings.service';
 import { PackagesService } from '../packages/packages.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
+import {
+  PaymentProvider,
+  PAYMENT_PROVIDER,
+} from './providers/payment-provider.interface';
+
+const DEFAULT_CURRENCY = 'GNF';
 
 function toPaymentShape(payment: PrismaPayment): PaymentShape {
   return {
@@ -43,6 +49,7 @@ export class PaymentsService {
     private readonly bookingsService: BookingsService,
     private readonly packagesService: PackagesService,
     private readonly agenciesService: AgenciesService,
+    @Inject(PAYMENT_PROVIDER) private readonly paymentProvider: PaymentProvider,
   ) {}
 
   async initiate(
@@ -59,9 +66,13 @@ export class PaymentsService {
         where: { bookingId: booking.id },
       })) + 1;
 
-    // Référence provisoire tant qu'aucun agrégateur Mobile Money/carte n'est
-    // intégré (voir ADR 0006) — à remplacer par la référence retournée par
-    // l'appel d'initiation réel du prestataire.
+    const { providerReference } = await this.paymentProvider.initiate({
+      bookingId: booking.id,
+      amount: dto.amount,
+      currency: DEFAULT_CURRENCY,
+      method: dto.method,
+    });
+
     const payment = await this.prisma.payment.create({
       data: {
         bookingId: booking.id,
@@ -69,7 +80,7 @@ export class PaymentsService {
         installmentNumber,
         method: dto.method as unknown as PrismaPaymentMethod,
         status: PaymentStatus.PENDING as unknown as PrismaPaymentStatus,
-        providerReference: `dev-${randomUUID()}`,
+        providerReference,
       },
     });
     return toPaymentShape(payment);

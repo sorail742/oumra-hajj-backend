@@ -112,6 +112,25 @@ export class BookingsService {
     return bookings.map(toBookingShape);
   }
 
+  // Score de confiance agence (idée #96 du backlog "Cent Fonctionnalités") —
+  // agencyId direct, pas ownerId : appelé par ReviewsService, qui ne connaît
+  // que l'agence publique, jamais son propriétaire.
+  async countByAgencyAndStatus(
+    agencyId: string,
+  ): Promise<Record<BookingStatus, number>> {
+    const statuses = Object.values(BookingStatus);
+    const counts = await Promise.all(
+      statuses.map((status) =>
+        this.prisma.booking.count({
+          where: { agencyId, status: status as unknown as PrismaBookingStatus },
+        }),
+      ),
+    );
+    return Object.fromEntries(
+      statuses.map((status, i) => [status, counts[i]]),
+    ) as Record<BookingStatus, number>;
+  }
+
   async findAuthorizedOrFail(
     requesterId: string,
     requesterRole: Role,
