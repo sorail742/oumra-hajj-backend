@@ -278,7 +278,7 @@ Rappel de vaccins de suivi, fatigue post-Hadj — souvent négligé alors que le
 
 Espace de don vers des associations caritatives locales vérifiées — extension naturelle du modèle économique.
 
-**ADR concerné :** ADR 0006 (nouveau flux de paiement à cadrer)
+**ADR concerné :** ADR 0022 (nouveau domaine voisin de l'ADR 0006, accepté, sans le modifier)
 
 **À vérifier avant/pendant l'implémentation :**
 - [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)
@@ -477,7 +477,7 @@ Contrats courts des guides, paie, disponibilité d'une saison à l'autre.
 
 Rôles comptable/commercial/opérations — aujourd'hui un seul compte propriétaire fait tout.
 
-**ADR concerné :** ADR 0003 (extension du modèle de rôles)
+**ADR concerné :** ADR 0021 (étend l'ADR 0003, accepté, sans le remplacer)
 
 **À vérifier avant/pendant l'implémentation :**
 - [ ] Cohérence : suit les conventions déjà en place (module NestJS dédié si backend, séparation DTO/Prisma, voir ADR 0002)

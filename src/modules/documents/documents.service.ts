@@ -23,7 +23,7 @@ import {
   StorageProvider,
   StoredFile,
   STORAGE_PROVIDER,
-} from './storage/storage-provider.interface';
+} from '../storage/storage-provider.interface';
 
 const REQUIRED_TYPES = Object.values(PilgrimDocumentType);
 

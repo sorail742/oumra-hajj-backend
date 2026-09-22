@@ -348,6 +348,82 @@
         ]
       }
     },
+    "/api/v1/agencies/me/legal-documents": {
+      "post": {
+        "operationId": "AgenciesController_addLegalDocument",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AddLegalDocumentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agencies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/agencies/me/legal-documents/alerts": {
+      "get": {
+        "operationId": "AgenciesController_getComplianceAlerts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agencies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/agencies/me/legal-documents/{id}/access-url": {
+      "get": {
+        "operationId": "AgenciesController_getLegalDocumentAccessUrl",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agencies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/agencies": {
       "get": {
         "operationId": "AgenciesController_list",
@@ -490,6 +566,42 @@
             "name": "agencyId",
             "required": false,
             "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "maxBudget",
+            "required": false,
+            "in": "query",
+            "description": "Budget maximum, dans la devise du forfait",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "familySize",
+            "required": false,
+            "in": "query",
+            "description": "Nombre de pèlerins du groupe — filtre sur les places restantes",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "startDateFrom",
+            "required": false,
+            "in": "query",
+            "description": "Date de départ au plus tôt acceptable",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDateTo",
+            "required": false,
+            "in": "query",
+            "description": "Date de départ au plus tard acceptable",
             "schema": {
               "type": "string"
             }
@@ -2070,6 +2182,20 @@
             "type": "object"
           }
         }
+      },
+      "AddLegalDocumentDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "label"
+        ]
       },
       "RejectAgencyDto": {
         "type": "object",

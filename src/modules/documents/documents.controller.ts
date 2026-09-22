@@ -21,7 +21,7 @@ import { PilgrimDocumentShape } from '../../types/document.types';
 import { DocumentsService } from './documents.service';
 import { RejectDocumentDto } from './dto/reject-document.dto';
 import { UploadDocumentDto } from './dto/upload-document.dto';
-import { AccessUrl } from './storage/storage-provider.interface';
+import { AccessUrl } from '../storage/storage-provider.interface';
 
 const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024; // 10 Mo — passeport/visa/billet scannés.
 

@@ -1,9 +1,23 @@
 import { AgencyValidationStatus } from '../common/enums/agency-validation-status.enum';
 
 export interface LegalDocumentShape {
+  id: string;
   label: string;
   storageRef: string;
   uploadedAt: Date;
+  expiresAt?: Date;
+}
+
+// Idée #56 (backlog "Cent Fonctionnalités") : ne remonte que les documents
+// qui nécessitent une action (expirés ou proches de l'expiration) — un
+// document sans `expiresAt` connu n'est jamais présumé expiré.
+export type LegalDocumentComplianceStatus = 'expired' | 'expiring_soon';
+
+export interface LegalDocumentAlertShape {
+  id: string;
+  label: string;
+  expiresAt: Date;
+  status: LegalDocumentComplianceStatus;
 }
 
 export interface BankDetailsShape {

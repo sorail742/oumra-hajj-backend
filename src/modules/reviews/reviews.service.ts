@@ -8,7 +8,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AgencyValidationStatus } from '../../common/enums/agency-validation-status.enum';
 import { BookingStatus } from '../../common/enums/booking-status.enum';
 import { AgencyTrustScoreShape } from '../../types/agency.types';
-import { ReviewShape } from '../../types/review.types';
+import { ReviewShape, SatisfactionReportShape } from '../../types/review.types';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -160,5 +160,57 @@ export class ReviewsService {
       concludedBookingsCount,
       badge,
     };
+  }
+
+  // Idée #64 (backlog "Cent Fonctionnalités") : rapport pensé pour être
+  // partagé à un bailleur/partenaire financier en fin de saison — jamais de
+  // moyenne fabriquée si aucun avis n'existe (voir SatisfactionReportShape).
+  async getSatisfactionReport(
+    ownerId: string,
+  ): Promise<SatisfactionReportShape> {
+    const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
+    const reviews = await this.prisma.review.findMany({
+      where: { agencyId: agency.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const ratingDistribution = [1, 2, 3, 4, 5].map((rating) => ({
+      rating,
+      count: reviews.filter((r) => r.rating === rating).length,
+    }));
+    const reviewAverage =
+      reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        : undefined;
+
+    return {
+      agencyId: agency.id,
+      agencyName: agency.legalName,
+      generatedAt: new Date(),
+      reviewCount: reviews.length,
+      reviewAverage,
+      ratingDistribution,
+      reviews: reviews
+        .map((r) => toReviewShape(r))
+        .map((r) => ({
+          rating: r.rating,
+          comment: r.comment,
+          createdAt: r.createdAt,
+        })),
+    };
+  }
+
+  async getSatisfactionReportCsv(ownerId: string): Promise<string> {
+    const report = await this.getSatisfactionReport(ownerId);
+    const escapeCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const header = 'date,note,commentaire';
+    const rows = report.reviews.map((r) =>
+      [
+        r.createdAt.toISOString(),
+        String(r.rating),
+        escapeCsv(r.comment ?? ''),
+      ].join(','),
+    );
+    return [header, ...rows].join('\n');
   }
 }

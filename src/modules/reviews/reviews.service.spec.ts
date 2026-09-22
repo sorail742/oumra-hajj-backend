@@ -25,7 +25,10 @@ describe('ReviewsService', () => {
     findByIdOrFail: jest.Mock;
     countByAgencyAndStatus: jest.Mock;
   };
-  let agenciesService: { findByIdOrFail: jest.Mock };
+  let agenciesService: {
+    findByIdOrFail: jest.Mock;
+    findByOwnerOrFail: jest.Mock;
+  };
 
   const pilgrimId = 'pilgrim-1';
   const agencyId = 'agency-1';
@@ -61,7 +64,10 @@ describe('ReviewsService', () => {
       findByIdOrFail: jest.fn(),
       countByAgencyAndStatus: jest.fn(),
     };
-    agenciesService = { findByIdOrFail: jest.fn() };
+    agenciesService = {
+      findByIdOrFail: jest.fn(),
+      findByOwnerOrFail: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -373,6 +379,95 @@ describe('ReviewsService', () => {
       const result = await service.findByBooking(bookingId);
 
       expect(result?.rating).toBe(4);
+    });
+  });
+
+  // Idée #64 (backlog "Cent Fonctionnalités") — rapport de satisfaction.
+  describe('getSatisfactionReport', () => {
+    it('agrège la distribution des notes et la moyenne quand des avis existent', async () => {
+      agenciesService.findByOwnerOrFail.mockResolvedValue({
+        id: agencyId,
+        legalName: 'Agence Al-Amine',
+      });
+      prisma.review.findMany.mockResolvedValue([
+        {
+          id: 'review-1',
+          pilgrimId,
+          agencyId,
+          bookingId: 'booking-1',
+          rating: 5,
+          comment: 'Excellent',
+          createdAt: new Date('2026-02-01'),
+        },
+        {
+          id: 'review-2',
+          pilgrimId: 'pilgrim-2',
+          agencyId,
+          bookingId: 'booking-2',
+          rating: 3,
+          comment: null,
+          createdAt: new Date('2026-01-01'),
+        },
+      ]);
+
+      const report = await service.getSatisfactionReport('owner-1');
+
+      expect(report.agencyName).toBe('Agence Al-Amine');
+      expect(report.reviewCount).toBe(2);
+      expect(report.reviewAverage).toBe(4);
+      expect(report.ratingDistribution).toEqual([
+        { rating: 1, count: 0 },
+        { rating: 2, count: 0 },
+        { rating: 3, count: 1 },
+        { rating: 4, count: 0 },
+        { rating: 5, count: 1 },
+      ]);
+      expect(report.reviews).toEqual([
+        { rating: 5, comment: 'Excellent', createdAt: new Date('2026-02-01') },
+        { rating: 3, comment: undefined, createdAt: new Date('2026-01-01') },
+      ]);
+    });
+
+    it("n'invente pas de moyenne quand l'agence n'a aucun avis", async () => {
+      agenciesService.findByOwnerOrFail.mockResolvedValue({
+        id: agencyId,
+        legalName: 'Agence Al-Amine',
+      });
+      prisma.review.findMany.mockResolvedValue([]);
+
+      const report = await service.getSatisfactionReport('owner-1');
+
+      expect(report.reviewAverage).toBeUndefined();
+      expect(report.reviewCount).toBe(0);
+      expect(report.ratingDistribution.every((d) => d.count === 0)).toBe(true);
+    });
+  });
+
+  describe('getSatisfactionReportCsv', () => {
+    it('génère un CSV avec un en-tête et une ligne par avis, échappant les guillemets', async () => {
+      agenciesService.findByOwnerOrFail.mockResolvedValue({
+        id: agencyId,
+        legalName: 'Agence Al-Amine',
+      });
+      prisma.review.findMany.mockResolvedValue([
+        {
+          id: 'review-1',
+          pilgrimId,
+          agencyId,
+          bookingId: 'booking-1',
+          rating: 5,
+          comment: 'Très pro, dit "au top"',
+          createdAt: new Date('2026-02-01T00:00:00.000Z'),
+        },
+      ]);
+
+      const csv = await service.getSatisfactionReportCsv('owner-1');
+      const lines = csv.split('\n');
+
+      expect(lines[0]).toBe('date,note,commentaire');
+      expect(lines[1]).toBe(
+        '2026-02-01T00:00:00.000Z,5,"Très pro, dit ""au top"""',
+      );
     });
   });
 });

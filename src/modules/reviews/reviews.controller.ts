@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Header, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -6,7 +6,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
 import { AgencyTrustScoreShape } from '../../types/agency.types';
-import { ReviewShape } from '../../types/review.types';
+import { ReviewShape, SatisfactionReportShape } from '../../types/review.types';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { ReviewsService } from './reviews.service';
 
@@ -30,6 +30,29 @@ export class ReviewsController {
   @Get('mine')
   listMine(@CurrentUser() user: JwtPayload): Promise<ReviewShape[]> {
     return this.reviewsService.findMine(user.sub);
+  }
+
+  // Idée #64 (backlog "Cent Fonctionnalités") — rapport de satisfaction
+  // exportable pour les bailleurs/partenaires financiers de l'agence.
+  @ApiBearerAuth()
+  @Roles(Role.AGENCY)
+  @Get('agency/me/satisfaction-report')
+  getSatisfactionReport(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<SatisfactionReportShape> {
+    return this.reviewsService.getSatisfactionReport(user.sub);
+  }
+
+  @ApiBearerAuth()
+  @Roles(Role.AGENCY)
+  @Get('agency/me/satisfaction-report/csv')
+  @Header('Content-Type', 'text/csv')
+  @Header(
+    'Content-Disposition',
+    'attachment; filename="rapport-satisfaction.csv"',
+  )
+  getSatisfactionReportCsv(@CurrentUser() user: JwtPayload): Promise<string> {
+    return this.reviewsService.getSatisfactionReportCsv(user.sub);
   }
 
   @Public()
