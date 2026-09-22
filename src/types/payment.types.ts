@@ -15,3 +15,13 @@ export interface PaymentShape {
   refundedAmount?: number;
   refundedAt?: Date;
 }
+
+export interface SavingsPlanShape {
+  id: string;
+  bookingId: string;
+  targetAmount: number;
+  autoDeduct: boolean;
+  deductAmount?: number;
+  frequency?: string;
+  nextDeductDate?: Date;
+}
