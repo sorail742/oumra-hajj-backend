@@ -10,7 +10,9 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AgenciesModule } from './modules/agencies/agencies.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
+import { CalendarModule } from './modules/calendar/calendar.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { FamilyViewModule } from './modules/family-view/family-view.module';
 import { GroupsModule } from './modules/groups/groups.module';
 import { HealthModule } from './modules/health/health.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
@@ -49,6 +51,8 @@ import { PrismaModule } from './prisma/prisma.module';
     MessagingModule,
     AdminModule,
     TripSummaryModule,
+    CalendarModule,
+    FamilyViewModule,
   ],
   providers: [
     {

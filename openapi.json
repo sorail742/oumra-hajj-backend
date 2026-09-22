@@ -424,6 +424,44 @@
         ]
       }
     },
+    "/api/v1/agencies/me/calendar-subscription": {
+      "get": {
+        "operationId": "AgenciesController_getCalendarSubscription",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agencies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/agencies/me/calendar-subscription/regenerate": {
+      "post": {
+        "operationId": "AgenciesController_regenerateCalendarSubscription",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agencies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/agencies": {
       "get": {
         "operationId": "AgenciesController_list",
@@ -1261,6 +1299,62 @@
         ]
       }
     },
+    "/api/v1/bookings/{id}/family-view-link": {
+      "get": {
+        "operationId": "BookingsController_getFamilyViewLink",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "bookings"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/{id}/family-view-link/regenerate": {
+      "post": {
+        "operationId": "BookingsController_regenerateFamilyViewLink",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "bookings"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/payments/initiate": {
       "post": {
         "operationId": "PaymentsController_initiate",
@@ -1467,6 +1561,34 @@
       "get": {
         "operationId": "DocumentsController_listMine",
         "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/documents/expiry-alerts": {
+      "get": {
+        "operationId": "DocumentsController_getExpiryAlerts",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -1827,6 +1949,44 @@
     "/api/v1/reviews/mine": {
       "get": {
         "operationId": "ReviewsController_listMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reviews"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reviews/agency/me/satisfaction-report": {
+      "get": {
+        "operationId": "ReviewsController_getSatisfactionReport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reviews"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reviews/agency/me/satisfaction-report/csv": {
+      "get": {
+        "operationId": "ReviewsController_getSatisfactionReportCsv",
         "parameters": [],
         "responses": {
           "200": {
@@ -2500,6 +2660,9 @@
               "flight_ticket",
               "vaccination_certificate"
             ]
+          },
+          "expiresAt": {
+            "type": "string"
           }
         },
         "required": [

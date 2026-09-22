@@ -20,6 +20,14 @@ export interface LegalDocumentAlertShape {
   status: LegalDocumentComplianceStatus;
 }
 
+// Idée #70 (backlog "Cent Fonctionnalités") : URL d'abonnement calendrier
+// (Google/Outlook) — chemin relatif, comme AccessUrl (voir
+// storage-provider.interface.ts), le client compose avec sa propre base.
+export interface CalendarSubscriptionShape {
+  token: string;
+  subscriptionUrl: string;
+}
+
 export interface BankDetailsShape {
   accountName: string;
   accountNumber: string;

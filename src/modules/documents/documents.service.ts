@@ -14,9 +14,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { DossierStepKey } from '../../common/enums/dossier-step-key.enum';
 import { PilgrimDocumentStatus } from '../../common/enums/pilgrim-document-status.enum';
 import { PilgrimDocumentType } from '../../common/enums/pilgrim-document-type.enum';
-import { PilgrimDocumentShape } from '../../types/document.types';
+import {
+  DocumentExpiryAlertShape,
+  DocumentExpiryStatus,
+  PilgrimDocumentShape,
+} from '../../types/document.types';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
+import { PackagesService } from '../packages/packages.service';
 import { UploadDocumentDto } from './dto/upload-document.dto';
 import {
   AccessUrl,
@@ -27,6 +32,12 @@ import {
 
 const REQUIRED_TYPES = Object.values(PilgrimDocumentType);
 
+// Idée #59 (backlog "Cent Fonctionnalités") : exigence courante (de
+// nombreux pays/visas, dont l'Arabie saoudite) qu'un passeport reste valide
+// au moins 6 mois après la date de retour — un repère à confirmer au cas
+// par cas avec l'agence/l'ambassade, pas une garantie légale absolue.
+const PASSPORT_VALIDITY_MARGIN_DAYS = 180;
+
 function toDocumentShape(doc: PrismaPilgrimDocument): PilgrimDocumentShape {
   return {
     id: doc.id,
@@ -36,6 +47,7 @@ function toDocumentShape(doc: PrismaPilgrimDocument): PilgrimDocumentShape {
     storageRef: doc.storageRef,
     status: doc.status as unknown as PilgrimDocumentStatus,
     rejectionReason: doc.rejectionReason ?? undefined,
+    expiresAt: doc.expiresAt ?? undefined,
   };
 }
 
@@ -48,6 +60,7 @@ export class DocumentsService {
     private readonly prisma: PrismaService,
     private readonly bookingsService: BookingsService,
     private readonly agenciesService: AgenciesService,
+    private readonly packagesService: PackagesService,
     @Inject(STORAGE_PROVIDER) private readonly storageProvider: StorageProvider,
   ) {}
 
@@ -75,6 +88,7 @@ export class DocumentsService {
         storageRef,
         status:
           PilgrimDocumentStatus.PENDING as unknown as PrismaPilgrimDocumentStatus,
+        expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
       },
     });
     return toDocumentShape(doc);
@@ -189,6 +203,58 @@ export class DocumentsService {
       throw new NotFoundException('Document introuvable');
     }
     return toDocumentShape(doc);
+  }
+
+  // Idée #59 (backlog "Cent Fonctionnalités") : croise la date d'expiration
+  // déclarée de chaque document avec les dates réelles du voyage. Ne
+  // remonte que ce qui nécessite une action — jamais d'alerte pour un
+  // document sans date d'expiration connue (voir DocumentExpiryAlertShape).
+  async getExpiryAlerts(
+    requesterId: string,
+    requesterRole: 'pilgrim' | 'agency',
+    bookingId: string,
+  ): Promise<DocumentExpiryAlertShape[]> {
+    const docs = await this.findByBooking(
+      requesterId,
+      requesterRole,
+      bookingId,
+    );
+    const booking = await this.bookingsService.findByIdOrFail(bookingId);
+    const pkg = await this.packagesService.findByIdOrFail(booking.packageId);
+
+    const now = Date.now();
+    const tripEnd = pkg.endDate.getTime();
+    const margeMs = PASSPORT_VALIDITY_MARGIN_DAYS * 24 * 60 * 60 * 1000;
+
+    const alerts: DocumentExpiryAlertShape[] = [];
+    for (const doc of docs) {
+      if (!doc.expiresAt) {
+        continue;
+      }
+      const expiresAtMs = doc.expiresAt.getTime();
+
+      let status: DocumentExpiryStatus | undefined;
+      if (expiresAtMs < now) {
+        status = 'expired';
+      } else if (expiresAtMs < tripEnd) {
+        status = 'expires_before_trip';
+      } else if (
+        doc.type === PilgrimDocumentType.PASSPORT &&
+        expiresAtMs < tripEnd + margeMs
+      ) {
+        status = 'expires_soon_after_trip';
+      }
+
+      if (status) {
+        alerts.push({
+          id: doc.id,
+          type: doc.type,
+          expiresAt: doc.expiresAt,
+          status,
+        });
+      }
+    }
+    return alerts;
   }
 
   private async assertAgencyOwnership(

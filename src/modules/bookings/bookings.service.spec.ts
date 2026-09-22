@@ -18,6 +18,7 @@ describe('BookingsService', () => {
     booking: {
       create: jest.Mock;
       findUnique: jest.Mock;
+      findUniqueOrThrow: jest.Mock;
       findMany: jest.Mock;
       update: jest.Mock;
       count: jest.Mock;
@@ -30,7 +31,7 @@ describe('BookingsService', () => {
     releaseSeat: jest.Mock;
   };
   let agenciesService: { findByOwnerOrFail: jest.Mock };
-  let groupsService: { addMember: jest.Mock };
+  let groupsService: { addMember: jest.Mock; findByIdOrFail: jest.Mock };
   let notificationsService: { send: jest.Mock; sendRawSms: jest.Mock };
   let usersService: { findByIdOrFail: jest.Mock };
 
@@ -56,9 +57,10 @@ describe('BookingsService', () => {
     overrides: Partial<{
       pilgrimId: string;
       agencyId: string;
+      groupId: string | null;
       status: string;
       steps: { key: string; status: string; updatedAt: Date }[];
-    }>,
+    }> = {},
   ) => ({
     id: bookingId,
     pilgrimId,
@@ -75,6 +77,7 @@ describe('BookingsService', () => {
       booking: {
         create: jest.fn(),
         findUnique: jest.fn(),
+        findUniqueOrThrow: jest.fn(),
         findMany: jest.fn(),
         update: jest.fn(),
         count: jest.fn().mockResolvedValue(0),
@@ -87,7 +90,7 @@ describe('BookingsService', () => {
       releaseSeat: jest.fn(),
     };
     agenciesService = { findByOwnerOrFail: jest.fn() };
-    groupsService = { addMember: jest.fn() };
+    groupsService = { addMember: jest.fn(), findByIdOrFail: jest.fn() };
     notificationsService = {
       send: jest.fn().mockResolvedValue([]),
       sendRawSms: jest.fn().mockResolvedValue(undefined),
@@ -395,6 +398,141 @@ describe('BookingsService', () => {
       });
       expect(counts[BookingStatus.COMPLETED]).toBe(3);
       expect(counts[BookingStatus.CANCELLED]).toBe(0);
+    });
+  });
+
+  // Idée #28 (backlog "Cent Fonctionnalités") — espace famille simplifié.
+  describe('getOrCreateFamilyViewLink', () => {
+    it('renvoie le jeton existant sans le régénérer', async () => {
+      prisma.booking.findUnique.mockResolvedValue(buildBooking());
+      prisma.booking.findUniqueOrThrow.mockResolvedValue({
+        familyViewToken: 'jeton-existant',
+      });
+
+      const result = await service.getOrCreateFamilyViewLink(
+        pilgrimId,
+        bookingId,
+      );
+
+      expect(result.token).toBe('jeton-existant');
+      expect(result.viewUrl).toBe('/api/v1/family-view/jeton-existant');
+      expect(prisma.booking.update).not.toHaveBeenCalled();
+    });
+
+    it("génère un jeton si la réservation n'en a pas encore", async () => {
+      prisma.booking.findUnique.mockResolvedValue(buildBooking());
+      prisma.booking.findUniqueOrThrow.mockResolvedValue({
+        familyViewToken: null,
+      });
+      prisma.booking.update.mockResolvedValue(buildBooking());
+
+      const result = await service.getOrCreateFamilyViewLink(
+        pilgrimId,
+        bookingId,
+      );
+
+      expect(result.token).toEqual(expect.any(String));
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: bookingId },
+        data: { familyViewToken: result.token },
+      });
+    });
+
+    it("refuse un pèlerin qui n'est pas propriétaire de la réservation", async () => {
+      prisma.booking.findUnique.mockResolvedValue(buildBooking());
+
+      await expect(
+        service.getOrCreateFamilyViewLink('un-autre-pelerin', bookingId),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.booking.findUniqueOrThrow).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('regenerateFamilyViewLink', () => {
+    it('remplace le jeton par un nouveau', async () => {
+      prisma.booking.findUnique.mockResolvedValue(buildBooking());
+      prisma.booking.update.mockResolvedValue(buildBooking());
+
+      const result = await service.regenerateFamilyViewLink(
+        pilgrimId,
+        bookingId,
+      );
+
+      expect(prisma.booking.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: bookingId },
+          data: { familyViewToken: result.token },
+        }),
+      );
+    });
+  });
+
+  describe('getFamilyView', () => {
+    it('rejette un jeton invalide sans interroger le forfait ni le groupe', async () => {
+      prisma.booking.findUnique.mockResolvedValue(null);
+
+      await expect(service.getFamilyView('jeton-invalide')).rejects.toThrow();
+      expect(packagesService.findByIdOrFail).not.toHaveBeenCalled();
+    });
+
+    it("agrège le forfait, le pèlerin, la position et la dernière étape d'itinéraire quand un groupe est rattaché", async () => {
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({
+          groupId: 'group-1',
+          steps: allStepsDone(),
+          status: 'confirmed',
+        }),
+      );
+      packagesService.findByIdOrFail.mockResolvedValue({
+        title: 'Oumra Ramadan 2027',
+      });
+      usersService.findByIdOrFail.mockResolvedValue({
+        fullName: 'Fatoumata Diallo',
+      });
+      groupsService.findByIdOrFail.mockResolvedValue({
+        locations: [
+          {
+            userId: pilgrimId,
+            lat: 21.42,
+            lng: 39.82,
+            updatedAt: new Date('2027-03-05'),
+          },
+        ],
+        itinerary: [
+          { label: 'Arrivée à Médine', date: new Date('2027-03-01') },
+          { label: 'Départ pour La Mecque', date: new Date('2027-03-05') },
+        ],
+      });
+
+      const view = await service.getFamilyView('un-jeton');
+
+      expect(view.pilgrimFullName).toBe('Fatoumata Diallo');
+      expect(view.packageTitle).toBe('Oumra Ramadan 2027');
+      expect(view.status).toBe('confirmed');
+      expect(view.location).toEqual({
+        lat: 21.42,
+        lng: 39.82,
+        updatedAt: new Date('2027-03-05'),
+      });
+      expect(view.latestItineraryStep?.label).toBe('Départ pour La Mecque');
+    });
+
+    it("n'invente ni position ni étape d'itinéraire quand la réservation n'a pas de groupe", async () => {
+      prisma.booking.findUnique.mockResolvedValue(
+        buildBooking({ groupId: null }),
+      );
+      packagesService.findByIdOrFail.mockResolvedValue({
+        title: 'Oumra Ramadan 2027',
+      });
+      usersService.findByIdOrFail.mockResolvedValue({
+        fullName: 'Fatoumata Diallo',
+      });
+
+      const view = await service.getFamilyView('un-jeton');
+
+      expect(view.location).toBeUndefined();
+      expect(view.latestItineraryStep).toBeUndefined();
+      expect(groupsService.findByIdOrFail).not.toHaveBeenCalled();
     });
   });
 });

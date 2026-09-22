@@ -17,7 +17,10 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
-import { PilgrimDocumentShape } from '../../types/document.types';
+import {
+  DocumentExpiryAlertShape,
+  PilgrimDocumentShape,
+} from '../../types/document.types';
 import { DocumentsService } from './documents.service';
 import { RejectDocumentDto } from './dto/reject-document.dto';
 import { UploadDocumentDto } from './dto/upload-document.dto';
@@ -68,6 +71,18 @@ export class DocumentsController {
   ): Promise<PilgrimDocumentShape[]> {
     const role = user.role === Role.AGENCY ? 'agency' : 'pilgrim';
     return this.documentsService.findByBooking(user.sub, role, bookingId);
+  }
+
+  // Idée #59 (backlog "Cent Fonctionnalités") — vérification croisée des
+  // dates d'expiration de documents avec les dates du voyage.
+  @Roles(Role.PILGRIM, Role.AGENCY)
+  @Get('expiry-alerts')
+  getExpiryAlerts(
+    @CurrentUser() user: JwtPayload,
+    @Query('bookingId') bookingId: string,
+  ): Promise<DocumentExpiryAlertShape[]> {
+    const role = user.role === Role.AGENCY ? 'agency' : 'pilgrim';
+    return this.documentsService.getExpiryAlerts(user.sub, role, bookingId);
   }
 
   @Roles(Role.PILGRIM, Role.AGENCY)

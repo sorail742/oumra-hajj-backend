@@ -204,6 +204,12 @@ model Agency {
   bankAccountName   String?
   bankAccountNumber String?
   bankName          String?
+  // Idée #70 (backlog "Cent Fonctionnalités") : jeton opaque et non expirant
+  // pour l'URL d'abonnement au calendrier ICS des échéances (Google/Outlook
+  // ne peuvent pas envoyer d'en-tête Authorization sur une URL
+  // d'abonnement) — révocable via régénération, jamais le seul mécanisme
+  // d'authentification agence.
+  calendarToken     String?                @unique
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
 
@@ -348,18 +354,24 @@ model GroupMemberLocation {
 // ---------------------------------------------------------------------------
 
 model Booking {
-  id        String        @id @default(uuid())
-  pilgrimId String
-  pilgrim   User          @relation("BookingPilgrim", fields: [pilgrimId], references: [id])
-  packageId String
-  package   Package       @relation(fields: [packageId], references: [id])
-  agencyId  String
-  agency    Agency        @relation(fields: [agencyId], references: [id])
-  groupId   String?
-  group     Group?        @relation(fields: [groupId], references: [id])
-  status    BookingStatus @default(pending_payment)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id              String        @id @default(uuid())
+  pilgrimId       String
+  pilgrim         User          @relation("BookingPilgrim", fields: [pilgrimId], references: [id])
+  packageId       String
+  package         Package       @relation(fields: [packageId], references: [id])
+  agencyId        String
+  agency          Agency        @relation(fields: [agencyId], references: [id])
+  groupId         String?
+  group           Group?        @relation(fields: [groupId], references: [id])
+  status          BookingStatus @default(pending_payment)
+  // Idée #28 (backlog "Cent Fonctionnalités") : jeton opaque et non expirant
+  // pour un lien de suivi en lecture seule, partagé par le pèlerin à sa
+  // famille — pas de compte pèlerin à créer pour un proche peu digitalisé.
+  // Révocable via régénération, même principe que Agency.calendarToken
+  // (idée #70).
+  familyViewToken String?       @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   steps         BookingStep[]
   payments      Payment[]
@@ -430,6 +442,10 @@ model PilgrimDocument {
   storageRef      String
   status          PilgrimDocumentStatus @default(pending)
   rejectionReason String?
+  // Idée #59 (backlog "Cent Fonctionnalités") : date d'expiration déclarée
+  // par le pèlerin à l'upload (passeport, visa...) — absente si le type de
+  // document n'en a pas (billet d'avion) ou si elle n'est pas connue.
+  expiresAt       DateTime?
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
 

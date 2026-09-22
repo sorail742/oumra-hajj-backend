@@ -187,8 +187,16 @@ export class PackagesService {
 
   async listMine(ownerId: string): Promise<PackageShape[]> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
+    return this.findAllByAgencyId(agency.id);
+  }
+
+  // Tous les forfaits d'une agence, quel que soit leur statut — utilisé par
+  // CalendarService (idée #70) : une agence a besoin de voir un forfait
+  // FULL/CLOSED sur son calendrier des échéances, pas seulement ceux encore
+  // ouverts à la réservation (contrairement à `listPublic`).
+  async findAllByAgencyId(agencyId: string): Promise<PackageShape[]> {
     const pkgs = await this.prisma.package.findMany({
-      where: { agencyId: agency.id },
+      where: { agencyId },
       include: WITH_STAGES,
     });
     return pkgs.map(toPackageShape);

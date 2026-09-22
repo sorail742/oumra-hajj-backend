@@ -387,4 +387,21 @@ describe('PackagesService — gestion des places (capacité forfait)', () => {
       expect(result[0].seatsTaken).toBe(2);
     });
   });
+
+  // Idée #70 (backlog "Cent Fonctionnalités") — utilisé par CalendarService.
+  describe('findAllByAgencyId', () => {
+    it('renvoie tous les forfaits de l’agence, y compris FULL/CLOSED', async () => {
+      prisma.package.findMany.mockResolvedValue([
+        buildPkg({ status: 'full' }),
+        buildPkg({ status: 'closed' }),
+      ]);
+
+      const result = await service.findAllByAgencyId('agency-1');
+
+      expect(prisma.package.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { agencyId: 'agency-1' } }),
+      );
+      expect(result).toHaveLength(2);
+    });
+  });
 });
