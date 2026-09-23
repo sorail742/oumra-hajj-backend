@@ -288,6 +288,29 @@ model PackageStage {
 }
 
 // ---------------------------------------------------------------------------
+// Checklist (Ticket 3)
+// ---------------------------------------------------------------------------
+
+model ChecklistItem {
+  id              String   @id @default(uuid())
+  bookingId       String
+  booking         Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  title           String
+  category        String   // "document", "vaccine", "luggage", "spiritual"
+  isCompleted     Boolean  @default(false)
+  
+  reminderDate    DateTime?
+  reminderSent    Boolean  @default(false)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([bookingId])
+  @@map("checklist_items")
+}
+
+// ---------------------------------------------------------------------------
 // Groups
 // ---------------------------------------------------------------------------
 
@@ -378,6 +401,7 @@ model Booking {
   documents     PilgrimDocument[]
   review        Review?
   conversations Conversation[]
+  checklists    ChecklistItem[]
 
   @@index([pilgrimId])
   @@index([packageId])
