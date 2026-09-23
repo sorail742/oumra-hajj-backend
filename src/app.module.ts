@@ -2,6 +2,7 @@ import { Module, ValidationPipe } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_PIPE, Reflector } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import configuration, { AppConfig } from './config/configuration';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -23,6 +24,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { RitesModule } from './modules/rites/rites.module';
 import { TripSummaryModule } from './modules/trip-summary/trip-summary.module';
 import { UsersModule } from './modules/users/users.module';
+import { ChecklistModule } from './modules/checklist/checklist.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -35,6 +37,7 @@ import { PrismaModule } from './prisma/prisma.module';
         return { throttlers: [{ ttl: ttlMs, limit }] };
       },
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     HealthModule,
     AuthModule,
@@ -53,6 +56,7 @@ import { PrismaModule } from './prisma/prisma.module';
     TripSummaryModule,
     CalendarModule,
     FamilyViewModule,
+    ChecklistModule,
   ],
   providers: [
     {
