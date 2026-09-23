@@ -465,7 +465,7 @@ model SavingsPlan {
   targetAmount   Float
   autoDeduct     Boolean   @default(false)
   deductAmount   Float?
-  frequency      String? // "weekly", "monthly", "custom"
+  frequency      String?   // "weekly", "monthly", "custom"
   nextDeductDate DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
