@@ -25,6 +25,7 @@ import { RitesModule } from './modules/rites/rites.module';
 import { TripSummaryModule } from './modules/trip-summary/trip-summary.module';
 import { UsersModule } from './modules/users/users.module';
 import { ChecklistModule } from './modules/checklist/checklist.module';
+import { MicroCoursesModule } from './modules/micro-courses/micro-courses.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -57,6 +58,7 @@ import { PrismaModule } from './prisma/prisma.module';
     CalendarModule,
     FamilyViewModule,
     ChecklistModule,
+    MicroCoursesModule,
   ],
   providers: [
     {

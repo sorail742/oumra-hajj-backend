@@ -144,6 +144,7 @@ model User {
   bookingsAsPilgrim   Booking[]             @relation("BookingPilgrim")
   documents           PilgrimDocument[]
   riteProgress        RiteProgress[]
+  microCourseProgress MicroCourseProgress[]
   notifications       Notification[]
   reviews             Review[]
   sentMessages        Message[]
@@ -597,4 +598,41 @@ model Message {
 
   @@index([conversationId])
   @@map("messages")
+}
+
+// ---------------------------------------------------------------------------
+// Micro-cours "Préparer sa Oumra/Hadj" (Ticket 4 - ADR 0007)
+// ---------------------------------------------------------------------------
+
+model MicroCourse {
+  id              String                @id @default(uuid())
+  title           String
+  description     String?
+  videoUrl        String
+  durationSeconds Int                   @default(0)
+  order           Int                   @default(0)
+  category        String                @default("preparation") // "preparation", "rites", "health", "logistics"
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  progress        MicroCourseProgress[]
+
+  @@map("micro_courses")
+}
+
+model MicroCourseProgress {
+  id              String      @id @default(uuid())
+  pilgrimId       String
+  pilgrim         User        @relation(fields: [pilgrimId], references: [id], onDelete: Cascade)
+  courseId        String
+  course          MicroCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  isCompleted     Boolean     @default(false)
+  clientUpdatedAt DateTime    @default(now())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([pilgrimId, courseId])
+  @@index([pilgrimId])
+  @@index([courseId])
+  @@map("micro_course_progress")
 }
