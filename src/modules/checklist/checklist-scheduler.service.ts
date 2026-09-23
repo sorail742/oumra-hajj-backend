@@ -17,9 +17,9 @@ export class ChecklistSchedulerService {
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async remindChecklistItems() {
     this.logger.log('Recherche des éléments de checklist à rappeler...');
-    
+
     const now = new Date();
-    
+
     const items = await this.prisma.checklistItem.findMany({
       where: {
         isCompleted: false,
@@ -51,4 +51,3 @@ export class ChecklistSchedulerService {
     }
   }
 }
-

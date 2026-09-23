@@ -32,4 +32,3 @@ export class ChecklistController {
     return this.checklistService.updateStatus(user.sub, id, dto);
   }
 }
-
