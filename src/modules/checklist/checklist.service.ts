@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateChecklistStatusDto } from './dto/update-checklist-status.dto';
 
@@ -26,16 +22,12 @@ export class ChecklistService {
     });
   }
 
-  async updateStatus(
-    pilgrimId: string,
-    id: string,
-    dto: UpdateChecklistStatusDto,
-  ) {
+  async updateStatus(pilgrimId: string, id: string, dto: UpdateChecklistStatusDto) {
     const item = await this.prisma.checklistItem.findUnique({
       where: { id },
       include: { booking: true },
     });
-
+    
     if (!item) {
       throw new NotFoundException('Élément de checklist introuvable');
     }
@@ -60,9 +52,7 @@ export class ChecklistService {
     // Calcul de la date de départ
     let departureDate = new Date();
     if (booking.package.stages && booking.package.stages.length > 0) {
-      departureDate = booking.package.stages.sort(
-        (a, b) => a.startDate.getTime() - b.startDate.getTime(),
-      )[0].startDate;
+      departureDate = booking.package.stages.sort((a, b) => a.startDate.getTime() - b.startDate.getTime())[0].startDate;
     } else {
       departureDate.setMonth(departureDate.getMonth() + 2); // Par défaut M+2
     }

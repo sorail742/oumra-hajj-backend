@@ -17,9 +17,9 @@ export class ChecklistSchedulerService {
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async remindChecklistItems() {
     this.logger.log('Recherche des éléments de checklist à rappeler...');
-
+    
     const now = new Date();
-
+    
     const items = await this.prisma.checklistItem.findMany({
       where: {
         isCompleted: false,
@@ -33,7 +33,7 @@ export class ChecklistSchedulerService {
       try {
         await this.notificationsService.send({
           recipientIds: [item.booking.pilgrimId],
-          type: NotificationType.DOCUMENT_STATUS, // on utilise une notif existante, à affiner
+          type: NotificationType.DOCUMENT, // on utilise une notif existante, à affiner
           title: 'Préparation : ' + item.category,
           content: `N'oubliez pas : ${item.title}. Cochez-le dans votre espace dès que c'est fait !`,
           isCritical: false,
@@ -51,3 +51,4 @@ export class ChecklistSchedulerService {
     }
   }
 }
+
