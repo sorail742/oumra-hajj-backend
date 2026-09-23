@@ -26,5 +26,5 @@ export class SetupSavingsPlanDto {
       'Activer ou désactiver les prélèvements automatiques / rappels',
   })
   @IsBoolean()
-  autoDeduct: boolean;
+  autoDeduct!: boolean;
 }

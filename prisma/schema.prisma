@@ -152,6 +152,7 @@ model User {
   guidedGroups        Group[]               @relation("GroupGuide")
   groupMemberships    GroupMember[]
   groupLocations      GroupMemberLocation[]
+  budgetSimulations   BudgetSimulation[]    @relation("PilgrimBudgetSimulations")
 
   @@map("users")
 }
@@ -261,9 +262,10 @@ model Package {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  stages   PackageStage[]
-  bookings Booking[]
-  groups   Group[]
+  stages            PackageStage[]
+  bookings          Booking[]
+  groups            Group[]
+  budgetSimulations BudgetSimulation[]
 
   @@index([type])
   @@index([status])
@@ -285,6 +287,33 @@ model PackageStage {
 
   @@index([packageId])
   @@map("package_stages")
+}
+
+// ---------------------------------------------------------------------------
+// Budget (Simulateur)
+// ---------------------------------------------------------------------------
+
+model BudgetSimulation {
+  id        String   @id @default(uuid())
+  pilgrimId String
+  pilgrim   User     @relation("PilgrimBudgetSimulations", fields: [pilgrimId], references: [id], onDelete: Cascade)
+  packageId String?
+  package   Package? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+
+  packagePrice  Float @default(0)
+  pocketMoney   Float @default(0)
+  gifts         Float @default(0)
+  sacrifice     Float @default(0)
+  insurance     Float @default(0)
+  otherExpenses Float @default(0)
+
+  currency String @default("GNF")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pilgrimId])
+  @@map("budget_simulations")
 }
 
 // ---------------------------------------------------------------------------
@@ -436,7 +465,7 @@ model SavingsPlan {
   targetAmount   Float
   autoDeduct     Boolean   @default(false)
   deductAmount   Float?
-  frequency      String?   // "weekly", "monthly", "custom"
+  frequency      String? // "weekly", "monthly", "custom"
   nextDeductDate DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
