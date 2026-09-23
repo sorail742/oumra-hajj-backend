@@ -1,4 +1,10 @@
-import { IsBoolean, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SetupSavingsPlanDto {
@@ -8,12 +14,17 @@ export class SetupSavingsPlanDto {
   @Min(0)
   deductAmount?: number;
 
-  @ApiPropertyOptional({ description: 'Fréquence de prélèvement (ex: weekly, monthly)' })
+  @ApiPropertyOptional({
+    description: 'Fréquence de prélèvement (ex: weekly, monthly)',
+  })
   @IsOptional()
   @IsString()
   frequency?: string;
 
-  @ApiProperty({ description: 'Activer ou désactiver les prélèvements automatiques / rappels' })
+  @ApiProperty({
+    description:
+      'Activer ou désactiver les prélèvements automatiques / rappels',
+  })
   @IsBoolean()
-  autoDeduct: boolean;
+  autoDeduct!: boolean;
 }

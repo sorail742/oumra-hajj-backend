@@ -24,6 +24,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { RitesModule } from './modules/rites/rites.module';
 import { TripSummaryModule } from './modules/trip-summary/trip-summary.module';
 import { UsersModule } from './modules/users/users.module';
+import { BudgetModule } from './modules/budget/budget.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -55,6 +56,7 @@ import { PrismaModule } from './prisma/prisma.module';
     TripSummaryModule,
     CalendarModule,
     FamilyViewModule,
+    BudgetModule,
   ],
   providers: [
     {

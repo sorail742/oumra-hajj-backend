@@ -20,7 +20,7 @@ export class SavingsSchedulerService {
   @Cron(CronExpression.EVERY_DAY_AT_10AM)
   async processDueSavings() {
     this.logger.log('Lancement du job processDueSavings...');
-    
+
     const now = new Date();
     const duePlans = await this.prisma.savingsPlan.findMany({
       where: {
@@ -37,7 +37,7 @@ export class SavingsSchedulerService {
 
       try {
         // Initier le paiement
-        const payment = await this.paymentsService.initiate(plan.booking.pilgrimId, {
+        await this.paymentsService.initiate(plan.booking.pilgrimId, {
           bookingId: plan.bookingId,
           amount: plan.deductAmount,
           method: PaymentMethod.MOBILE_MONEY_ORANGE, // Par défaut ou issu du plan
@@ -47,7 +47,7 @@ export class SavingsSchedulerService {
         await this.notificationsService.send({
           recipientIds: [plan.booking.pilgrimId],
           type: NotificationType.PAYMENT,
-          title: 'Plan d\'épargne Hajj/Omra',
+          title: "Plan d'épargne Hajj/Omra",
           content: `C'est l'heure de votre cotisation de ${plan.deductAmount} GNF. Validez le paiement sur votre mobile pour avancer vers votre voyage !`,
           isCritical: false,
         });
@@ -73,10 +73,13 @@ export class SavingsSchedulerService {
 
         this.logger.log(`Plan ${plan.id} traité avec succès.`);
       } catch (error) {
-        this.logger.error(`Erreur lors du traitement du plan ${plan.id}`, error);
+        this.logger.error(
+          `Erreur lors du traitement du plan ${plan.id}`,
+          error,
+        );
       }
     }
-    
+
     this.logger.log('Job processDueSavings terminé.');
   }
 }

@@ -280,8 +280,12 @@ export class PaymentsService {
 
   // --- Plan d'épargne (Ticket 1) ---
 
-  async findSavingsPlanByBooking(bookingId: string): Promise<SavingsPlanShape | null> {
-    const plan = await this.prisma.savingsPlan.findUnique({ where: { bookingId } });
+  async findSavingsPlanByBooking(
+    bookingId: string,
+  ): Promise<SavingsPlanShape | null> {
+    const plan = await this.prisma.savingsPlan.findUnique({
+      where: { bookingId },
+    });
     if (!plan) return null;
     return {
       id: plan.id,
@@ -304,7 +308,8 @@ export class PaymentsService {
       throw new ForbiddenException('Cette réservation ne vous appartient pas');
     }
     const pkg = await this.packagesService.findByIdOrFail(booking.packageId);
-    
+
+
     let nextDate: Date | undefined;
     if (dto.autoDeduct && dto.frequency) {
       nextDate = new Date();
