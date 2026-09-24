@@ -153,6 +153,7 @@ model User {
   guidedGroups        Group[]               @relation("GroupGuide")
   groupMemberships    GroupMember[]
   groupLocations      GroupMemberLocation[]
+  communityMessages   CommunityMessage[]
 
   @@map("users")
 }
@@ -331,6 +332,7 @@ model Group {
   itinerary GroupItineraryStep[]
   locations GroupMemberLocation[]
   bookings  Booking[]
+  communityMessages CommunityMessage[]
 
   @@index([agencyId])
   @@map("groups")
@@ -635,4 +637,22 @@ model MicroCourseProgress {
   @@index([pilgrimId])
   @@index([courseId])
   @@map("micro_course_progress")
+}
+
+// ---------------------------------------------------------------------------
+// Communauté pré-départ (Ticket 5 - ADR 0023)
+// ---------------------------------------------------------------------------
+
+model CommunityMessage {
+  id           String   @id @default(uuid())
+  groupId      String
+  group        Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  senderId     String
+  sender       User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content      String
+  clientSentAt DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([groupId])
+  @@map("community_messages")
 }
