@@ -154,6 +154,23 @@ model User {
   groupMemberships    GroupMember[]
   groupLocations      GroupMemberLocation[]
   communityMessages   CommunityMessage[]
+  ownedAgency            Agency?               @relation("AgencyOwner")
+  refreshTokens          RefreshToken[]
+  bookingsAsPilgrim      Booking[]             @relation("BookingPilgrim")
+  documents              PilgrimDocument[]
+  riteProgress           RiteProgress[]
+  microCourseProgress    MicroCourseProgress[]
+  notifications          Notification[]
+  reviews                Review[]
+  sentMessages           Message[]
+  validatedAgencies      Agency[]              @relation("AgencyValidatedBy")
+  validatedRiteSheets    RiteSheet[]           @relation("RiteSheetValidatedBy")
+  validatedQuizQuestions QuizQuestion[]        @relation("QuizQuestionValidatedBy")
+  guidedGroups           Group[]               @relation("GroupGuide")
+  groupMemberships       GroupMember[]
+  groupLocations         GroupMemberLocation[]
+  communityMessages      CommunityMessage[]
+  quizAttempts           QuizAttempt[]
 
   @@map("users")
 }
@@ -304,9 +321,21 @@ model ChecklistItem {
   
   reminderDate    DateTime?
   reminderSent    Boolean  @default(false)
+  id        String  @id @default(uuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  title       String
+  category    String // "document", "vaccine", "luggage", "spiritual"
+  isCompleted Boolean @default(false)
+
+  reminderDate DateTime?
+  reminderSent Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([bookingId])
   @@map("checklist_items")
@@ -332,6 +361,10 @@ model Group {
   itinerary GroupItineraryStep[]
   locations GroupMemberLocation[]
   bookings  Booking[]
+  members           GroupMember[]
+  itinerary         GroupItineraryStep[]
+  locations         GroupMemberLocation[]
+  bookings          Booking[]
   communityMessages CommunityMessage[]
 
   @@index([agencyId])
@@ -502,6 +535,8 @@ model RiteSheet {
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
 
+  quizQuestions QuizQuestion[]
+
   @@index([key])
   @@map("rite_sheets")
 }
@@ -608,6 +643,7 @@ model Message {
 
 model MicroCourse {
   id              String                @id @default(uuid())
+  id              String   @id @default(uuid())
   title           String
   description     String?
   videoUrl        String
@@ -616,8 +652,14 @@ model MicroCourse {
   category        String                @default("preparation") // "preparation", "rites", "health", "logistics"
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
+  durationSeconds Int      @default(0)
+  order           Int      @default(0)
+  category        String   @default("preparation") // "preparation", "rites", "health", "logistics"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   progress        MicroCourseProgress[]
+  progress MicroCourseProgress[]
 
   @@map("micro_courses")
 }
@@ -655,4 +697,46 @@ model CommunityMessage {
 
   @@index([groupId])
   @@map("community_messages")
+}
+
+// ---------------------------------------------------------------------------
+// Quiz des rites (Ticket 6)
+// ---------------------------------------------------------------------------
+
+model QuizQuestion {
+  id            String    @id @default(uuid())
+  riteSheetId   String
+  riteSheet     RiteSheet @relation(fields: [riteSheetId], references: [id], onDelete: Cascade)
+  question      String
+  options       Json
+  correctOption Int
+  explanation   String?
+
+  isValidated   Boolean   @default(false)
+  validatedById String?
+  validatedBy   User?     @relation("QuizQuestionValidatedBy", fields: [validatedById], references: [id])
+  validatedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attempts QuizAttempt[]
+
+  @@index([riteSheetId])
+  @@map("quiz_questions")
+}
+
+model QuizAttempt {
+  id             String       @id @default(uuid())
+  pilgrimId      String
+  pilgrim        User         @relation(fields: [pilgrimId], references: [id], onDelete: Cascade)
+  questionId     String
+  question       QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption Int
+  isCorrect      Boolean
+  createdAt      DateTime     @default(now())
+
+  @@index([pilgrimId])
+  @@index([questionId])
+  @@map("quiz_attempts")
 }

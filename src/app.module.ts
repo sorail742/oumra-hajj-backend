@@ -28,6 +28,7 @@ import { ChecklistModule } from './modules/checklist/checklist.module';
 import { MicroCoursesModule } from './modules/micro-courses/micro-courses.module';
 import { CommunityModule } from './modules/community/community.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { QuizModule } from './modules/quiz/quiz.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { PrismaModule } from './prisma/prisma.module';
     ChecklistModule,
     MicroCoursesModule,
     CommunityModule,
+    QuizModule,
   ],
   providers: [
     {
