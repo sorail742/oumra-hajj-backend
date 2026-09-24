@@ -63,4 +63,3 @@ describe('CommunityController', () => {
     expect(result).toEqual(mockMessage);
   });
 });
-

@@ -7,4 +7,3 @@ export interface CommunityMessageShape {
   clientSentAt: Date;
   createdAt: Date;
 }
-

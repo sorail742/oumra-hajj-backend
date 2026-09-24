@@ -69,4 +69,3 @@ export class CommunityGateway implements OnGatewayConnection {
     return message;
   }
 }
-

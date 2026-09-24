@@ -23,4 +23,3 @@ import { CommunityService } from './community.service';
   exports: [CommunityService],
 })
 export class CommunityModule {}
-

@@ -12,4 +12,3 @@ export class SendCommunityMessageDto {
   @IsDateString()
   clientSentAt!: string;
 }
-

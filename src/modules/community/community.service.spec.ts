@@ -138,9 +138,9 @@ describe('CommunityService — Communauté pré-départ (Ticket #5, ADR 0023)', 
         new ForbiddenException("Vous n'avez pas accès à ce groupe"),
       );
 
-      await expect(
-        service.listMessages(groupId, strangerUser),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.listMessages(groupId, strangerUser)).rejects.toThrow(
+        ForbiddenException,
+      );
 
       expect(prisma.communityMessage.findMany).not.toHaveBeenCalled();
     });
@@ -198,4 +198,3 @@ describe('CommunityService — Communauté pré-départ (Ticket #5, ADR 0023)', 
     });
   });
 });
-

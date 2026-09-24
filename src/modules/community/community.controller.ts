@@ -29,4 +29,3 @@ export class CommunityController {
     return this.communityService.sendMessage(groupId, user, dto);
   }
 }
-
