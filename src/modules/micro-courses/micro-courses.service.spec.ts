@@ -75,7 +75,10 @@ describe('MicroCoursesService — Micro-cours & Synchronisation hors-ligne (ADR 
 
   describe('listAll', () => {
     it('renvoie la liste des micro-cours ordonnés', async () => {
-      const courses = [buildCourse({ id: 'c1', order: 1 }), buildCourse({ id: 'c2', order: 2 })];
+      const courses = [
+        buildCourse({ id: 'c1', order: 1 }),
+        buildCourse({ id: 'c2', order: 2 }),
+      ];
       prisma.microCourse.findMany.mockResolvedValue(courses);
 
       const result = await service.listAll();
@@ -89,7 +92,9 @@ describe('MicroCoursesService — Micro-cours & Synchronisation hors-ligne (ADR 
     });
 
     it('filtre par catégorie si renseignée', async () => {
-      prisma.microCourse.findMany.mockResolvedValue([buildCourse({ category: 'rites' })]);
+      prisma.microCourse.findMany.mockResolvedValue([
+        buildCourse({ category: 'rites' }),
+      ]);
 
       const result = await service.listAll('rites');
 
@@ -113,7 +118,9 @@ describe('MicroCoursesService — Micro-cours & Synchronisation hors-ligne (ADR 
     it('lève NotFoundException si le cours n existe pas', async () => {
       prisma.microCourse.findUnique.mockResolvedValue(null);
 
-      await expect(service.findById('unknown')).rejects.toThrow(NotFoundException);
+      await expect(service.findById('unknown')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -145,7 +152,9 @@ describe('MicroCoursesService — Micro-cours & Synchronisation hors-ligne (ADR 
   describe('update', () => {
     it('met à jour un micro-cours', async () => {
       prisma.microCourse.findUnique.mockResolvedValue(buildCourse());
-      prisma.microCourse.update.mockResolvedValue(buildCourse({ title: 'Titre Modifié' }));
+      prisma.microCourse.update.mockResolvedValue(
+        buildCourse({ title: 'Titre Modifié' }),
+      );
 
       const result = await service.update(courseId, { title: 'Titre Modifié' });
 
@@ -159,7 +168,9 @@ describe('MicroCoursesService — Micro-cours & Synchronisation hors-ligne (ADR 
     it('lève NotFoundException si le cours à modifier n existe pas', async () => {
       prisma.microCourse.findUnique.mockResolvedValue(null);
 
-      await expect(service.update('unknown', { title: 'Test' })).rejects.toThrow(NotFoundException);
+      await expect(
+        service.update('unknown', { title: 'Test' }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -178,13 +189,17 @@ describe('MicroCoursesService — Micro-cours & Synchronisation hors-ligne (ADR 
     it('lève NotFoundException si le cours à supprimer n existe pas', async () => {
       prisma.microCourse.findUnique.mockResolvedValue(null);
 
-      await expect(service.delete('unknown')).rejects.toThrow(NotFoundException);
+      await expect(service.delete('unknown')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('findMyProgress', () => {
     it('renvoie les progressions associées au pèlerin', async () => {
-      prisma.microCourseProgress.findMany.mockResolvedValue([buildProgress({ isCompleted: true })]);
+      prisma.microCourseProgress.findMany.mockResolvedValue([
+        buildProgress({ isCompleted: true }),
+      ]);
 
       const result = await service.findMyProgress(pilgrimId);
 
@@ -216,7 +231,11 @@ describe('MicroCoursesService — Micro-cours & Synchronisation hors-ligne (ADR 
       expect(prisma.microCourseProgress.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { pilgrimId_courseId: { pilgrimId, courseId } },
-          create: expect.objectContaining({ pilgrimId, courseId, isCompleted: true }),
+          create: expect.objectContaining({
+            pilgrimId,
+            courseId,
+            isCompleted: true,
+          }),
         }),
       );
       expect(result[0].isCompleted).toBe(true);
@@ -275,13 +294,25 @@ describe('MicroCoursesService — Micro-cours & Synchronisation hors-ligne (ADR 
     it('traite plusieurs items dans le même lot de synchronisation', async () => {
       prisma.microCourseProgress.findUnique.mockResolvedValue(null);
       prisma.microCourseProgress.upsert
-        .mockResolvedValueOnce(buildProgress({ courseId: 'c1', isCompleted: true }))
-        .mockResolvedValueOnce(buildProgress({ courseId: 'c2', isCompleted: false }));
+        .mockResolvedValueOnce(
+          buildProgress({ courseId: 'c1', isCompleted: true }),
+        )
+        .mockResolvedValueOnce(
+          buildProgress({ courseId: 'c2', isCompleted: false }),
+        );
 
       const result = await service.syncBatch(pilgrimId, {
         items: [
-          { courseId: 'c1', isCompleted: true, clientUpdatedAt: new Date().toISOString() },
-          { courseId: 'c2', isCompleted: false, clientUpdatedAt: new Date().toISOString() },
+          {
+            courseId: 'c1',
+            isCompleted: true,
+            clientUpdatedAt: new Date().toISOString(),
+          },
+          {
+            courseId: 'c2',
+            isCompleted: false,
+            clientUpdatedAt: new Date().toISOString(),
+          },
         ],
       });
 
@@ -290,4 +321,3 @@ describe('MicroCoursesService — Micro-cours & Synchronisation hors-ligne (ADR 
     });
   });
 });
-

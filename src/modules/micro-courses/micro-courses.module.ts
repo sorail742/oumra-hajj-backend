@@ -8,4 +8,3 @@ import { MicroCoursesService } from './micro-courses.service';
   exports: [MicroCoursesService],
 })
 export class MicroCoursesModule {}
-

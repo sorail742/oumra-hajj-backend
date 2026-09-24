@@ -17,4 +17,3 @@ export interface MicroCourseProgressShape {
   isCompleted: boolean;
   clientUpdatedAt: Date;
 }
-

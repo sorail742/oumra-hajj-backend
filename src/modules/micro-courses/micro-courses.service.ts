@@ -103,9 +103,7 @@ export class MicroCoursesService {
     });
   }
 
-  async findMyProgress(
-    pilgrimId: string,
-  ): Promise<MicroCourseProgressShape[]> {
+  async findMyProgress(pilgrimId: string): Promise<MicroCourseProgressShape[]> {
     const items = await this.prisma.microCourseProgress.findMany({
       where: { pilgrimId },
     });
@@ -160,4 +158,3 @@ export class MicroCoursesService {
     return results;
   }
 }
-

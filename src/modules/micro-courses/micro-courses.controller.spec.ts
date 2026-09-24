@@ -136,4 +136,3 @@ describe('MicroCoursesController', () => {
     expect(service.syncBatch).toHaveBeenCalledWith(user.sub, dto);
   });
 });
-

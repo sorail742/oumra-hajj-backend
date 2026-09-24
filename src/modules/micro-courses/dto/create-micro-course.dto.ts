@@ -21,7 +21,9 @@ export class CreateMicroCourseDto {
   @IsString()
   description?: string;
 
-  @ApiProperty({ description: 'URL de la vidéo (hébergée sur stockage S3/CDN)' })
+  @ApiProperty({
+    description: 'URL de la vidéo (hébergée sur stockage S3/CDN)',
+  })
   @IsString()
   @IsNotEmpty()
   @IsUrl({ require_tld: false })
@@ -56,4 +58,3 @@ export class CreateMicroCourseDto {
   @IsString()
   category?: string;
 }
-

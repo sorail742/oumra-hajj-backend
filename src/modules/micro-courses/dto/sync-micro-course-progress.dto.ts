@@ -41,4 +41,3 @@ export class SyncMicroCourseProgressDto {
   @Type(() => MicroCourseProgressItemDto)
   items!: MicroCourseProgressItemDto[];
 }
-

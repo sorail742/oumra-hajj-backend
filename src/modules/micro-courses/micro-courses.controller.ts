@@ -32,9 +32,7 @@ export class MicroCoursesController {
 
   @Public()
   @Get()
-  listAll(
-    @Query('category') category?: string,
-  ): Promise<MicroCourseShape[]> {
+  listAll(@Query('category') category?: string): Promise<MicroCourseShape[]> {
     return this.microCoursesService.listAll(category);
   }
 
@@ -89,4 +87,3 @@ export class MicroCoursesController {
     return this.microCoursesService.syncBatch(user.sub, dto);
   }
 }
-
