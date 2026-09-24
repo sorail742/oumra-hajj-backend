@@ -139,21 +139,6 @@ model User {
   agencyId String?
   agency   Agency? @relation("AgencyGuides", fields: [agencyId], references: [id])
 
-  ownedAgency         Agency?               @relation("AgencyOwner")
-  refreshTokens       RefreshToken[]
-  bookingsAsPilgrim   Booking[]             @relation("BookingPilgrim")
-  documents           PilgrimDocument[]
-  riteProgress        RiteProgress[]
-  microCourseProgress MicroCourseProgress[]
-  notifications       Notification[]
-  reviews             Review[]
-  sentMessages        Message[]
-  validatedAgencies   Agency[]              @relation("AgencyValidatedBy")
-  validatedRiteSheets RiteSheet[]           @relation("RiteSheetValidatedBy")
-  guidedGroups        Group[]               @relation("GroupGuide")
-  groupMemberships    GroupMember[]
-  groupLocations      GroupMemberLocation[]
-  communityMessages   CommunityMessage[]
   ownedAgency            Agency?               @relation("AgencyOwner")
   refreshTokens          RefreshToken[]
   bookingsAsPilgrim      Booking[]             @relation("BookingPilgrim")
@@ -165,11 +150,11 @@ model User {
   sentMessages           Message[]
   validatedAgencies      Agency[]              @relation("AgencyValidatedBy")
   validatedRiteSheets    RiteSheet[]           @relation("RiteSheetValidatedBy")
-  validatedQuizQuestions QuizQuestion[]        @relation("QuizQuestionValidatedBy")
   guidedGroups           Group[]               @relation("GroupGuide")
   groupMemberships       GroupMember[]
   groupLocations         GroupMemberLocation[]
   communityMessages      CommunityMessage[]
+  validatedQuizQuestions QuizQuestion[]        @relation("QuizQuestionValidatedBy")
   quizAttempts           QuizAttempt[]
 
   @@map("users")
@@ -311,22 +296,10 @@ model PackageStage {
 // ---------------------------------------------------------------------------
 
 model ChecklistItem {
-  id              String   @id @default(uuid())
-  bookingId       String
-  booking         Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  
-  title           String
-  category        String   // "document", "vaccine", "luggage", "spiritual"
-  isCompleted     Boolean  @default(false)
-  
-  reminderDate    DateTime?
-  reminderSent    Boolean  @default(false)
   id        String  @id @default(uuid())
   bookingId String
   booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
   title       String
   category    String // "document", "vaccine", "luggage", "spiritual"
   isCompleted Boolean @default(false)
@@ -357,10 +330,6 @@ model Group {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members   GroupMember[]
-  itinerary GroupItineraryStep[]
-  locations GroupMemberLocation[]
-  bookings  Booking[]
   members           GroupMember[]
   itinerary         GroupItineraryStep[]
   locations         GroupMemberLocation[]
@@ -642,23 +611,16 @@ model Message {
 // ---------------------------------------------------------------------------
 
 model MicroCourse {
-  id              String                @id @default(uuid())
   id              String   @id @default(uuid())
   title           String
   description     String?
   videoUrl        String
-  durationSeconds Int                   @default(0)
-  order           Int                   @default(0)
-  category        String                @default("preparation") // "preparation", "rites", "health", "logistics"
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
   durationSeconds Int      @default(0)
   order           Int      @default(0)
   category        String   @default("preparation") // "preparation", "rites", "health", "logistics"
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  progress        MicroCourseProgress[]
   progress MicroCourseProgress[]
 
   @@map("micro_courses")

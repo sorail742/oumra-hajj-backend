@@ -2,6 +2,7 @@ import {
   IsString,
   IsNotEmpty,
   IsArray,
+  ArrayMinSize,
   IsInt,
   Min,
   IsOptional,
@@ -17,6 +18,7 @@ export class CreateQuizQuestionDto {
   question!: string;
 
   @IsArray()
+  @ArrayMinSize(2)
   @IsString({ each: true })
   options!: string[];
 

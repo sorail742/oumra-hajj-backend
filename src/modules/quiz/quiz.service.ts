@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateQuizQuestionDto } from './dto/create-quiz-question.dto';
@@ -12,6 +13,15 @@ export class QuizService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createQuestion(dto: CreateQuizQuestionDto) {
+    if (dto.correctOption >= dto.options.length) {
+      throw new BadRequestException('correctOption is out of range');
+    }
+
+    const riteSheet = await this.prisma.riteSheet.findUnique({
+      where: { id: dto.riteSheetId },
+    });
+    if (!riteSheet) throw new NotFoundException('Rite sheet not found');
+
     return this.prisma.quizQuestion.create({
       data: {
         riteSheetId: dto.riteSheetId,
@@ -39,12 +49,21 @@ export class QuizService {
     });
   }
 
+  // La bonne réponse et l'explication ne sont révélées qu'après une
+  // tentative (voir submitAttempt), sinon le quiz n'a plus d'intérêt.
   async getQuestionsForRite(riteSheetId: string) {
     return this.prisma.quizQuestion.findMany({
       where: {
         riteSheetId,
         isValidated: true,
       },
+      select: {
+        id: true,
+        riteSheetId: true,
+        question: true,
+        options: true,
+      },
+      orderBy: { createdAt: 'asc' },
     });
   }
 
@@ -62,7 +81,7 @@ export class QuizService {
 
     const isCorrect = dto.selectedOption === question.correctOption;
 
-    return this.prisma.quizAttempt.create({
+    const attempt = await this.prisma.quizAttempt.create({
       data: {
         pilgrimId,
         questionId,
@@ -70,6 +89,12 @@ export class QuizService {
         isCorrect,
       },
     });
+
+    return {
+      ...attempt,
+      correctOption: question.correctOption,
+      explanation: question.explanation,
+    };
   }
 
   async getMyStats(pilgrimId: string) {
