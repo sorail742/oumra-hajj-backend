@@ -29,6 +29,7 @@ Statuts : `proposé` · `accepté` · `déprécié` · `remplacé`
 | [0020](0020-microfinance-partenaire.md) | Microfinance / crédit pèlerin partenaire | proposé |
 | [0021](0021-multi-utilisateurs-agence.md) | Multi-utilisateurs par agence (rôles internes) | proposé |
 | [0022](0022-dons-sadaqa-verifies.md) | Dons / sadaqa vérifiés vers associations caritatives | proposé |
+| [0023](0023-communaute-pre-depart-chat-groupe.md) | Communauté pré-départ : Chat & Forum de groupe en temps réel | accepté |
 
 Les ADR marqués `proposé` doivent être confirmés (passage à `accepté`) avant le
 début de la phase du plan de développement à laquelle ils se rattachent.

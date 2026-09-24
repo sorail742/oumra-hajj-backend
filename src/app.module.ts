@@ -26,6 +26,7 @@ import { TripSummaryModule } from './modules/trip-summary/trip-summary.module';
 import { UsersModule } from './modules/users/users.module';
 import { ChecklistModule } from './modules/checklist/checklist.module';
 import { MicroCoursesModule } from './modules/micro-courses/micro-courses.module';
+import { CommunityModule } from './modules/community/community.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -59,6 +60,7 @@ import { PrismaModule } from './prisma/prisma.module';
     FamilyViewModule,
     ChecklistModule,
     MicroCoursesModule,
+    CommunityModule,
   ],
   providers: [
     {
