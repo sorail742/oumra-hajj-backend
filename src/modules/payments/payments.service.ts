@@ -309,7 +309,6 @@ export class PaymentsService {
     }
     const pkg = await this.packagesService.findByIdOrFail(booking.packageId);
 
-
     let nextDate: Date | undefined;
     if (dto.autoDeduct && dto.frequency) {
       nextDate = new Date();
