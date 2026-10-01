@@ -43,3 +43,20 @@ du projet a demandé explicitement (2026-10-01) la combinaison Neon + Render
 - Le passage en production demandera : stockage objet chiffré (ADR 0008),
   fournisseurs réels (ADR 0006/0009), offres payantes ou équivalent, et un
   ADR de suivi si l'un de ces choix change.
+
+## Complément (2026-10-01) — données de démonstration
+
+La base hébergée étant vide, aucun administrateur ne pouvait valider une
+agence. `scripts/seed-demo.ts` (`npm run seed:demo`) crée un administrateur,
+une agence fictive validée et un forfait fictif (libellés `[DÉMO]`) :
+
+- **opt-in** : ne fait rien sans `SEED_DEMO=true` ;
+- **idempotent** : rejouable, ne duplique rien ; refuse de réutiliser
+  l'email d'un compte existant d'un autre rôle ;
+- identifiants lus dans `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD`/
+  `SEED_AGENCY_EMAIL`/`SEED_AGENCY_PASSWORD`, jamais dans le code ni les logs.
+
+Il est appelé par le hook npm `postbuild` : la commande de build Render
+(`npm ci --include=dev && npx prisma migrate deploy && npm run build`) l'exécute
+après les migrations. Hors Render (`SEED_DEMO` absente), le hook est sans effet.
+`SEED_DEMO` ne doit jamais être positionnée sur une base de production.
