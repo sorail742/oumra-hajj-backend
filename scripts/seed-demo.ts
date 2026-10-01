@@ -1,5 +1,5 @@
 /**
- * Données de DÉMONSTRATION pour un environnement hébergé (ADR 0023) :
+ * Données de DÉMONSTRATION pour un environnement hébergé (ADR 0024) :
  * un administrateur, une agence fictive déjà validée et un forfait fictif.
  *
  *   SEED_DEMO=true SEED_ADMIN_EMAIL=… SEED_ADMIN_PASSWORD=… \

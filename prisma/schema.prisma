@@ -139,20 +139,24 @@ model User {
   agencyId String?
   agency   Agency? @relation("AgencyGuides", fields: [agencyId], references: [id])
 
-  ownedAgency         Agency?               @relation("AgencyOwner")
-  refreshTokens       RefreshToken[]
-  bookingsAsPilgrim   Booking[]             @relation("BookingPilgrim")
-  documents           PilgrimDocument[]
-  riteProgress        RiteProgress[]
-  notifications       Notification[]
-  reviews             Review[]
-  sentMessages        Message[]
-  validatedAgencies   Agency[]              @relation("AgencyValidatedBy")
-  validatedRiteSheets RiteSheet[]           @relation("RiteSheetValidatedBy")
-  guidedGroups        Group[]               @relation("GroupGuide")
-  groupMemberships    GroupMember[]
-  groupLocations      GroupMemberLocation[]
-  budgetSimulations   BudgetSimulation[]    @relation("PilgrimBudgetSimulations")
+  ownedAgency            Agency?               @relation("AgencyOwner")
+  refreshTokens          RefreshToken[]
+  bookingsAsPilgrim      Booking[]             @relation("BookingPilgrim")
+  documents              PilgrimDocument[]
+  riteProgress           RiteProgress[]
+  microCourseProgress    MicroCourseProgress[]
+  notifications          Notification[]
+  reviews                Review[]
+  sentMessages           Message[]
+  validatedAgencies      Agency[]              @relation("AgencyValidatedBy")
+  validatedRiteSheets    RiteSheet[]           @relation("RiteSheetValidatedBy")
+  guidedGroups           Group[]               @relation("GroupGuide")
+  groupMemberships       GroupMember[]
+  groupLocations         GroupMemberLocation[]
+  communityMessages      CommunityMessage[]
+  validatedQuizQuestions QuizQuestion[]        @relation("QuizQuestionValidatedBy")
+  quizAttempts           QuizAttempt[]
+  budgetSimulations      BudgetSimulation[]    @relation("PilgrimBudgetSimulations")
 
   @@map("users")
 }
@@ -317,6 +321,29 @@ model BudgetSimulation {
 }
 
 // ---------------------------------------------------------------------------
+// Checklist (Ticket 3)
+// ---------------------------------------------------------------------------
+
+model ChecklistItem {
+  id        String  @id @default(uuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  title       String
+  category    String // "document", "vaccine", "luggage", "spiritual"
+  isCompleted Boolean @default(false)
+
+  reminderDate DateTime?
+  reminderSent Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([bookingId])
+  @@map("checklist_items")
+}
+
+// ---------------------------------------------------------------------------
 // Groups
 // ---------------------------------------------------------------------------
 
@@ -332,10 +359,11 @@ model Group {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members   GroupMember[]
-  itinerary GroupItineraryStep[]
-  locations GroupMemberLocation[]
-  bookings  Booking[]
+  members           GroupMember[]
+  itinerary         GroupItineraryStep[]
+  locations         GroupMemberLocation[]
+  bookings          Booking[]
+  communityMessages CommunityMessage[]
 
   @@index([agencyId])
   @@map("groups")
@@ -408,6 +436,7 @@ model Booking {
   review        Review?
   savingsPlan   SavingsPlan?
   conversations Conversation[]
+  checklists    ChecklistItem[]
 
   @@index([pilgrimId])
   @@index([packageId])
@@ -465,7 +494,7 @@ model SavingsPlan {
   targetAmount   Float
   autoDeduct     Boolean   @default(false)
   deductAmount   Float?
-  frequency      String?   // "weekly", "monthly", "custom"
+  frequency      String? // "weekly", "monthly", "custom"
   nextDeductDate DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -519,6 +548,8 @@ model RiteSheet {
   validatedAt    DateTime?
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
+
+  quizQuestions QuizQuestion[]
 
   @@index([key])
   @@map("rite_sheets")
@@ -618,4 +649,101 @@ model Message {
 
   @@index([conversationId])
   @@map("messages")
+}
+
+// ---------------------------------------------------------------------------
+// Micro-cours "Préparer sa Oumra/Hadj" (Ticket 4 - ADR 0007)
+// ---------------------------------------------------------------------------
+
+model MicroCourse {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+  videoUrl        String
+  durationSeconds Int      @default(0)
+  order           Int      @default(0)
+  category        String   @default("preparation") // "preparation", "rites", "health", "logistics"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  progress MicroCourseProgress[]
+
+  @@map("micro_courses")
+}
+
+model MicroCourseProgress {
+  id              String      @id @default(uuid())
+  pilgrimId       String
+  pilgrim         User        @relation(fields: [pilgrimId], references: [id], onDelete: Cascade)
+  courseId        String
+  course          MicroCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  isCompleted     Boolean     @default(false)
+  clientUpdatedAt DateTime    @default(now())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([pilgrimId, courseId])
+  @@index([pilgrimId])
+  @@index([courseId])
+  @@map("micro_course_progress")
+}
+
+// ---------------------------------------------------------------------------
+// Communauté pré-départ (Ticket 5 - ADR 0023)
+// ---------------------------------------------------------------------------
+
+model CommunityMessage {
+  id           String   @id @default(uuid())
+  groupId      String
+  group        Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  senderId     String
+  sender       User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content      String
+  clientSentAt DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([groupId])
+  @@map("community_messages")
+}
+
+// ---------------------------------------------------------------------------
+// Quiz des rites (Ticket 6)
+// ---------------------------------------------------------------------------
+
+model QuizQuestion {
+  id            String    @id @default(uuid())
+  riteSheetId   String
+  riteSheet     RiteSheet @relation(fields: [riteSheetId], references: [id], onDelete: Cascade)
+  question      String
+  options       Json
+  correctOption Int
+  explanation   String?
+
+  isValidated   Boolean   @default(false)
+  validatedById String?
+  validatedBy   User?     @relation("QuizQuestionValidatedBy", fields: [validatedById], references: [id])
+  validatedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attempts QuizAttempt[]
+
+  @@index([riteSheetId])
+  @@map("quiz_questions")
+}
+
+model QuizAttempt {
+  id             String       @id @default(uuid())
+  pilgrimId      String
+  pilgrim        User         @relation(fields: [pilgrimId], references: [id], onDelete: Cascade)
+  questionId     String
+  question       QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption Int
+  isCorrect      Boolean
+  createdAt      DateTime     @default(now())
+
+  @@index([pilgrimId])
+  @@index([questionId])
+  @@map("quiz_attempts")
 }

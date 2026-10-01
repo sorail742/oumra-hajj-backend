@@ -27,6 +27,7 @@ import { GroupsService } from '../groups/groups.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PackagesService } from '../packages/packages.service';
 import { UsersService } from '../users/users.service';
+import { ChecklistService } from '../checklist/checklist.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
 
@@ -83,6 +84,7 @@ export class BookingsService {
     private readonly groupsService: GroupsService,
     private readonly notificationsService: NotificationsService,
     private readonly usersService: UsersService,
+    private readonly checklistService: ChecklistService,
   ) {}
 
   async create(
@@ -386,6 +388,7 @@ export class BookingsService {
       });
       const shape = toBookingShape(updated);
       await this.notifyConfirmed(shape);
+      await this.checklistService.generateStandardChecklist(shape.id);
       return shape;
     }
     return booking;
