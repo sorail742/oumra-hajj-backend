@@ -24,6 +24,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { RitesModule } from './modules/rites/rites.module';
 import { TripSummaryModule } from './modules/trip-summary/trip-summary.module';
 import { UsersModule } from './modules/users/users.module';
+import { BudgetModule } from './modules/budget/budget.module';
 import { ChecklistModule } from './modules/checklist/checklist.module';
 import { MicroCoursesModule } from './modules/micro-courses/micro-courses.module';
 import { CommunityModule } from './modules/community/community.module';
@@ -59,6 +60,7 @@ import { QuizModule } from './modules/quiz/quiz.module';
     TripSummaryModule,
     CalendarModule,
     FamilyViewModule,
+    BudgetModule,
     ChecklistModule,
     MicroCoursesModule,
     CommunityModule,

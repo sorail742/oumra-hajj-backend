@@ -156,6 +156,7 @@ model User {
   communityMessages      CommunityMessage[]
   validatedQuizQuestions QuizQuestion[]        @relation("QuizQuestionValidatedBy")
   quizAttempts           QuizAttempt[]
+  budgetSimulations      BudgetSimulation[]    @relation("PilgrimBudgetSimulations")
 
   @@map("users")
 }
@@ -265,9 +266,10 @@ model Package {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  stages   PackageStage[]
-  bookings Booking[]
-  groups   Group[]
+  stages            PackageStage[]
+  bookings          Booking[]
+  groups            Group[]
+  budgetSimulations BudgetSimulation[]
 
   @@index([type])
   @@index([status])
@@ -289,6 +291,33 @@ model PackageStage {
 
   @@index([packageId])
   @@map("package_stages")
+}
+
+// ---------------------------------------------------------------------------
+// Budget (Simulateur)
+// ---------------------------------------------------------------------------
+
+model BudgetSimulation {
+  id        String   @id @default(uuid())
+  pilgrimId String
+  pilgrim   User     @relation("PilgrimBudgetSimulations", fields: [pilgrimId], references: [id], onDelete: Cascade)
+  packageId String?
+  package   Package? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+
+  packagePrice  Float @default(0)
+  pocketMoney   Float @default(0)
+  gifts         Float @default(0)
+  sacrifice     Float @default(0)
+  insurance     Float @default(0)
+  otherExpenses Float @default(0)
+
+  currency String @default("GNF")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pilgrimId])
+  @@map("budget_simulations")
 }
 
 // ---------------------------------------------------------------------------
@@ -405,6 +434,7 @@ model Booking {
   payments      Payment[]
   documents     PilgrimDocument[]
   review        Review?
+  savingsPlan   SavingsPlan?
   conversations Conversation[]
   checklists    ChecklistItem[]
 
@@ -455,6 +485,21 @@ model Payment {
   @@index([bookingId])
   @@index([status])
   @@map("payments")
+}
+
+model SavingsPlan {
+  id             String    @id @default(uuid())
+  bookingId      String    @unique
+  booking        Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  targetAmount   Float
+  autoDeduct     Boolean   @default(false)
+  deductAmount   Float?
+  frequency      String? // "weekly", "monthly", "custom"
+  nextDeductDate DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("savings_plans")
 }
 
 // ---------------------------------------------------------------------------
