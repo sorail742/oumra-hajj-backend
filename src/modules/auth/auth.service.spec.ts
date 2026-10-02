@@ -6,7 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Role } from '../../common/enums/role.enum';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
-import { OTP_SENDER } from './otp/otp-sender.interface';
+import { EMAIL_OTP_SENDER, OTP_SENDER } from './otp/otp-sender.interface';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -26,11 +26,13 @@ describe('AuthService', () => {
   };
   let usersService: {
     findByPhone: jest.Mock;
+    findByEmail: jest.Mock;
     create: jest.Mock;
     findByEmailWithPassword: jest.Mock;
     findByIdOrFail: jest.Mock;
   };
   let otpSender: { send: jest.Mock };
+  let emailOtpSender: { send: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
@@ -49,11 +51,13 @@ describe('AuthService', () => {
     };
     usersService = {
       findByPhone: jest.fn(),
+      findByEmail: jest.fn(),
       create: jest.fn(),
       findByEmailWithPassword: jest.fn(),
       findByIdOrFail: jest.fn(),
     };
     otpSender = { send: jest.fn().mockResolvedValue(undefined) };
+    emailOtpSender = { send: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -87,6 +91,7 @@ describe('AuthService', () => {
           },
         },
         { provide: OTP_SENDER, useValue: otpSender },
+        { provide: EMAIL_OTP_SENDER, useValue: emailOtpSender },
       ],
     }).compile();
 
@@ -95,7 +100,7 @@ describe('AuthService', () => {
 
   describe('requestOtp', () => {
     it("génère un code, le hashe, purge les anciens codes et l'envoie via le provider OTP", async () => {
-      await service.requestOtp('+224620000000');
+      await service.requestOtp({ phone: '+224620000000' });
 
       expect(prisma.otp.deleteMany).toHaveBeenCalledWith({
         where: { phone: '+224620000000' },
@@ -108,6 +113,39 @@ describe('AuthService', () => {
         '+224620000000',
         expect.any(String),
       );
+      expect(emailOtpSender.send).not.toHaveBeenCalled();
+    });
+
+    it("envoie le code par email (EmailJS) quand l'identifiant est une adresse", async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+
+      await service.requestOtp({ email: 'pelerin@example.test' });
+
+      expect(prisma.otp.deleteMany).toHaveBeenCalledWith({
+        where: { email: 'pelerin@example.test' },
+      });
+      expect(prisma.otp.create.mock.calls[0][0].data.email).toBe(
+        'pelerin@example.test',
+      );
+      expect(emailOtpSender.send).toHaveBeenCalledWith(
+        'pelerin@example.test',
+        expect.stringMatching(/^\d{6}$/),
+      );
+      expect(otpSender.send).not.toHaveBeenCalled();
+    });
+
+    it("n'envoie aucun code à une adresse d'agence, sans le révéler", async () => {
+      usersService.findByEmail.mockResolvedValue({
+        id: 'agence-1',
+        role: Role.AGENCY,
+        isActive: true,
+      });
+
+      await expect(
+        service.requestOtp({ email: 'agence@example.test' }),
+      ).resolves.toEqual({ sent: true });
+      expect(prisma.otp.create).not.toHaveBeenCalled();
+      expect(emailOtpSender.send).not.toHaveBeenCalled();
     });
   });
 
@@ -116,7 +154,7 @@ describe('AuthService', () => {
       prisma.otp.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.verifyOtp('+224620000000', '123456'),
+        service.verifyOtp({ phone: '+224620000000' }, '123456'),
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
@@ -131,7 +169,7 @@ describe('AuthService', () => {
       });
 
       await expect(
-        service.verifyOtp('+224620000000', '123456'),
+        service.verifyOtp({ phone: '+224620000000' }, '123456'),
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
@@ -155,7 +193,7 @@ describe('AuthService', () => {
       prisma.refreshToken.create.mockResolvedValue({});
 
       const tokens = await service.verifyOtp(
-        '+224620000000',
+        { phone: '+224620000000' },
         '123456',
         'Amadou Diallo',
       );
@@ -165,6 +203,58 @@ describe('AuthService', () => {
       );
       expect(tokens.accessToken).toBe('signed-token');
       expect(tokens.refreshToken).toBe('signed-token');
+    });
+
+    it('crée un pèlerin rattaché à son email quand le code reçu par email est valide', async () => {
+      const bcrypt = await import('bcrypt');
+      const codeHash = await bcrypt.hash('123456', 4);
+      prisma.otp.findFirst.mockResolvedValue({
+        id: 'otp-2',
+        codeHash,
+        attempts: 0,
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+      usersService.findByEmail.mockResolvedValue(null);
+      usersService.create.mockResolvedValue({
+        id: 'user-2',
+        role: Role.PILGRIM,
+        email: 'pelerin@example.test',
+        isActive: true,
+      });
+      prisma.refreshToken.create.mockResolvedValue({});
+
+      await service.verifyOtp({ email: 'pelerin@example.test' }, '123456');
+
+      expect(prisma.otp.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { email: 'pelerin@example.test' } }),
+      );
+      expect(usersService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: Role.PILGRIM,
+          email: 'pelerin@example.test',
+        }),
+      );
+    });
+
+    it('refuse de connecter un compte agence par OTP, même avec un code valide', async () => {
+      const bcrypt = await import('bcrypt');
+      const codeHash = await bcrypt.hash('123456', 4);
+      prisma.otp.findFirst.mockResolvedValue({
+        id: 'otp-3',
+        codeHash,
+        attempts: 0,
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+      usersService.findByEmail.mockResolvedValue({
+        id: 'agence-1',
+        role: Role.AGENCY,
+        isActive: true,
+      });
+
+      await expect(
+        service.verifyOtp({ email: 'agence@example.test' }, '123456'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(prisma.refreshToken.create).not.toHaveBeenCalled();
     });
   });
 });

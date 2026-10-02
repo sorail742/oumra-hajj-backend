@@ -323,6 +323,28 @@ export class AgenciesService {
     return this.storageProvider.getAccessUrl(doc.storageRef);
   }
 
+  // Validation par l'administrateur (cahier des charges §3.4) : il doit
+  // pouvoir ouvrir les documents légaux qu'il valide. Même URL signée à
+  // courte durée de vie que pour l'agence (ADR 0008) ; chaque accès est
+  // journalisé avec l'identifiant de l'administrateur, jamais le document.
+  async getLegalDocumentAccessUrlForAdmin(
+    adminId: string,
+    agencyId: string,
+    documentId: string,
+  ): Promise<AccessUrl> {
+    const doc = await this.prisma.agencyLegalDocument.findFirst({
+      where: { id: documentId, agencyId },
+    });
+    if (!doc) {
+      throw new NotFoundException('Document introuvable pour cette agence');
+    }
+
+    this.accessLogger.log(
+      `Génération URL d'accès (admin=${adminId}) — agence=${agencyId} document=${documentId}`,
+    );
+    return this.storageProvider.getAccessUrl(doc.storageRef);
+  }
+
   // Idée #70 (backlog "Cent Fonctionnalités") : jeton opaque et non expirant
   // — Google/Outlook ne peuvent pas envoyer d'en-tête Authorization sur une
   // URL d'abonnement calendrier, contrairement aux URL de documents signées

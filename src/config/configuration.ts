@@ -13,6 +13,13 @@ export interface AppConfig {
     ttlSeconds: number;
     codeLength: number;
   };
+  // Envoi du code OTP par email — ADR 0025. Vides tant que non configurés.
+  emailjs: {
+    serviceId: string;
+    templateId: string;
+    publicKey: string;
+    privateKey: string;
+  };
   throttle: {
     ttlMs: number;
     limit: number;
@@ -37,6 +44,12 @@ export default (): AppConfig => ({
   otp: {
     ttlSeconds: parseInt(process.env.OTP_TTL_SECONDS ?? '300', 10),
     codeLength: parseInt(process.env.OTP_CODE_LENGTH ?? '6', 10),
+  },
+  emailjs: {
+    serviceId: process.env.EMAILJS_SERVICE_ID ?? '',
+    templateId: process.env.EMAILJS_TEMPLATE_ID ?? '',
+    publicKey: process.env.EMAILJS_PUBLIC_KEY ?? '',
+    privateKey: process.env.EMAILJS_PRIVATE_KEY ?? '',
   },
   throttle: {
     ttlMs: parseInt(process.env.THROTTLE_TTL_MS ?? '60000', 10),

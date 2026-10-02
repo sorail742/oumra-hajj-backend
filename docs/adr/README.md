@@ -31,6 +31,7 @@ Statuts : `proposé` · `accepté` · `déprécié` · `remplacé`
 | [0022](0022-dons-sadaqa-verifies.md) | Dons / sadaqa vérifiés vers associations caritatives | proposé |
 | [0023](0023-communaute-pre-depart-chat-groupe.md) | Communauté pré-départ : Chat & Forum de groupe en temps réel | accepté |
 | [0024](0024-hebergement-neon-render-vercel.md) | Hébergement : Neon (PostgreSQL), Render (API), Vercel (web) | accepté |
+| [0025](0025-otp-par-email-emailjs.md) | Code OTP par email via EmailJS | accepté |
 
 Les ADR marqués `proposé` doivent être confirmés (passage à `accepté`) avant le
 début de la phase du plan de développement à laquelle ils se rattachent.

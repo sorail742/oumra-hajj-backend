@@ -1,10 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OtpSender } from './otp-sender.interface';
 
-// Implémentation temporaire (journalisation locale uniquement) tant que le
-// fournisseur SMS/OTP n'est pas choisi (ADR 0006, ADR 0009). À remplacer par
-// un provider réel avant la phase 5 (intégrations & tests) — ne jamais
-// utiliser cette implémentation en production.
+// Développement et tests uniquement, tant qu'aucun fournisseur SMS n'est
+// choisi (ADR 0009, ADR 0018) — jamais retenu en production, voir
+// `sms-otp-sender.provider` (ADR 0025 §4).
 @Injectable()
 export class ConsoleOtpSender implements OtpSender {
   private readonly logger = new Logger(ConsoleOtpSender.name);
