@@ -7,6 +7,7 @@ import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { ConsoleOtpSender } from './otp/console-otp-sender.service';
+import { emailOtpSenderProvider } from './otp/email-otp-sender.provider';
 import { OTP_SENDER } from './otp/otp-sender.interface';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
@@ -26,6 +27,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     AuthService,
     JwtStrategy,
     { provide: OTP_SENDER, useClass: ConsoleOtpSender },
+    emailOtpSenderProvider,
   ],
   exports: [AuthService],
 })

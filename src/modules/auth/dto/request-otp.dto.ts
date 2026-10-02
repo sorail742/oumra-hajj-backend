@@ -1,8 +1,19 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsPhoneNumber } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsPhoneNumber, Validate, ValidateIf } from 'class-validator';
+import { ExactlyOneContact } from './otp-contact';
 
+// Soit `phone` (SMS), soit `email` (EmailJS, ADR 0025) — un seul des deux.
 export class RequestOtpDto {
-  @ApiProperty({ example: '+224620000000' })
+  @ApiPropertyOptional({ example: '+224620000000' })
+  @ValidateIf((dto: RequestOtpDto) => dto.phone !== undefined)
   @IsPhoneNumber()
-  phone!: string;
+  phone?: string;
+
+  @ApiPropertyOptional({ example: 'pelerin@example.com' })
+  @ValidateIf((dto: RequestOtpDto) => dto.email !== undefined)
+  @IsEmail()
+  email?: string;
+
+  @Validate(ExactlyOneContact)
+  readonly contact?: never;
 }

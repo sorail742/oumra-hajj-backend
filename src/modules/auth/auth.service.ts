@@ -9,10 +9,17 @@ import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
 import { UsersService } from '../users/users.service';
 import { AuthTokensDto } from './dto/auth-tokens.dto';
-import { OtpSender, OTP_SENDER } from './otp/otp-sender.interface';
+import { OtpContact } from './dto/otp-contact';
+import {
+  EMAIL_OTP_SENDER,
+  OtpSender,
+  OTP_SENDER,
+} from './otp/otp-sender.interface';
 
 const SALT_ROUNDS = 12;
 const MAX_OTP_ATTEMPTS = 5;
+// L'OTP ne connecte qu'un pèlerin ou un guide (ADR 0003, ADR 0025 §5).
+const OTP_ROLES: ReadonlySet<Role> = new Set([Role.PILGRIM, Role.GUIDE]);
 
 interface Identity {
   id: string;
@@ -30,35 +37,46 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<AppConfig, true>,
     @Inject(OTP_SENDER) private readonly otpSender: OtpSender,
+    @Inject(EMAIL_OTP_SENDER) private readonly emailOtpSender: OtpSender,
   ) {}
 
-  async requestOtp(phone: string): Promise<{ sent: true }> {
+  async requestOtp(contact: OtpContact): Promise<{ sent: true }> {
+    // Une adresse d'agence ou d'admin ne reçoit pas de code ; la réponse
+    // reste identique pour ne pas révéler l'existence du compte (ADR 0025).
+    if ('email' in contact && !(await this.otpAllowedForEmail(contact.email))) {
+      return { sent: true };
+    }
+
     const { ttlSeconds, codeLength } = this.configService.get('otp', {
       infer: true,
     });
     const code = this.generateNumericCode(codeLength);
     const codeHash = await bcrypt.hash(code, SALT_ROUNDS);
 
-    await this.prisma.otp.deleteMany({ where: { phone } });
+    await this.prisma.otp.deleteMany({ where: contact });
     await this.prisma.otp.create({
       data: {
-        phone,
+        ...contact,
         codeHash,
         expiresAt: new Date(Date.now() + ttlSeconds * 1000),
       },
     });
 
-    await this.otpSender.send(phone, code);
+    if ('email' in contact) {
+      await this.emailOtpSender.send(contact.email, code);
+    } else {
+      await this.otpSender.send(contact.phone, code);
+    }
     return { sent: true };
   }
 
   async verifyOtp(
-    phone: string,
+    contact: OtpContact,
     code: string,
     fullName?: string,
   ): Promise<AuthTokensDto> {
     const otp = await this.prisma.otp.findFirst({
-      where: { phone },
+      where: contact,
       orderBy: { createdAt: 'desc' },
     });
     if (!otp || otp.expiresAt.getTime() < Date.now()) {
@@ -82,13 +100,20 @@ export class AuthService {
 
     await this.prisma.otp.delete({ where: { id: otp.id } });
 
-    let user = await this.usersService.findByPhone(phone);
+    let user =
+      'email' in contact
+        ? await this.usersService.findByEmail(contact.email)
+        : await this.usersService.findByPhone(contact.phone);
     if (!user) {
       user = await this.usersService.create({
         fullName: fullName ?? 'Pèlerin',
-        phone,
+        ...contact,
         role: Role.PILGRIM,
       });
+    }
+
+    if (!OTP_ROLES.has(user.role)) {
+      throw new UnauthorizedException('Code invalide ou expiré');
     }
 
     if (!user.isActive) {
@@ -212,6 +237,11 @@ export class AuthService {
       }
     }
     return null;
+  }
+
+  private async otpAllowedForEmail(email: string): Promise<boolean> {
+    const user = await this.usersService.findByEmail(email);
+    return !user || OTP_ROLES.has(user.role);
   }
 
   private generateNumericCode(length: number): string {

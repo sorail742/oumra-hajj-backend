@@ -1,9 +1,10 @@
 export const OTP_SENDER = 'OTP_SENDER';
+export const EMAIL_OTP_SENDER = 'EMAIL_OTP_SENDER';
 
-// Abstraction du provider SMS/OTP — le choix du fournisseur (Orange, MTN,
-// agrégateur tiers) reste à confirmer, voir ADR 0006 (statut "proposé") et
-// ADR 0009. Ne jamais implémenter d'appel réseau réel ici avant qu'un
-// fournisseur soit retenu.
+// Abstraction d'un canal d'envoi du code OTP. Canal SMS (`OTP_SENDER`) :
+// fournisseur encore à choisir (ADR 0009, ADR 0018). Canal email
+// (`EMAIL_OTP_SENDER`) : EmailJS, voir ADR 0025. `destination` est un
+// numéro E.164 ou une adresse email selon le canal.
 export interface OtpSender {
-  send(phone: string, code: string): Promise<void>;
+  send(destination: string, code: string): Promise<void>;
 }

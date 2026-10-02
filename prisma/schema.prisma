@@ -163,15 +163,20 @@ model User {
 
 // TTL applicatif (voir ADR 0007/0003) : purge programmée à écrire côté job
 // ou cron, Postgres n'a pas d'équivalent natif à l'index TTL Mongo.
+// Un code par destinataire : `phone` (SMS) ou `email` (EmailJS, ADR 0025),
+// exactement l'un des deux — garanti par le service et par la contrainte
+// CHECK de la migration.
 model Otp {
   id        String   @id @default(uuid())
-  phone     String
+  phone     String?
+  email     String?
   codeHash  String
   expiresAt DateTime
   attempts  Int      @default(0)
   createdAt DateTime @default(now())
 
   @@index([phone])
+  @@index([email])
   @@map("otps")
 }
 
