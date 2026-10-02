@@ -27,6 +27,10 @@ updates:
       # ESLint 9+ impose la configuration « flat » : migration à part.
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]
+      # TypeScript 7 (compilateur réécrit) n'est pas encore accepté par
+      # @typescript-eslint ni ts-jest : npm ci échoue (ERESOLVE).
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
