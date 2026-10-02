@@ -1355,6 +1355,72 @@
         ]
       }
     },
+    "/api/v1/checklist/bookings/{bookingId}": {
+      "get": {
+        "operationId": "ChecklistController_getByBooking",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "checklist"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/checklist/{id}/status": {
+      "patch": {
+        "operationId": "ChecklistController_updateStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChecklistStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "checklist"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/payments/initiate": {
       "post": {
         "operationId": "PaymentsController_initiate",
@@ -1480,6 +1546,60 @@
         "parameters": [
           {
             "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payments/bookings/{bookingId}/savings-plan": {
+      "get": {
+        "operationId": "PaymentsController_getSavingsPlan",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "PaymentsController_setupSavingsPlan",
+        "parameters": [
+          {
+            "name": "bookingId",
             "required": true,
             "in": "path",
             "schema": {
@@ -2195,6 +2315,467 @@
           }
         ]
       }
+    },
+    "/api/v1/budget/mine": {
+      "get": {
+        "operationId": "BudgetController_listMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "budget"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/budget": {
+      "post": {
+        "operationId": "BudgetController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBudgetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "budget"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/budget/{id}": {
+      "put": {
+        "operationId": "BudgetController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBudgetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "budget"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "BudgetController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "budget"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/micro-courses": {
+      "get": {
+        "operationId": "MicroCoursesController_listAll",
+        "parameters": [
+          {
+            "name": "category",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "micro-courses"
+        ]
+      },
+      "post": {
+        "operationId": "MicroCoursesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMicroCourseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "micro-courses"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/micro-courses/{id}": {
+      "get": {
+        "operationId": "MicroCoursesController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "micro-courses"
+        ]
+      },
+      "patch": {
+        "operationId": "MicroCoursesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMicroCourseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "micro-courses"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "MicroCoursesController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "micro-courses"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/micro-courses/progress/mine": {
+      "get": {
+        "operationId": "MicroCoursesController_getMyProgress",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "micro-courses"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/micro-courses/progress/sync": {
+      "post": {
+        "operationId": "MicroCoursesController_syncProgress",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncMicroCourseProgressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "micro-courses"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/community/groups/{groupId}/messages": {
+      "get": {
+        "operationId": "CommunityController_listMessages",
+        "parameters": [
+          {
+            "name": "groupId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "community"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "CommunityController_sendMessage",
+        "parameters": [
+          {
+            "name": "groupId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendCommunityMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "community"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/quiz/questions": {
+      "post": {
+        "operationId": "QuizController_createQuestion",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuizQuestionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/quiz/questions/{id}/validate": {
+      "patch": {
+        "operationId": "QuizController_validateQuestion",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/quiz/questions/{riteSheetId}": {
+      "get": {
+        "operationId": "QuizController_getQuestionsForRite",
+        "parameters": [
+          {
+            "name": "riteSheetId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/quiz/questions/{id}/attempts": {
+      "post": {
+        "operationId": "QuizController_submitAttempt",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitQuizAttemptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/quiz/attempts/my-stats": {
+      "get": {
+        "operationId": "QuizController_getMyStats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
     }
   },
   "info": {
@@ -2601,6 +3182,18 @@
           "groupId"
         ]
       },
+      "UpdateChecklistStatusDto": {
+        "type": "object",
+        "properties": {
+          "isCompleted": {
+            "type": "boolean",
+            "description": "Statut de la tâche"
+          }
+        },
+        "required": [
+          "isCompleted"
+        ]
+      },
       "InitiatePaymentDto": {
         "type": "object",
         "properties": {
@@ -2822,6 +3415,183 @@
           "content",
           "clientSentAt"
         ]
+      },
+      "CreateBudgetDto": {
+        "type": "object",
+        "properties": {
+          "packageId": {
+            "type": "string",
+            "description": "ID du forfait rattaché"
+          },
+          "pocketMoney": {
+            "type": "number"
+          },
+          "gifts": {
+            "type": "number"
+          },
+          "sacrifice": {
+            "type": "number"
+          },
+          "insurance": {
+            "type": "number"
+          },
+          "otherExpenses": {
+            "type": "number"
+          }
+        }
+      },
+      "UpdateBudgetDto": {
+        "type": "object",
+        "properties": {
+          "packageId": {
+            "type": "string",
+            "description": "ID du forfait rattaché"
+          },
+          "pocketMoney": {
+            "type": "number"
+          },
+          "gifts": {
+            "type": "number"
+          },
+          "sacrifice": {
+            "type": "number"
+          },
+          "insurance": {
+            "type": "number"
+          },
+          "otherExpenses": {
+            "type": "number"
+          }
+        }
+      },
+      "CreateMicroCourseDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Titre du micro-cours"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description optionnelle"
+          },
+          "videoUrl": {
+            "type": "string",
+            "description": "URL de la vidéo (hébergée sur stockage S3/CDN)"
+          },
+          "durationSeconds": {
+            "type": "number",
+            "description": "Durée en secondes",
+            "default": 0
+          },
+          "order": {
+            "type": "number",
+            "description": "Ordre d'affichage",
+            "default": 0
+          },
+          "category": {
+            "type": "string",
+            "description": "Catégorie du cours (ex: preparation, rites, sante)",
+            "default": "preparation"
+          }
+        },
+        "required": [
+          "title",
+          "videoUrl"
+        ]
+      },
+      "UpdateMicroCourseDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Titre du micro-cours"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description optionnelle"
+          },
+          "videoUrl": {
+            "type": "string",
+            "description": "URL de la vidéo (hébergée sur stockage S3/CDN)"
+          },
+          "durationSeconds": {
+            "type": "number",
+            "description": "Durée en secondes",
+            "default": 0
+          },
+          "order": {
+            "type": "number",
+            "description": "Ordre d'affichage",
+            "default": 0
+          },
+          "category": {
+            "type": "string",
+            "description": "Catégorie du cours (ex: preparation, rites, sante)",
+            "default": "preparation"
+          }
+        }
+      },
+      "MicroCourseProgressItemDto": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "description": "ID du micro-cours"
+          },
+          "isCompleted": {
+            "type": "boolean",
+            "description": "Statut de complétion"
+          },
+          "clientUpdatedAt": {
+            "type": "string",
+            "description": "Horodatage client de l'action hors-ligne (ISO 8601)"
+          }
+        },
+        "required": [
+          "courseId",
+          "clientUpdatedAt"
+        ]
+      },
+      "SyncMicroCourseProgressDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Liste des progressions horodatées à synchroniser",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MicroCourseProgressItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "SendCommunityMessageDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Contenu textuel du message"
+          },
+          "clientSentAt": {
+            "type": "string",
+            "description": "Horodatage de l'envoi côté client"
+          }
+        },
+        "required": [
+          "content",
+          "clientSentAt"
+        ]
+      },
+      "CreateQuizQuestionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SubmitQuizAttemptDto": {
+        "type": "object",
+        "properties": {}
       }
     }
   }
