@@ -21,3 +21,18 @@ export interface UserShape {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Vue d'administration d'un compte : identité, contact, rôle, statut —
+// jamais groupe sanguin, passeport ni contact d'urgence (minimisation des
+// données personnelles, voir ADR 0008). Sert aussi à la liste des guides
+// d'une agence.
+export interface UserSummaryShape {
+  id: string;
+  fullName: string;
+  phone?: string;
+  email?: string;
+  role: Role;
+  agencyId?: string;
+  isActive: boolean;
+  createdAt: Date;
+}

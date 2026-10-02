@@ -25,8 +25,10 @@ import {
   LegalDocumentAlertShape,
 } from '../../types/agency.types';
 import { AccessUrl } from '../storage/storage-provider.interface';
+import { UserSummaryShape } from '../../types/user.types';
 import { AgenciesService } from './agencies.service';
 import { AddLegalDocumentDto } from './dto/add-legal-document.dto';
+import { CreateGuideDto } from './dto/create-guide.dto';
 import { RegisterAgencyDto } from './dto/register-agency.dto';
 import { RejectAgencyDto } from './dto/reject-agency.dto';
 import { UpdateAgencyDto } from './dto/update-agency.dto';
@@ -59,6 +61,24 @@ export class AgenciesController {
     @Body() dto: UpdateAgencyDto,
   ): Promise<AgencyShape> {
     return this.agenciesService.updateOwn(user.sub, dto);
+  }
+
+  // Guides de l'agence — liste et ajout (sorail742/Oumra-hajj-web#64).
+  @ApiBearerAuth()
+  @Roles(Role.AGENCY)
+  @Get('me/guides')
+  listOwnGuides(@CurrentUser() user: JwtPayload): Promise<UserSummaryShape[]> {
+    return this.agenciesService.listOwnGuides(user.sub);
+  }
+
+  @ApiBearerAuth()
+  @Roles(Role.AGENCY)
+  @Post('me/guides')
+  addGuide(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateGuideDto,
+  ): Promise<UserSummaryShape> {
+    return this.agenciesService.addGuide(user.sub, dto);
   }
 
   // Idée #56 (backlog "Cent Fonctionnalités") — alertes de conformité

@@ -231,6 +231,33 @@ describe('UsersService', () => {
     });
   });
 
+  describe('listForAdmin', () => {
+    it("ne renvoie ni groupe sanguin, ni passeport, ni contact d'urgence", async () => {
+      prisma.user.findMany.mockResolvedValue([
+        {
+          ...baseUser,
+          bloodType: 'O+',
+          passportNumber: 'PASSEPORT-FACTICE',
+          emergencyContactFullName: 'Contact Factice',
+          emergencyContactPhone: '+224600000001',
+        },
+      ]);
+
+      const [compte] = await service.listForAdmin(Role.PILGRIM);
+
+      expect(compte).toEqual({
+        id: baseUser.id,
+        fullName: baseUser.fullName,
+        phone: baseUser.phone,
+        email: undefined,
+        role: baseUser.role,
+        agencyId: undefined,
+        isActive: true,
+        createdAt: baseUser.createdAt,
+      });
+    });
+  });
+
   describe('findByRole', () => {
     it('filtre par rôle et par agence quand fournie', async () => {
       prisma.user.findMany.mockResolvedValue([baseUser]);
