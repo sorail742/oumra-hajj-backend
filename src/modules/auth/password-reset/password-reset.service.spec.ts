@@ -16,7 +16,8 @@ const AGENCE = {
   email: 'agence@example.test',
   role: 'agency',
   isActive: true,
-  passwordHash: 'empreinte-factice',
+  // Empreinte fictive, jamais comparée dans ces tests.
+  passwordHash: 'x'.repeat(60),
 };
 const JETON = 'a'.repeat(43);
 

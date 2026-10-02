@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { randomBytes } from 'crypto';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { EMAIL_OTP_SENDER } from '../../src/modules/auth/otp/otp-sender.interface';
@@ -122,8 +123,10 @@ describe('Auth (e2e)', () => {
   it("réinitialise le mot de passe d'une agence et ferme ses sessions (ADR 0026)", async () => {
     const server = app.getHttpServer();
     const email = 'agence.reset@example.test';
-    const ancien = 'ancien-mot-de-passe-factice';
-    const nouveau = 'nouveau-mot-de-passe-factice';
+    // Mots de passe aléatoires générés pour le test (CLAUDE.md : rien de réaliste en dur).
+    const ancien = randomBytes(12).toString('hex');
+    const nouveau = randomBytes(12).toString('hex');
+    const autre = randomBytes(12).toString('hex');
 
     await request(server)
       .post('/api/v1/agencies/register')
@@ -151,10 +154,9 @@ describe('Auth (e2e)', () => {
       .send({ email })
       .expect(200, { sent: true });
     const envoi = liensEnvoyes.find((l) => l.email === email);
-    const token = new URL(envoi?.lien ?? 'http://x').hash.replace(
-      '#token=',
-      '',
-    );
+    const token = new URL(
+      envoi?.lien ?? 'https://invalide.example.test',
+    ).hash.replace('#token=', '');
     expect(token).toHaveLength(43);
 
     await request(server)
@@ -165,7 +167,7 @@ describe('Auth (e2e)', () => {
     // Usage unique, ancienne session fermée, ancien mot de passe refusé.
     await request(server)
       .post('/api/v1/auth/password/reset')
-      .send({ token, newPassword: 'encore-un-autre-factice' })
+      .send({ token, newPassword: autre })
       .expect(400);
     await request(server)
       .post('/api/v1/auth/refresh')

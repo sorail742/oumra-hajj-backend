@@ -46,8 +46,8 @@ déjà côté serveur (EmailJS, ADR 0025).
    réel. Sinon, hors production, le lien est journalisé (développement
    uniquement) ; en **production**, `forgot` répond `503` avant toute
    recherche de compte (même réponse pour tous, donc pas d'énumération).
-8. **Échec d'envoi** (EmailJS indisponible) : journalisé avec l'adresse
-   masquée, sans le lien ; la réponse reste `{ sent: true }` pour ne pas
+8. **Échec d'envoi** (EmailJS indisponible) : journalisé sans l'adresse ni
+   le lien (donnée saisie : pas d'injection possible dans les journaux) ; la réponse reste `{ sent: true }` pour ne pas
    révéler qu'un compte existe à cette adresse.
 9. **Anti-abus** : 3 demandes par minute et par IP sur `forgot`, 10 sur
    `reset`, en plus de la limite globale.

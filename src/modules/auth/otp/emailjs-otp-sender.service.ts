@@ -5,14 +5,13 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppConfig } from '../../../config/configuration';
-import { maskEmail } from './mask-email';
 import { OtpSender } from './otp-sender.interface';
 import { EmailJsSendError, sendEmailJs } from './send-emailjs';
 
 export { EMAILJS_SEND_URL } from './send-emailjs';
 
 // Envoi du code OTP par email via l'API REST d'EmailJS (ADR 0025). Ni le
-// code ni l'adresse complète ne sont journalisés.
+// code ni l'adresse (donnée saisie) ne sont journalisés.
 @Injectable()
 export class EmailJsOtpSender implements OtpSender {
   private readonly logger = new Logger(EmailJsOtpSender.name);
@@ -35,9 +34,7 @@ export class EmailJsOtpSender implements OtpSender {
     } catch (error) {
       const detail =
         error instanceof EmailJsSendError ? error.detail : 'inconnue';
-      this.logger.error(
-        `Envoi OTP vers ${maskEmail(email)} impossible (${detail})`,
-      );
+      this.logger.error(`Envoi OTP par email impossible (${detail})`);
       throw new ServiceUnavailableException(
         "L'envoi du code par email est momentanément indisponible",
       );

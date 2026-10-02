@@ -35,9 +35,9 @@ class ConsolePasswordResetMailer implements PasswordResetMailer {
   readonly available = true;
   private readonly logger = new Logger('PasswordResetMailer');
 
-  send(email: string, resetUrl: string): Promise<void> {
+  send(_email: string, resetUrl: string): Promise<void> {
     this.logger.warn(
-      `[RESET DEV ONLY] Lien ${resetUrl} pour ${email} — EmailJS non configuré (ADR 0026).`,
+      `[RESET DEV ONLY] Lien de réinitialisation : ${resetUrl} — EmailJS non configuré (ADR 0026).`,
     );
     return Promise.resolve();
   }

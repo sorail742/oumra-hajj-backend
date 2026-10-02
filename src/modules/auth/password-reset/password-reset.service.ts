@@ -12,7 +12,6 @@ import { AppConfig } from '../../../config/configuration';
 import { Role } from '../../../common/enums/role.enum';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UsersService } from '../../users/users.service';
-import { maskEmail } from '../otp/mask-email';
 import {
   PASSWORD_RESET_MAILER,
   PasswordResetMailer,
@@ -50,7 +49,12 @@ export class PasswordResetService {
     }
 
     const user = await this.usersService.findByEmailWithPassword(email);
-    if (!user?.passwordHash || !user.isActive || !RESET_ROLES.has(user.role)) {
+    if (
+      !user?.passwordHash ||
+      !user.email ||
+      !user.isActive ||
+      !RESET_ROLES.has(user.role)
+    ) {
       return { sent: true };
     }
 
@@ -76,14 +80,10 @@ export class PasswordResetService {
     );
     resetUrl.hash = `token=${token}`;
     try {
-      await this.mailer.send(
-        user.email ?? email,
-        resetUrl.toString(),
-        ttlMinutes,
-      );
+      await this.mailer.send(user.email, resetUrl.toString(), ttlMinutes);
     } catch (error) {
       this.logger.error(
-        `Envoi du lien de réinitialisation vers ${maskEmail(email)} impossible (${(error as Error).name})`,
+        `Envoi du lien de réinitialisation impossible (${(error as Error).name})`,
       );
     }
     return { sent: true };
