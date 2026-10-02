@@ -23,6 +23,7 @@ describe('AgenciesService — inscription et validation des agences', () => {
     };
     agencyLegalDocument: {
       create: jest.Mock;
+      findFirst: jest.Mock;
     };
   };
   let usersService: { findByEmail: jest.Mock; create: jest.Mock };
@@ -59,6 +60,7 @@ describe('AgenciesService — inscription et validation des agences', () => {
       },
       agencyLegalDocument: {
         create: jest.fn(),
+        findFirst: jest.fn(),
       },
     };
     usersService = { findByEmail: jest.fn(), create: jest.fn() };
@@ -358,6 +360,45 @@ describe('AgenciesService — inscription et validation des agences', () => {
       await expect(
         service.getLegalDocumentAccessUrl('owner-1', 'doc-inconnu'),
       ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(storageProvider.getAccessUrl).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getLegalDocumentAccessUrlForAdmin', () => {
+    it("renvoie l'URL signée d'un document de l'agence examinée", async () => {
+      prisma.agencyLegalDocument.findFirst.mockResolvedValue({
+        id: 'doc-1',
+        agencyId: 'agency-1',
+        storageRef: 'ref-1',
+      });
+      storageProvider.getAccessUrl.mockResolvedValue({
+        url: '/api/v1/documents/files/token',
+        expiresAt: new Date('2026-01-01T00:05:00.000Z'),
+      });
+
+      const result = await service.getLegalDocumentAccessUrlForAdmin(
+        'admin-1',
+        'agency-1',
+        'doc-1',
+      );
+
+      expect(prisma.agencyLegalDocument.findFirst).toHaveBeenCalledWith({
+        where: { id: 'doc-1', agencyId: 'agency-1' },
+      });
+      expect(storageProvider.getAccessUrl).toHaveBeenCalledWith('ref-1');
+      expect(result.url).toBe('/api/v1/documents/files/token');
+    });
+
+    it("refuse un document qui n'appartient pas à cette agence", async () => {
+      prisma.agencyLegalDocument.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.getLegalDocumentAccessUrlForAdmin(
+          'admin-1',
+          'agency-1',
+          'doc-autre-agence',
+        ),
+      ).rejects.toBeInstanceOf(NotFoundException);
       expect(storageProvider.getAccessUrl).not.toHaveBeenCalled();
     });
   });

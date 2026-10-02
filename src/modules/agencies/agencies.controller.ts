@@ -146,6 +146,21 @@ export class AgenciesController {
 
   @ApiBearerAuth()
   @Roles(Role.ADMIN)
+  @Get(':id/legal-documents/:documentId/access-url')
+  getLegalDocumentAccessUrlForAdmin(
+    @Param('id') id: string,
+    @Param('documentId') documentId: string,
+    @CurrentUser() admin: JwtPayload,
+  ): Promise<AccessUrl> {
+    return this.agenciesService.getLegalDocumentAccessUrlForAdmin(
+      admin.sub,
+      id,
+      documentId,
+    );
+  }
+
+  @ApiBearerAuth()
+  @Roles(Role.ADMIN)
   @Patch(':id/approve')
   approve(
     @Param('id') id: string,
