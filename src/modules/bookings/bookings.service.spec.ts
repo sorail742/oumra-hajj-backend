@@ -11,6 +11,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { PackagesService } from '../packages/packages.service';
 import { UsersService } from '../users/users.service';
 import { BookingsService } from './bookings.service';
+import { ChecklistService } from '../checklist/checklist.service';
 
 describe('BookingsService', () => {
   let service: BookingsService;
@@ -100,6 +101,9 @@ describe('BookingsService', () => {
         .fn()
         .mockResolvedValue({ id: pilgrimId, fullName: 'Pèlerin Test' }),
     };
+    const checklistService = {
+      generateStandardChecklist: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -110,6 +114,7 @@ describe('BookingsService', () => {
         { provide: GroupsService, useValue: groupsService },
         { provide: NotificationsService, useValue: notificationsService },
         { provide: UsersService, useValue: usersService },
+        { provide: ChecklistService, useValue: checklistService },
       ],
     }).compile();
 

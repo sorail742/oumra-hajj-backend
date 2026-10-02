@@ -37,4 +37,3 @@ export class CreateBudgetDto {
   @Min(0)
   otherExpenses?: number;
 }
-
