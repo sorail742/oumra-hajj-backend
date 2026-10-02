@@ -20,6 +20,12 @@ export interface AppConfig {
     publicKey: string;
     privateKey: string;
   };
+  // Réinitialisation du mot de passe agence / admin — ADR 0026.
+  passwordReset: {
+    ttlMinutes: number;
+    webAppUrl: string;
+    emailjsTemplateId: string;
+  };
   throttle: {
     ttlMs: number;
     limit: number;
@@ -50,6 +56,11 @@ export default (): AppConfig => ({
     templateId: process.env.EMAILJS_TEMPLATE_ID ?? '',
     publicKey: process.env.EMAILJS_PUBLIC_KEY ?? '',
     privateKey: process.env.EMAILJS_PRIVATE_KEY ?? '',
+  },
+  passwordReset: {
+    ttlMinutes: parseInt(process.env.PASSWORD_RESET_TTL_MINUTES ?? '30', 10),
+    webAppUrl: process.env.WEB_APP_URL ?? '',
+    emailjsTemplateId: process.env.EMAILJS_RESET_TEMPLATE_ID ?? '',
   },
   throttle: {
     ttlMs: parseInt(process.env.THROTTLE_TTL_MS ?? '60000', 10),

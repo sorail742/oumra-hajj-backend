@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { EMAIL_OTP_SENDER } from '../../src/modules/auth/otp/otp-sender.interface';
+import { PASSWORD_RESET_MAILER } from '../../src/modules/auth/password-reset/password-reset-mailer';
 import { setupApp } from '../../src/setup-app';
 import { startTestPostgres, stopTestPostgres } from '../utils/postgres-test-db';
 
@@ -10,6 +11,8 @@ describe('Auth (e2e)', () => {
   let app: INestApplication;
   // Canal email (ADR 0025) remplacé par un espion : aucun appel EmailJS réel.
   const emailsEnvoyes: { email: string; code: string }[] = [];
+  // Lien de réinitialisation (ADR 0026) capturé de la même façon.
+  const liensEnvoyes: { email: string; lien: string }[] = [];
 
   beforeAll(async () => {
     process.env.DATABASE_URL = await startTestPostgres();
@@ -21,6 +24,14 @@ describe('Auth (e2e)', () => {
       .useValue({
         send: (email: string, code: string) => {
           emailsEnvoyes.push({ email, code });
+          return Promise.resolve();
+        },
+      })
+      .overrideProvider(PASSWORD_RESET_MAILER)
+      .useValue({
+        available: true,
+        send: (email: string, lien: string) => {
+          liensEnvoyes.push({ email, lien });
           return Promise.resolve();
         },
       })
@@ -106,5 +117,69 @@ describe('Auth (e2e)', () => {
       .post('/api/v1/auth/refresh')
       .send({ refreshToken: 'jeton-invalide' })
       .expect(401);
+  });
+
+  it("réinitialise le mot de passe d'une agence et ferme ses sessions (ADR 0026)", async () => {
+    const server = app.getHttpServer();
+    const email = 'agence.reset@example.test';
+    const ancien = 'ancien-mot-de-passe-factice';
+    const nouveau = 'nouveau-mot-de-passe-factice';
+
+    await request(server)
+      .post('/api/v1/agencies/register')
+      .send({
+        legalName: 'Agence Fictive Reset',
+        contactEmail: email,
+        contactPhone: '+224620000020',
+        password: ancien,
+      })
+      .expect(201);
+    const session = await request(server)
+      .post('/api/v1/auth/agency/login')
+      .send({ email, password: ancien })
+      .expect(200);
+
+    // Adresse inconnue : même réponse, aucun envoi.
+    await request(server)
+      .post('/api/v1/auth/password/forgot')
+      .send({ email: 'inconnue@example.test' })
+      .expect(200, { sent: true });
+    expect(liensEnvoyes).toHaveLength(0);
+
+    await request(server)
+      .post('/api/v1/auth/password/forgot')
+      .send({ email })
+      .expect(200, { sent: true });
+    const envoi = liensEnvoyes.find((l) => l.email === email);
+    const token = new URL(envoi?.lien ?? 'http://x').hash.replace(
+      '#token=',
+      '',
+    );
+    expect(token).toHaveLength(43);
+
+    await request(server)
+      .post('/api/v1/auth/password/reset')
+      .send({ token, newPassword: nouveau })
+      .expect(204);
+
+    // Usage unique, ancienne session fermée, ancien mot de passe refusé.
+    await request(server)
+      .post('/api/v1/auth/password/reset')
+      .send({ token, newPassword: 'encore-un-autre-factice' })
+      .expect(400);
+    await request(server)
+      .post('/api/v1/auth/refresh')
+      .send({
+        refreshToken: (session.body as { refreshToken: string }).refreshToken,
+      })
+      .expect(401);
+    await request(server)
+      .post('/api/v1/auth/agency/login')
+      .send({ email, password: ancien })
+      .expect(401);
+    await request(server)
+      .post('/api/v1/auth/agency/login')
+      .send({ email, password: nouveau })
+      .expect(200);
   });
 });
