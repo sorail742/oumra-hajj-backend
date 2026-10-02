@@ -31,10 +31,12 @@ Le porteur du projet a demandé que le code arrive **par email** via
 3. **Configuration uniquement par variables d'environnement** (hébergeur) :
    `EMAILJS_SERVICE_ID`, `EMAILJS_TEMPLATE_ID`, `EMAILJS_PUBLIC_KEY`,
    `EMAILJS_PRIVATE_KEY`. Jamais dans le dépôt, jamais dans un log.
-4. **Comportement si EmailJS n'est pas configuré** : en développement et en
-   test, le code est journalisé (comme le canal SMS aujourd'hui) ; en
-   **production**, la demande échoue en `503` — jamais de code dans les
-   journaux de production par ce canal.
+4. **Aucun code dans les journaux de production, quel que soit le canal.**
+   Email sans EmailJS configuré, ou SMS tant qu'aucun fournisseur n'est
+   retenu : en développement et en test, le code est journalisé ; en
+   **production**, la demande échoue en `503` (décision du porteur de
+   projet, 2026-10-02). La connexion par téléphone est donc indisponible en
+   production jusqu'au choix d'un fournisseur SMS.
 5. **Périmètre des rôles inchangé (ADR 0003)** : l'OTP par email ne connecte
    qu'un pèlerin ou un guide. Une adresse rattachée à un compte agence ou
    admin ne reçoit aucun code (réponse identique `{ sent: true }`, pour ne
@@ -68,5 +70,10 @@ cela, l'appel serveur est refusé (`403`).
 - Dépendance à un service tiers supplémentaire (quota de l'offre EmailJS) :
   en cas d'indisponibilité, l'API renvoie `503` et l'interface invite à
   réessayer.
+- Les comptes pèlerin/guide créés par téléphone ne peuvent plus se
+  connecter en production tant qu'un fournisseur SMS n'est pas branché.
+  Se connecter par email crée un **nouveau** compte : aucun rattachement
+  d'une adresse à un compte téléphone n'existe encore (il faudrait vérifier
+  l'adresse avant de la lier — à traiter dans un ticket dédié).
 - Lorsque le fournisseur SMS sera retenu, il remplacera `ConsoleOtpSender`
-  pour le canal téléphone sans toucher au canal email.
+  dans `sms-otp-sender.provider` sans toucher au canal email.
