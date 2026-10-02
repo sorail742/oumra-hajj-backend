@@ -4,7 +4,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
-import { UserShape } from '../../types/user.types';
+import { UserShape, UserSummaryShape } from '../../types/user.types';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UsersService } from './users.service';
 
@@ -34,19 +34,19 @@ export class UsersController {
   listByRole(
     @Query('role') role: Role,
     @Query('agencyId') agencyId?: string,
-  ): Promise<UserShape[]> {
-    return this.usersService.findByRole(role, agencyId);
+  ): Promise<UserSummaryShape[]> {
+    return this.usersService.listForAdmin(role, agencyId);
   }
 
   @Roles(Role.ADMIN)
   @Patch(':id/suspend')
-  suspend(@Param('id') id: string): Promise<UserShape> {
-    return this.usersService.setActive(id, false);
+  suspend(@Param('id') id: string): Promise<UserSummaryShape> {
+    return this.usersService.setActiveForAdmin(id, false);
   }
 
   @Roles(Role.ADMIN)
   @Patch(':id/reactivate')
-  reactivate(@Param('id') id: string): Promise<UserShape> {
-    return this.usersService.setActive(id, true);
+  reactivate(@Param('id') id: string): Promise<UserSummaryShape> {
+    return this.usersService.setActiveForAdmin(id, true);
   }
 }

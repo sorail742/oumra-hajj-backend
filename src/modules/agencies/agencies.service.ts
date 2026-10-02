@@ -16,6 +16,7 @@ import { randomBytes } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AgencyValidationStatus } from '../../common/enums/agency-validation-status.enum';
 import { Role } from '../../common/enums/role.enum';
+import { UserSummaryShape } from '../../types/user.types';
 import {
   AgencyShape,
   CalendarSubscriptionShape,
@@ -28,8 +29,9 @@ import {
   StoredFile,
   STORAGE_PROVIDER,
 } from '../storage/storage-provider.interface';
-import { UsersService } from '../users/users.service';
+import { toUserSummary, UsersService } from '../users/users.service';
 import { AddLegalDocumentDto } from './dto/add-legal-document.dto';
+import { CreateGuideDto } from './dto/create-guide.dto';
 import { RegisterAgencyDto } from './dto/register-agency.dto';
 import { UpdateAgencyDto } from './dto/update-agency.dto';
 
@@ -321,6 +323,36 @@ export class AgenciesService {
       `Génération URL d'accès — agence=${owned.id} document=${documentId}`,
     );
     return this.storageProvider.getAccessUrl(doc.storageRef);
+  }
+
+  // Guides de l'agence (sorail742/Oumra-hajj-web#64) : seuls les guides
+  // rattachés à l'agence peuvent être assignés à ses groupes.
+  async listOwnGuides(ownerId: string): Promise<UserSummaryShape[]> {
+    const owned = await this.findByOwnerOrFail(ownerId);
+    return this.usersService.listForAdmin(Role.GUIDE, owned.id);
+  }
+
+  async addGuide(
+    ownerId: string,
+    dto: CreateGuideDto,
+  ): Promise<UserSummaryShape> {
+    const owned = await this.findByOwnerOrFail(ownerId);
+    const [parTelephone, parEmail] = await Promise.all([
+      dto.phone ? this.usersService.findByPhone(dto.phone) : null,
+      dto.email ? this.usersService.findByEmail(dto.email) : null,
+    ]);
+    if (parTelephone || parEmail) {
+      // Jamais de changement de rôle ni de rattachement d'un compte existant.
+      throw new ConflictException('Un compte existe déjà avec ce contact');
+    }
+    const guide = await this.usersService.create({
+      fullName: dto.fullName,
+      phone: dto.phone,
+      email: dto.email,
+      role: Role.GUIDE,
+      agencyId: owned.id,
+    });
+    return toUserSummary(guide);
   }
 
   // Validation par l'administrateur (cahier des charges §3.4) : il doit

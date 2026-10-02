@@ -158,6 +158,12 @@ export class GroupsService {
         "L'utilisateur désigné n'a pas le rôle guide",
       );
     }
+    // Une agence n'assigne que ses propres guides.
+    if (guide.agencyId !== group.agencyId) {
+      throw new ForbiddenException(
+        "Ce guide n'est pas rattaché à votre agence",
+      );
+    }
 
     const updated = await this.prisma.group.update({
       where: { id: group.id },
