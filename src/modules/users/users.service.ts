@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { User as PrismaUser, Role as PrismaRole } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role } from '../../common/enums/role.enum';
-import { UserShape } from '../../types/user.types';
+import { UserShape, UserSummaryShape } from '../../types/user.types';
 import { CreateUserInternalDto } from './dto/create-user-internal.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
@@ -12,6 +12,19 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 // dans les deux sens pour ne pas changer la forme de l'API.
 type UserRecord = Omit<PrismaUser, 'passwordHash'>;
 export type UserWithPassword = PrismaUser;
+
+export function toUserSummary(user: UserShape): UserSummaryShape {
+  return {
+    id: user.id,
+    fullName: user.fullName,
+    phone: user.phone,
+    email: user.email,
+    role: user.role,
+    agencyId: user.agencyId,
+    isActive: user.isActive,
+    createdAt: user.createdAt,
+  };
+}
 
 function toUserShape(user: UserRecord): UserShape {
   const hasEmergencyContact =
@@ -133,5 +146,20 @@ export class UsersService {
       },
     });
     return users.map(toUserShape);
+  }
+
+  // Administration (cahier des charges §3.4) : vue minimale des comptes.
+  async listForAdmin(
+    role: Role,
+    agencyId?: string,
+  ): Promise<UserSummaryShape[]> {
+    return (await this.findByRole(role, agencyId)).map(toUserSummary);
+  }
+
+  async setActiveForAdmin(
+    userId: string,
+    isActive: boolean,
+  ): Promise<UserSummaryShape> {
+    return toUserSummary(await this.setActive(userId, isActive));
   }
 }

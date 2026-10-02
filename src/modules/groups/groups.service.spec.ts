@@ -165,6 +165,7 @@ describe('GroupsService', () => {
       usersService.findByIdOrFail.mockResolvedValue({
         id: guideId,
         role: Role.GUIDE,
+        agencyId: 'agency-1',
       });
       prisma.group.update.mockResolvedValue(buildGroup({ guideId }));
 
@@ -175,6 +176,21 @@ describe('GroupsService', () => {
       );
       expect(result.guideId).toBe(guideId);
     });
+  });
+
+  it("refuse d'assigner le guide d'une autre agence", async () => {
+    prisma.group.findUnique.mockResolvedValue(buildGroup({}));
+    agenciesService.findByOwnerOrFail.mockResolvedValue({ id: 'agency-1' });
+    usersService.findByIdOrFail.mockResolvedValue({
+      id: guideId,
+      role: Role.GUIDE,
+      agencyId: 'autre-agence',
+    });
+
+    await expect(
+      service.assignGuide('owner-1', groupId, guideId),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(prisma.group.update).not.toHaveBeenCalled();
   });
 
   describe('addMember', () => {

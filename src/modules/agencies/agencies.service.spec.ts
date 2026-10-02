@@ -26,7 +26,12 @@ describe('AgenciesService — inscription et validation des agences', () => {
       findFirst: jest.Mock;
     };
   };
-  let usersService: { findByEmail: jest.Mock; create: jest.Mock };
+  let usersService: {
+    findByEmail: jest.Mock;
+    findByPhone: jest.Mock;
+    create: jest.Mock;
+    listForAdmin: jest.Mock;
+  };
   let storageProvider: { store: jest.Mock; getAccessUrl: jest.Mock };
 
   const baseAgency = {
@@ -63,7 +68,12 @@ describe('AgenciesService — inscription et validation des agences', () => {
         findFirst: jest.fn(),
       },
     };
-    usersService = { findByEmail: jest.fn(), create: jest.fn() };
+    usersService = {
+      findByEmail: jest.fn(),
+      findByPhone: jest.fn(),
+      create: jest.fn(),
+      listForAdmin: jest.fn(),
+    };
     storageProvider = { store: jest.fn(), getAccessUrl: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -361,6 +371,61 @@ describe('AgenciesService — inscription et validation des agences', () => {
         service.getLegalDocumentAccessUrl('owner-1', 'doc-inconnu'),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(storageProvider.getAccessUrl).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("guides de l'agence", () => {
+    it("crée un guide rattaché à l'agence", async () => {
+      prisma.agency.findUnique.mockResolvedValue(baseAgency);
+      usersService.findByPhone.mockResolvedValue(null);
+      usersService.create.mockResolvedValue({
+        id: 'guide-1',
+        fullName: 'Guide Factice',
+        phone: '+224600000009',
+        role: Role.GUIDE,
+        agencyId: baseAgency.id,
+        isActive: true,
+        createdAt: new Date('2026-10-02'),
+        bloodType: 'O+',
+      });
+
+      const guide = await service.addGuide('owner-1', {
+        fullName: 'Guide Factice',
+        phone: '+224600000009',
+      });
+
+      expect(usersService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ role: Role.GUIDE, agencyId: baseAgency.id }),
+      );
+      expect(guide).not.toHaveProperty('bloodType');
+    });
+
+    it('refuse un contact déjà utilisé, sans changer le compte existant', async () => {
+      prisma.agency.findUnique.mockResolvedValue(baseAgency);
+      usersService.findByEmail.mockResolvedValue({
+        id: 'u1',
+        role: Role.PILGRIM,
+      });
+
+      await expect(
+        service.addGuide('owner-1', {
+          fullName: 'Guide Factice',
+          email: 'pris@exemple.test',
+        }),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(usersService.create).not.toHaveBeenCalled();
+    });
+
+    it("ne liste que les guides de l'agence", async () => {
+      prisma.agency.findUnique.mockResolvedValue(baseAgency);
+      usersService.listForAdmin.mockResolvedValue([]);
+
+      await service.listOwnGuides('owner-1');
+
+      expect(usersService.listForAdmin).toHaveBeenCalledWith(
+        Role.GUIDE,
+        baseAgency.id,
+      );
     });
   });
 
