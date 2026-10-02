@@ -141,6 +141,7 @@ model User {
 
   ownedAgency            Agency?               @relation("AgencyOwner")
   refreshTokens          RefreshToken[]
+  passwordResetTokens    PasswordResetToken[]
   bookingsAsPilgrim      Booking[]             @relation("BookingPilgrim")
   documents              PilgrimDocument[]
   riteProgress           RiteProgress[]
@@ -191,6 +192,20 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+// Jeton de réinitialisation du mot de passe (ADR 0026) : seule l'empreinte
+// SHA-256 est stockée, usage unique, courte durée de vie.
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 // ---------------------------------------------------------------------------

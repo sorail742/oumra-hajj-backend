@@ -7,6 +7,8 @@ import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { emailOtpSenderProvider } from './otp/email-otp-sender.provider';
+import { passwordResetMailerProvider } from './password-reset/password-reset-mailer';
+import { PasswordResetService } from './password-reset/password-reset.service';
 import { smsOtpSenderProvider } from './otp/sms-otp-sender.provider';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
@@ -27,6 +29,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     JwtStrategy,
     smsOtpSenderProvider,
     emailOtpSenderProvider,
+    PasswordResetService,
+    passwordResetMailerProvider,
   ],
   exports: [AuthService],
 })
