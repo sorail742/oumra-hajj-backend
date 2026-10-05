@@ -6,16 +6,22 @@ import { Public } from '../../common/decorators/public.decorator';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
 import { AuthService } from './auth.service';
 import { AgencyLoginDto } from './dto/agency-login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthTokensDto } from './dto/auth-tokens.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { toOtpContact } from './dto/otp-contact';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { PasswordResetService } from './password-reset/password-reset.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly passwordResetService: PasswordResetService,
+  ) {}
 
   // Pèlerin / guide — code par SMS (ADR 0003) ou par email (ADR 0025).
   // Limites dédiées contre l'abus d'envoi et le brute-force (ADR 0025 §6).
@@ -45,6 +51,23 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   agencyLogin(@Body() dto: AgencyLoginDto): Promise<AuthTokensDto> {
     return this.authService.validateAgencyOrAdmin(dto.email, dto.password);
+  }
+
+  // Mot de passe oublié (agence / admin) — voir ADR 0026.
+  @Public()
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @Post('password/forgot')
+  @HttpCode(HttpStatus.OK)
+  forgotPassword(@Body() dto: ForgotPasswordDto): Promise<{ sent: true }> {
+    return this.passwordResetService.requestReset(dto.email);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post('password/reset')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+    await this.passwordResetService.resetPassword(dto.token, dto.newPassword);
   }
 
   @Public()

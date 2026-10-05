@@ -250,4 +250,46 @@ describe('GroupsService', () => {
       });
     });
   });
+
+  describe('triggerLostAlert', () => {
+    it("refuse le déclenchement si l'appelant ne fait pas partie du groupe", async () => {
+      prisma.group.findUnique.mockResolvedValue(buildGroup({ members: [] }));
+
+      await expect(
+        service.triggerLostAlert(pilgrimId, groupId, 21.42, 39.82),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.groupMemberLocation.upsert).not.toHaveBeenCalled();
+      expect(notificationsService.send).not.toHaveBeenCalled();
+    });
+
+    it('met à jour la position et alerte le guide sans SMS', async () => {
+      prisma.group.findUnique.mockResolvedValue(
+        buildGroup({ members: [{ userId: pilgrimId }], guideId }),
+      );
+      usersService.findByIdOrFail.mockResolvedValue({
+        fullName: 'Amadou Diallo',
+      });
+
+      await service.triggerLostAlert(pilgrimId, groupId, 21.42, 39.82);
+
+      // Verify location was updated
+      expect(prisma.groupMemberLocation.upsert).toHaveBeenCalledWith({
+        where: { groupId_userId: { groupId, userId: pilgrimId } },
+        create: { groupId, userId: pilgrimId, lat: 21.42, lng: 39.82 },
+        update: { lat: 21.42, lng: 39.82 },
+      });
+
+      // Verify guide was notified but not critical
+      expect(notificationsService.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipientIds: [guideId],
+          type: NotificationType.OTHER,
+          isCritical: false,
+        }),
+      );
+
+      // Verify no SMS was sent
+      expect(notificationsService.sendRawSms).not.toHaveBeenCalled();
+    });
+  });
 });

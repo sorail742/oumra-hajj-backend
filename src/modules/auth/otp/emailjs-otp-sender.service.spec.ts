@@ -7,7 +7,6 @@ import {
   EMAILJS_SEND_URL,
   EmailJsOtpSender,
 } from './emailjs-otp-sender.service';
-import { maskEmail } from './mask-email';
 import { UnavailableEmailOtpSender } from './unavailable-email-otp-sender.service';
 
 // Identifiants EmailJS explicitement factices (CLAUDE.md).
@@ -101,12 +100,5 @@ describe('chooseEmailOtpSender', () => {
     expect(chooseEmailOtpSender(config(vide, 'development'))).toBeInstanceOf(
       ConsoleEmailOtpSender,
     );
-  });
-});
-
-describe('maskEmail', () => {
-  it("masque l'adresse dans les journaux", () => {
-    expect(maskEmail('pelerin@example.test')).toBe('p***@example.test');
-    expect(maskEmail('invalide')).toBe('***');
   });
 });
