@@ -100,4 +100,14 @@ export class PaymentsController {
   ): Promise<import('../../types/payment.types').SavingsPlanShape> {
     return this.paymentsService.setupSavingsPlan(user.sub, bookingId, dto);
   }
+
+  // Ticket #38 : Trésorerie prévisionnelle
+  @ApiBearerAuth()
+  @Roles(Role.AGENCY)
+  @Get('agency/treasury-projection')
+  getTreasuryProjection(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<import('../../types/payment.types').TreasuryProjectionShape> {
+    return this.paymentsService.getTreasuryProjection(user.sub);
+  }
 }

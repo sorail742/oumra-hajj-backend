@@ -28,6 +28,9 @@ describe('PaymentsService', () => {
       count: jest.Mock;
       aggregate: jest.Mock;
     };
+    booking: {
+      findMany: jest.Mock;
+    };
   };
   let bookingsService: { findByIdOrFail: jest.Mock; markStepDone: jest.Mock };
   let packagesService: { findByIdOrFail: jest.Mock };
@@ -44,6 +47,9 @@ describe('PaymentsService', () => {
         update: jest.fn(),
         count: jest.fn().mockResolvedValue(0),
         aggregate: jest.fn(),
+      },
+      booking: {
+        findMany: jest.fn(),
       },
     };
     bookingsService = { findByIdOrFail: jest.fn(), markStepDone: jest.fn() };
@@ -377,6 +383,49 @@ describe('PaymentsService', () => {
         service.requestRefund('agency-owner-1', Role.AGENCY, paymentId),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(paymentProvider.refund).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getTreasuryProjection', () => {
+    it('calcule la trésorerie prévisionnelle avec et sans échéancier', async () => {
+      agenciesService.findByOwnerOrFail.mockResolvedValue({ id: 'agency-1' });
+
+      // Réservation 1 : 1000€, 300€ payés, sans échéancier (reste 700€ dûs dans 30j max)
+      // Réservation 2 : 2000€, 500€ payés, avec échéancier de 500€/mois (reste 1500€)
+      const futureDate = new Date();
+      futureDate.setMonth(futureDate.getMonth() + 2); // départ dans 2 mois
+
+      const nextMonth = new Date();
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+      prisma.booking.findMany.mockResolvedValue([
+        {
+          id: 'booking-1',
+          package: { price: 1000, startDate: futureDate },
+          payments: [{ amount: 300 }],
+          savingsPlan: null,
+        },
+        {
+          id: 'booking-2',
+          package: { price: 2000, startDate: futureDate },
+          payments: [{ amount: 500 }],
+          savingsPlan: {
+            autoDeduct: true,
+            deductAmount: 500,
+            nextDeductDate: nextMonth,
+            frequency: 'monthly',
+          },
+        },
+      ]);
+
+      const projection = await service.getTreasuryProjection('owner-1');
+
+      expect(projection.totalExpected).toBe(3000); // 1000 + 2000
+      expect(projection.totalCollected).toBe(800); // 300 + 500
+      expect(projection.outstandingBalance).toBe(2200); // 700 + 1500
+      expect(projection.projections).toBeInstanceOf(Array);
+      // Au moins un mois de projection devrait exister
+      expect(projection.projections.length).toBeGreaterThan(0);
     });
   });
 });

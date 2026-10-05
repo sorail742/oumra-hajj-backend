@@ -25,3 +25,15 @@ export interface SavingsPlanShape {
   frequency?: string;
   nextDeductDate?: Date;
 }
+
+export interface TreasuryProjectionItemShape {
+  month: string; // Format: YYYY-MM
+  expectedAmount: number;
+}
+
+export interface TreasuryProjectionShape {
+  totalExpected: number;
+  totalCollected: number;
+  outstandingBalance: number;
+  projections: TreasuryProjectionItemShape[];
+}
