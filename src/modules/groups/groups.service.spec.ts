@@ -27,6 +27,7 @@ describe('GroupsService', () => {
   const buildGroup = (
     overrides: Partial<{
       guideId: string | null;
+      agencyId: string;
       members: { userId: string }[];
     }>,
   ) => ({
@@ -248,6 +249,40 @@ describe('GroupsService', () => {
         create: { groupId, userId: pilgrimId, lat: 21.4, lng: 39.8 },
         update: { lat: 21.4, lng: 39.8 },
       });
+    });
+  });
+
+  describe('exportManifestCsv', () => {
+    it('génère un CSV valide pour le groupe', async () => {
+      prisma.group.findUnique.mockResolvedValue({
+        ...buildGroup({}),
+        members: [
+          {
+            user: {
+              fullName: 'Jean Dupont',
+              email: 'jean@example.com',
+              phone: '+33600000000',
+              passportNumber: 'AB12345',
+              bloodType: 'O+',
+            },
+          },
+        ],
+      });
+      agenciesService.findByOwnerOrFail.mockResolvedValue({ id: 'agency-1' });
+
+      const csv = await service.exportManifestCsv('owner-1', groupId);
+
+      expect(csv).toContain('Nom complet,Email,Téléphone,N° Passeport,Groupe Sanguin');
+      expect(csv).toContain('"Jean Dupont","jean@example.com","+33600000000","AB12345","O+"');
+    });
+
+    it('refuse l\'export si le groupe n\'appartient pas à l\'agence', async () => {
+      prisma.group.findUnique.mockResolvedValue(buildGroup({ agencyId: 'other-agency' }));
+      agenciesService.findByOwnerOrFail.mockResolvedValue({ id: 'agency-1' });
+
+      await expect(
+        service.exportManifestCsv('owner-1', groupId)
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
   });
 });

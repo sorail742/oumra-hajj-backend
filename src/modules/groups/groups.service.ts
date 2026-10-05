@@ -256,6 +256,37 @@ export class GroupsService {
     }
   }
 
+  // Ticket #41 : Export manifeste passagers
+  async exportManifestCsv(ownerId: string, groupId: string): Promise<string> {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+      include: {
+        members: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (!group) {
+      throw new NotFoundException('Groupe introuvable');
+    }
+
+    const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
+    if (group.agencyId !== agency.id) {
+      throw new ForbiddenException("Ce groupe n'appartient pas à votre agence");
+    }
+
+    const header = 'Nom complet,Email,Téléphone,N° Passeport,Groupe Sanguin';
+    const rows = group.members.map((member) => {
+      const u = member.user;
+      return `"${u.fullName}","${u.email ?? ''}","${u.phone ?? ''}","${u.passportNumber ?? ''}","${u.bloodType ?? ''}"`;
+    });
+
+    return [header, ...rows].join('\n');
+  }
+
   private async assertAgencyOwnership(
     ownerId: string,
     group: GroupShape,

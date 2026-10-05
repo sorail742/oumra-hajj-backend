@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Param,
@@ -100,5 +101,17 @@ export class GroupsController {
     @Param('id') id: string,
   ): Promise<void> {
     await this.groupsService.triggerSos(user.sub, id);
+  }
+
+  // Ticket #41 : Export manifeste passagers
+  @Roles(Role.AGENCY)
+  @Get(':id/manifest')
+  @Header('Content-Type', 'text/csv')
+  @Header('Content-Disposition', 'attachment; filename="manifest.csv"')
+  exportManifest(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<string> {
+    return this.groupsService.exportManifestCsv(user.sub, id);
   }
 }
