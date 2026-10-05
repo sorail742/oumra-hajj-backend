@@ -272,16 +272,22 @@ describe('GroupsService', () => {
 
       const csv = await service.exportManifestCsv('owner-1', groupId);
 
-      expect(csv).toContain('Nom complet,Email,Téléphone,N° Passeport,Groupe Sanguin');
-      expect(csv).toContain('"Jean Dupont","jean@example.com","+33600000000","AB12345","O+"');
+      expect(csv).toContain(
+        'Nom complet,Email,Téléphone,N° Passeport,Groupe Sanguin',
+      );
+      expect(csv).toContain(
+        '"Jean Dupont","jean@example.com","+33600000000","AB12345","O+"',
+      );
     });
 
-    it('refuse l\'export si le groupe n\'appartient pas à l\'agence', async () => {
-      prisma.group.findUnique.mockResolvedValue(buildGroup({ agencyId: 'other-agency' }));
+    it("refuse l'export si le groupe n'appartient pas à l'agence", async () => {
+      prisma.group.findUnique.mockResolvedValue(
+        buildGroup({ agencyId: 'other-agency' }),
+      );
       agenciesService.findByOwnerOrFail.mockResolvedValue({ id: 'agency-1' });
 
       await expect(
-        service.exportManifestCsv('owner-1', groupId)
+        service.exportManifestCsv('owner-1', groupId),
       ).rejects.toBeInstanceOf(ForbiddenException);
     });
   });
