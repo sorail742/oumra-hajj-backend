@@ -256,6 +256,35 @@ export class GroupsService {
     }
   }
 
+  // Ticket #14 : "Je suis perdu" en un geste (Alerte douce)
+  async triggerLostAlert(
+    pilgrimUserId: string,
+    groupId: string,
+    lat: number,
+    lng: number,
+  ): Promise<void> {
+    const group = await this.findByIdOrFail(groupId);
+    if (!group.memberIds.includes(pilgrimUserId)) {
+      throw new ForbiddenException('Vous ne faites pas partie de ce groupe');
+    }
+
+    // Met à jour la position du pèlerin
+    await this.updateLocation(pilgrimUserId, groupId, { lat, lng });
+
+    const pilgrim = await this.usersService.findByIdOrFail(pilgrimUserId);
+
+    if (group.guideId) {
+      // Alerte in-app pour le guide uniquement, pas de SMS
+      await this.notificationsService.send({
+        recipientIds: [group.guideId],
+        type: NotificationType.OTHER,
+        title: 'Pèlerin perdu',
+        content: `${pilgrim.fullName} a signalé être perdu. Sa position a été mise à jour.`,
+        isCritical: false,
+      });
+    }
+  }
+
   private async assertAgencyOwnership(
     ownerId: string,
     group: GroupShape,
