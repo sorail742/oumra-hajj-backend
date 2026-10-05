@@ -114,4 +114,16 @@ export class GroupsController {
   ): Promise<string> {
     return this.groupsService.exportManifestCsv(user.sub, id);
   }
+
+  // Ticket #14 : "Je suis perdu" en un geste
+  @Roles(Role.PILGRIM)
+  @Post(':id/lost')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async lost(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: UpdateLocationDto,
+  ): Promise<void> {
+    await this.groupsService.triggerLostAlert(user.sub, id, dto.lat, dto.lng);
+  }
 }
