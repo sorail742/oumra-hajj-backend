@@ -349,18 +349,24 @@ export class PaymentsService {
   }
 
   // Ticket #38 : Trésorerie prévisionnelle
-  async getTreasuryProjection(ownerId: string): Promise<import('../../types/payment.types').TreasuryProjectionShape> {
+  async getTreasuryProjection(
+    ownerId: string,
+  ): Promise<import('../../types/payment.types').TreasuryProjectionShape> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
-    
+
     const bookings = await this.prisma.booking.findMany({
       where: {
         agencyId: agency.id,
-        status: { not: BookingStatus.CANCELLED as unknown as import('@prisma/client').BookingStatus },
+        status: {
+          not: BookingStatus.CANCELLED as unknown as import('@prisma/client').BookingStatus,
+        },
       },
       include: {
         package: true,
         payments: {
-          where: { status: PaymentStatus.SUCCEEDED as unknown as PrismaPaymentStatus },
+          where: {
+            status: PaymentStatus.SUCCEEDED as unknown as PrismaPaymentStatus,
+          },
         },
         savingsPlan: true,
       },
@@ -382,15 +388,30 @@ export class PaymentsService {
       outstandingBalance += balance;
 
       if (balance > 0) {
-        if (booking.savingsPlan && booking.savingsPlan.autoDeduct && booking.savingsPlan.deductAmount && booking.savingsPlan.nextDeductDate && booking.savingsPlan.frequency) {
+        if (
+          booking.savingsPlan &&
+          booking.savingsPlan.autoDeduct &&
+          booking.savingsPlan.deductAmount &&
+          booking.savingsPlan.nextDeductDate &&
+          booking.savingsPlan.frequency
+        ) {
           let currentBalance = balance;
-          let currentDate = new Date(booking.savingsPlan.nextDeductDate);
-          
-          while (currentBalance > 0 && currentDate < booking.package.startDate) {
-            const amountToDeduct = Math.min(currentBalance, booking.savingsPlan.deductAmount);
+          const currentDate = new Date(booking.savingsPlan.nextDeductDate);
+
+          while (
+            currentBalance > 0 &&
+            currentDate < booking.package.startDate
+          ) {
+            const amountToDeduct = Math.min(
+              currentBalance,
+              booking.savingsPlan.deductAmount,
+            );
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-            projectionsMap.set(monthKey, (projectionsMap.get(monthKey) || 0) + amountToDeduct);
-            
+            projectionsMap.set(
+              monthKey,
+              (projectionsMap.get(monthKey) || 0) + amountToDeduct,
+            );
+
             currentBalance -= amountToDeduct;
             if (booking.savingsPlan.frequency === 'weekly') {
               currentDate.setDate(currentDate.getDate() + 7);
@@ -398,20 +419,25 @@ export class PaymentsService {
               currentDate.setMonth(currentDate.getMonth() + 1);
             }
           }
-          
-          if (currentBalance > 0) {
-             const monthKey = `${booking.package.startDate.getFullYear()}-${String(booking.package.startDate.getMonth() + 1).padStart(2, '0')}`;
-             projectionsMap.set(monthKey, (projectionsMap.get(monthKey) || 0) + currentBalance);
-          }
 
+          if (currentBalance > 0) {
+            const monthKey = `${booking.package.startDate.getFullYear()}-${String(booking.package.startDate.getMonth() + 1).padStart(2, '0')}`;
+            projectionsMap.set(
+              monthKey,
+              (projectionsMap.get(monthKey) || 0) + currentBalance,
+            );
+          }
         } else {
           const dueDate = new Date(booking.package.startDate);
           dueDate.setDate(dueDate.getDate() - 30);
-          
+
           const effectiveDate = dueDate < new Date() ? new Date() : dueDate;
           const monthKey = `${effectiveDate.getFullYear()}-${String(effectiveDate.getMonth() + 1).padStart(2, '0')}`;
-          
-          projectionsMap.set(monthKey, (projectionsMap.get(monthKey) || 0) + balance);
+
+          projectionsMap.set(
+            monthKey,
+            (projectionsMap.get(monthKey) || 0) + balance,
+          );
         }
       }
     }
@@ -428,4 +454,3 @@ export class PaymentsService {
     };
   }
 }
-
