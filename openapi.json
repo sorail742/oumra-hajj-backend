@@ -2147,6 +2147,32 @@
         ]
       }
     },
+    "/api/v1/payments/agency/treasury": {
+      "get": {
+        "operationId": "PaymentsController_treasury",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TreasuryProjectionShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/payments/webhook": {
       "post": {
         "operationId": "PaymentsController_webhook",
@@ -5239,6 +5265,47 @@
           "method",
           "status",
           "providerReference"
+        ]
+      },
+      "TreasuryProjectionItemShape": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string"
+          },
+          "expectedAmount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "month",
+          "expectedAmount"
+        ]
+      },
+      "TreasuryProjectionShape": {
+        "type": "object",
+        "properties": {
+          "totalExpected": {
+            "type": "number"
+          },
+          "totalCollected": {
+            "type": "number"
+          },
+          "outstandingBalance": {
+            "type": "number"
+          },
+          "projections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TreasuryProjectionItemShape"
+            }
+          }
+        },
+        "required": [
+          "totalExpected",
+          "totalCollected",
+          "outstandingBalance",
+          "projections"
         ]
       },
       "PaymentWebhookDto": {
