@@ -347,4 +347,110 @@ export class PaymentsService {
       nextDeductDate: plan.nextDeductDate ?? undefined,
     };
   }
+
+  // Ticket #38 : Trésorerie prévisionnelle
+  async getTreasuryProjection(
+    ownerId: string,
+  ): Promise<import('../../types/payment.types').TreasuryProjectionShape> {
+    const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
+
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        agencyId: agency.id,
+        status: {
+          not: BookingStatus.CANCELLED as unknown as import('@prisma/client').BookingStatus,
+        },
+      },
+      include: {
+        package: true,
+        payments: {
+          where: {
+            status: PaymentStatus.SUCCEEDED as unknown as PrismaPaymentStatus,
+          },
+        },
+        savingsPlan: true,
+      },
+    });
+
+    let totalExpected = 0;
+    let totalCollected = 0;
+    let outstandingBalance = 0;
+
+    const projectionsMap = new Map<string, number>();
+
+    for (const booking of bookings) {
+      const price = booking.package.price;
+      const collected = booking.payments.reduce((sum, p) => sum + p.amount, 0);
+      const balance = Math.max(0, price - collected);
+
+      totalExpected += price;
+      totalCollected += collected;
+      outstandingBalance += balance;
+
+      if (balance > 0) {
+        if (
+          booking.savingsPlan &&
+          booking.savingsPlan.autoDeduct &&
+          booking.savingsPlan.deductAmount &&
+          booking.savingsPlan.nextDeductDate &&
+          booking.savingsPlan.frequency
+        ) {
+          let currentBalance = balance;
+          const currentDate = new Date(booking.savingsPlan.nextDeductDate);
+
+          while (
+            currentBalance > 0 &&
+            currentDate < booking.package.startDate
+          ) {
+            const amountToDeduct = Math.min(
+              currentBalance,
+              booking.savingsPlan.deductAmount,
+            );
+            const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            projectionsMap.set(
+              monthKey,
+              (projectionsMap.get(monthKey) || 0) + amountToDeduct,
+            );
+
+            currentBalance -= amountToDeduct;
+            if (booking.savingsPlan.frequency === 'weekly') {
+              currentDate.setDate(currentDate.getDate() + 7);
+            } else {
+              currentDate.setMonth(currentDate.getMonth() + 1);
+            }
+          }
+
+          if (currentBalance > 0) {
+            const monthKey = `${booking.package.startDate.getFullYear()}-${String(booking.package.startDate.getMonth() + 1).padStart(2, '0')}`;
+            projectionsMap.set(
+              monthKey,
+              (projectionsMap.get(monthKey) || 0) + currentBalance,
+            );
+          }
+        } else {
+          const dueDate = new Date(booking.package.startDate);
+          dueDate.setDate(dueDate.getDate() - 30);
+
+          const effectiveDate = dueDate < new Date() ? new Date() : dueDate;
+          const monthKey = `${effectiveDate.getFullYear()}-${String(effectiveDate.getMonth() + 1).padStart(2, '0')}`;
+
+          projectionsMap.set(
+            monthKey,
+            (projectionsMap.get(monthKey) || 0) + balance,
+          );
+        }
+      }
+    }
+
+    const projections = Array.from(projectionsMap.entries())
+      .map(([month, expectedAmount]) => ({ month, expectedAmount }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+
+    return {
+      totalExpected,
+      totalCollected,
+      outstandingBalance,
+      projections,
+    };
+  }
 }
