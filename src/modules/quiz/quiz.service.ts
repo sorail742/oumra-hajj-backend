@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -74,6 +75,29 @@ export class QuizService {
       },
     });
     return toQuestionShape(validated);
+  }
+
+  // File de validation de l'administrateur (ticket web #81) : questions
+  // proposées, pas encore publiées, les plus anciennes d'abord.
+  async listPending(): Promise<QuizQuestionAdminShape[]> {
+    const questions = await this.prisma.quizQuestion.findMany({
+      where: { isValidated: false },
+      orderBy: { createdAt: 'asc' },
+    });
+    return questions.map(toQuestionShape);
+  }
+
+  // Refus d'une question proposée : seules les questions non publiées
+  // peuvent être retirées, pour ne pas effacer l'historique des tentatives.
+  async rejectQuestion(id: string): Promise<void> {
+    const question = await this.prisma.quizQuestion.findUnique({
+      where: { id },
+    });
+    if (!question) throw new NotFoundException('Question not found');
+    if (question.isValidated) {
+      throw new ConflictException('Une question publiée ne peut être refusée');
+    }
+    await this.prisma.quizQuestion.delete({ where: { id } });
   }
 
   // La bonne réponse et l'explication ne sont révélées qu'après une

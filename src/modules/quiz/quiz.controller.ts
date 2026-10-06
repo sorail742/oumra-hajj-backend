@@ -5,6 +5,9 @@ import {
   Patch,
   Param,
   Get,
+  Delete,
+  HttpCode,
+  HttpStatus,
   UseGuards,
 } from '@nestjs/common';
 import { QuizService } from './quiz.service';
@@ -43,6 +46,20 @@ export class QuizController {
     @CurrentUser() user: JwtPayload,
   ): Promise<QuizQuestionAdminShape> {
     return this.quizService.validateQuestion(id, user.sub);
+  }
+
+  // Déclarée avant `questions/:riteSheetId`, qui capturerait « pending ».
+  @Get('questions/pending')
+  @Roles(Role.ADMIN)
+  listPending(): Promise<QuizQuestionAdminShape[]> {
+    return this.quizService.listPending();
+  }
+
+  @Delete('questions/:id')
+  @Roles(Role.ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  rejectQuestion(@Param('id') id: string): Promise<void> {
+    return this.quizService.rejectQuestion(id);
   }
 
   @Get('questions/:riteSheetId')
