@@ -1,8 +1,8 @@
 # 0026 — Réinitialisation du mot de passe (agence / admin) par email
 
-- **Statut** : proposé
+- **Statut** : accepté (validé par la fusion de la PR #161, 2026-10-02)
 - **Date** : 2026-10-02
-- **Décideurs** : à confirmer par le porteur de projet (Sory KEITA)
+- **Décideurs** : Sory KEITA
 - **Complète** : [0003 — Stratégie d'authentification](0003-strategie-authentification.md) (accepté), [0025 — Code OTP par email via EmailJS](0025-otp-par-email-emailjs.md) (accepté)
 
 ## Contexte

@@ -4,6 +4,7 @@ import { WsJwtAuthGuard } from '../../common/guards/ws-jwt-auth.guard';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
 import { CommunityGateway } from './community.gateway';
+import { RealtimeSessionsService } from '../realtime/realtime-sessions.service';
 import { CommunityService } from './community.service';
 
 describe('CommunityGateway', () => {
@@ -15,6 +16,7 @@ describe('CommunityGateway', () => {
   let wsGuard: {
     authenticate: jest.Mock;
   };
+  let sessions: { register: jest.Mock };
 
   const user: JwtPayload = {
     sub: 'user-1',
@@ -29,12 +31,14 @@ describe('CommunityGateway', () => {
     wsGuard = {
       authenticate: jest.fn(),
     };
+    sessions = { register: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CommunityGateway,
         { provide: CommunityService, useValue: service },
         { provide: WsJwtAuthGuard, useValue: wsGuard },
+        { provide: RealtimeSessionsService, useValue: sessions },
       ],
     }).compile();
 
@@ -60,6 +64,7 @@ describe('CommunityGateway', () => {
 
       expect(client.data.user).toEqual(user);
       expect(client.disconnect).not.toHaveBeenCalled();
+      expect(sessions.register).toHaveBeenCalledWith(client, user.sub);
     });
 
     it('déconnecte le client si le token est invalide', async () => {

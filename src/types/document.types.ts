@@ -1,13 +1,13 @@
 import { PilgrimDocumentStatus } from '../common/enums/pilgrim-document-status.enum';
 import { PilgrimDocumentType } from '../common/enums/pilgrim-document-type.enum';
 
-export interface PilgrimDocumentShape {
-  id: string;
-  bookingId: string;
-  pilgrimId: string;
-  type: PilgrimDocumentType;
-  storageRef: string;
-  status: PilgrimDocumentStatus;
+export class PilgrimDocumentShape {
+  id!: string;
+  bookingId!: string;
+  pilgrimId!: string;
+  type!: PilgrimDocumentType;
+  storageRef!: string;
+  status!: PilgrimDocumentStatus;
   rejectionReason?: string;
   expiresAt?: Date;
 }
@@ -18,9 +18,9 @@ export interface PilgrimDocumentShape {
 export type DocumentExpiryStatus =
   'expired' | 'expires_before_trip' | 'expires_soon_after_trip';
 
-export interface DocumentExpiryAlertShape {
-  id: string;
-  type: PilgrimDocumentType;
-  expiresAt: Date;
-  status: DocumentExpiryStatus;
+export class DocumentExpiryAlertShape {
+  id!: string;
+  type!: PilgrimDocumentType;
+  expiresAt!: Date;
+  status!: DocumentExpiryStatus;
 }
