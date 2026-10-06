@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
 import { CommunityMessageShape } from '../../types/community.types';
+import { CommunityGateway } from './community.gateway';
 import { CommunityService } from './community.service';
 import { SendCommunityMessageDto } from './dto/send-community-message.dto';
 
@@ -10,7 +11,10 @@ import { SendCommunityMessageDto } from './dto/send-community-message.dto';
 @ApiBearerAuth()
 @Controller('community')
 export class CommunityController {
-  constructor(private readonly communityService: CommunityService) {}
+  constructor(
+    private readonly communityService: CommunityService,
+    private readonly gateway: CommunityGateway,
+  ) {}
 
   @Get('groups/:groupId/messages')
   listMessages(
@@ -21,11 +25,13 @@ export class CommunityController {
   }
 
   @Post('groups/:groupId/messages')
-  sendMessage(
+  async sendMessage(
     @CurrentUser() user: JwtPayload,
     @Param('groupId') groupId: string,
     @Body() dto: SendCommunityMessageDto,
   ): Promise<CommunityMessageShape> {
-    return this.communityService.sendMessage(groupId, user, dto);
+    const message = await this.communityService.sendMessage(groupId, user, dto);
+    this.gateway.emitNewMessage(message);
+    return message;
   }
 }

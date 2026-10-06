@@ -26,6 +26,12 @@ export interface AppConfig {
     webAppUrl: string;
     emailjsTemplateId: string;
   };
+  // Temps réel (ADR 0027) : ticket WebSocket éphémère, à usage unique.
+  realtime: {
+    ticketSecret: string;
+    ticketTtlSeconds: number;
+    sessionMaxMinutes: number;
+  };
   throttle: {
     ttlMs: number;
     limit: number;
@@ -61,6 +67,17 @@ export default (): AppConfig => ({
     ttlMinutes: parseInt(process.env.PASSWORD_RESET_TTL_MINUTES ?? '30', 10),
     webAppUrl: process.env.WEB_APP_URL ?? '',
     emailjsTemplateId: process.env.EMAILJS_RESET_TEMPLATE_ID ?? '',
+  },
+  realtime: {
+    // Vide en production sans variable : temps réel désactivé (repli sur
+    // le rafraîchissement périodique), jamais un secret connu de tous.
+    ticketSecret:
+      process.env.REALTIME_TICKET_SECRET ??
+      (process.env.NODE_ENV === 'production'
+        ? ''
+        : 'dev-realtime-secret-change-me'),
+    ticketTtlSeconds: 30,
+    sessionMaxMinutes: 15,
   },
   throttle: {
     ttlMs: parseInt(process.env.THROTTLE_TTL_MS ?? '60000', 10),

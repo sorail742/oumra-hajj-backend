@@ -20,6 +20,7 @@ import {
   MessageShape,
 } from '../../types';
 import { SendMessageDto } from './dto/send-message.dto';
+import { MessagingGateway } from './messaging.gateway';
 import { MessagingInboxService } from './messaging-inbox.service';
 import { MessagingService } from './messaging.service';
 
@@ -31,6 +32,7 @@ export class MessagingController {
   constructor(
     private readonly messagingService: MessagingService,
     private readonly inboxService: MessagingInboxService,
+    private readonly gateway: MessagingGateway,
   ) {}
 
   // Boîte de réception : fils avec au moins un message, le plus récent en
@@ -74,11 +76,17 @@ export class MessagingController {
   }
 
   @Post('conversations/:id/messages')
-  sendMessage(
+  async sendMessage(
     @CurrentUser() user: JwtPayload,
     @Param('id') conversationId: string,
     @Body() dto: SendMessageDto,
   ): Promise<MessageShape> {
-    return this.messagingService.sendMessage(conversationId, user.sub, dto);
+    const message = await this.messagingService.sendMessage(
+      conversationId,
+      user.sub,
+      dto,
+    );
+    this.gateway.emitNewMessage(message);
+    return message;
   }
 }

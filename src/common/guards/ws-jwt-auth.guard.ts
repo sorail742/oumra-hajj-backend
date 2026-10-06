@@ -4,21 +4,33 @@ import { JwtService } from '@nestjs/jwt';
 import { Socket } from 'socket.io';
 import { AppConfig } from '../../config/configuration';
 import { JwtPayload } from '../interfaces/authenticated-request.interface';
+import { RealtimeTicketService } from '../../modules/realtime/realtime-ticket.service';
 
 // Authentification du handshake websocket (voir ADR 0014). Les guards Nest
 // (@UseGuards) ne s'appliquent qu'aux handlers @SubscribeMessage, jamais aux
 // hooks de cycle de vie handleConnection/handleDisconnect — la verification
 // se fait donc explicitement dans handleConnection (voir MessagingGateway),
-// pas via l'interface CanActivate. Reutilise le meme JWT access token que le
-// REST (docs/auth-flow.md), pas de session parallele.
+// pas via l'interface CanActivate.
+//
+// Deux preuves acceptees (ADR 0027) :
+// - `auth.ticket` : ticket ephemere a usage unique, obtenu en REST — seul
+//   moyen pour le web, dont l'access token reste dans un cookie httpOnly ;
+// - `auth.token` / en-tete Authorization : l'access token, pour l'application
+//   mobile qui le detient deja hors de portee d'un script de page.
 @Injectable()
 export class WsJwtAuthGuard {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<AppConfig, true>,
+    private readonly realtimeTicketService: RealtimeTicketService,
   ) {}
 
   async authenticate(client: Socket): Promise<JwtPayload> {
+    const ticket = client.handshake.auth?.ticket as string | undefined;
+    if (ticket) {
+      return this.realtimeTicketService.consume(ticket);
+    }
+
     const token = this.extractToken(client);
     if (!token) {
       throw new UnauthorizedException('Token manquant');

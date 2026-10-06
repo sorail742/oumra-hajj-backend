@@ -4,7 +4,9 @@ import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
-import { SentShape } from '../../types';
+import { RealtimeTicketShape, SentShape } from '../../types';
+import { RealtimeSessionsService } from '../realtime/realtime-sessions.service';
+import { RealtimeTicketService } from '../realtime/realtime-ticket.service';
 import { AuthService } from './auth.service';
 import { AgencyLoginDto } from './dto/agency-login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -22,6 +24,8 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly passwordResetService: PasswordResetService,
+    private readonly realtimeTickets: RealtimeTicketService,
+    private readonly realtimeSessions: RealtimeSessionsService,
   ) {}
 
   // Pèlerin / guide — code par SMS (ADR 0003) ou par email (ADR 0025).
@@ -86,5 +90,19 @@ export class AuthController {
     @Body() dto: RefreshTokenDto,
   ): Promise<void> {
     await this.authService.logout(user.sub, dto.refreshToken);
+    // Plus aucune connexion temps réel ne reste ouverte (ADR 0027).
+    this.realtimeSessions.disconnectUser(user.sub);
+  }
+
+  // Ticket WebSocket à usage unique (ADR 0027) : appelé par le web à travers
+  // son proxy authentifié, avant chaque (re)connexion Socket.IO.
+  @ApiBearerAuth()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @Post('realtime-ticket')
+  @HttpCode(HttpStatus.OK)
+  realtimeTicket(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<RealtimeTicketShape> {
+    return this.realtimeTickets.issue(user);
   }
 }
