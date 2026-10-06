@@ -4,15 +4,37 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import {
+  QuizAttemptResultShape,
+  QuizQuestionAdminShape,
+  QuizQuestionShape,
+  QuizStatsShape,
+} from '../../types';
 import { CreateQuizQuestionDto } from './dto/create-quiz-question.dto';
 import { SubmitQuizAttemptDto } from './dto/submit-quiz-attempt.dto';
+
+// `options` est stocké en JSON ; seules les chaînes forment le contrat.
+function toOptions(options: Prisma.JsonValue): string[] {
+  return Array.isArray(options)
+    ? options.filter((o): o is string => typeof o === 'string')
+    : [];
+}
+
+function toQuestionShape<T extends { options: Prisma.JsonValue }>(
+  question: T,
+): Omit<T, 'options'> & { options: string[] } {
+  return { ...question, options: toOptions(question.options) };
+}
 
 @Injectable()
 export class QuizService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createQuestion(dto: CreateQuizQuestionDto) {
+  async createQuestion(
+    dto: CreateQuizQuestionDto,
+  ): Promise<QuizQuestionAdminShape> {
     if (dto.correctOption >= dto.options.length) {
       throw new BadRequestException('correctOption is out of range');
     }
@@ -22,7 +44,7 @@ export class QuizService {
     });
     if (!riteSheet) throw new NotFoundException('Rite sheet not found');
 
-    return this.prisma.quizQuestion.create({
+    const question = await this.prisma.quizQuestion.create({
       data: {
         riteSheetId: dto.riteSheetId,
         question: dto.question,
@@ -31,15 +53,19 @@ export class QuizService {
         explanation: dto.explanation,
       },
     });
+    return toQuestionShape(question);
   }
 
-  async validateQuestion(id: string, adminId: string) {
+  async validateQuestion(
+    id: string,
+    adminId: string,
+  ): Promise<QuizQuestionAdminShape> {
     const question = await this.prisma.quizQuestion.findUnique({
       where: { id },
     });
     if (!question) throw new NotFoundException('Question not found');
 
-    return this.prisma.quizQuestion.update({
+    const validated = await this.prisma.quizQuestion.update({
       where: { id },
       data: {
         isValidated: true,
@@ -47,12 +73,13 @@ export class QuizService {
         validatedAt: new Date(),
       },
     });
+    return toQuestionShape(validated);
   }
 
   // La bonne réponse et l'explication ne sont révélées qu'après une
   // tentative (voir submitAttempt), sinon le quiz n'a plus d'intérêt.
-  async getQuestionsForRite(riteSheetId: string) {
-    return this.prisma.quizQuestion.findMany({
+  async getQuestionsForRite(riteSheetId: string): Promise<QuizQuestionShape[]> {
+    const questions = await this.prisma.quizQuestion.findMany({
       where: {
         riteSheetId,
         isValidated: true,
@@ -65,13 +92,14 @@ export class QuizService {
       },
       orderBy: { createdAt: 'asc' },
     });
+    return questions.map(toQuestionShape);
   }
 
   async submitAttempt(
     questionId: string,
     pilgrimId: string,
     dto: SubmitQuizAttemptDto,
-  ) {
+  ): Promise<QuizAttemptResultShape> {
     const question = await this.prisma.quizQuestion.findUnique({
       where: { id: questionId },
     });
@@ -97,7 +125,7 @@ export class QuizService {
     };
   }
 
-  async getMyStats(pilgrimId: string) {
+  async getMyStats(pilgrimId: string): Promise<QuizStatsShape> {
     const attempts = await this.prisma.quizAttempt.findMany({
       where: { pilgrimId },
       include: {

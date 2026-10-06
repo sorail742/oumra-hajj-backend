@@ -3,6 +3,11 @@
  *
  *   npm run openapi:export
  *
+ * Exécuté depuis la sortie de `nest build` : le plugin `@nestjs/swagger`
+ * (voir `nest-cli.json`) n'agit qu'à la compilation, c'est lui qui déduit
+ * les schémas de réponse des types de retour des contrôleurs (ticket web
+ * #72). Un `ts-node` direct produirait un contrat sans ces schémas.
+ *
  * Sert de contrat pour générer les modèles côté mobile (Flutter) sans avoir
  * l'API en marche. Le même document reste aussi consultable en direct sur
  * /api/docs-json une fois l'application démarrée.
@@ -11,11 +16,12 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { AppModule } from '../src/app.module';
-import { setupApp } from '../src/setup-app';
-import { buildSwaggerConfig } from '../src/swagger.config';
+import { AppModule } from '../app.module';
+import { setupApp } from '../setup-app';
+import { buildSwaggerConfig } from '../swagger.config';
 
-const OUTPUT = resolve(__dirname, '..', 'openapi.json');
+// `dist/scripts/` → racine du dépôt.
+const OUTPUT = resolve(__dirname, '..', '..', 'openapi.json');
 
 async function main(): Promise<void> {
   // Pas d'`app.listen()` : Swagger lit les décorateurs des contrôleurs,

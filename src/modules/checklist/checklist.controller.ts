@@ -6,6 +6,7 @@ import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
 import { ChecklistService } from './checklist.service';
 import { UpdateChecklistStatusDto } from './dto/update-checklist-status.dto';
+import { ChecklistItemShape } from '../../types';
 
 @ApiTags('checklist')
 @ApiBearerAuth()
@@ -18,7 +19,7 @@ export class ChecklistController {
   getByBooking(
     @CurrentUser() user: JwtPayload,
     @Param('bookingId') bookingId: string,
-  ) {
+  ): Promise<ChecklistItemShape[]> {
     return this.checklistService.findByBookingId(user.sub, bookingId);
   }
 
@@ -28,7 +29,7 @@ export class ChecklistController {
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() dto: UpdateChecklistStatusDto,
-  ) {
+  ): Promise<ChecklistItemShape> {
     return this.checklistService.updateStatus(user.sub, id, dto);
   }
 }

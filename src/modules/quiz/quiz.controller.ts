@@ -16,6 +16,12 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import {
+  QuizAttemptResultShape,
+  QuizQuestionAdminShape,
+  QuizQuestionShape,
+  QuizStatsShape,
+} from '../../types';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('quiz')
@@ -24,19 +30,26 @@ export class QuizController {
 
   @Post('questions')
   @Roles(Role.ADMIN, Role.GUIDE)
-  createQuestion(@Body() dto: CreateQuizQuestionDto) {
+  createQuestion(
+    @Body() dto: CreateQuizQuestionDto,
+  ): Promise<QuizQuestionAdminShape> {
     return this.quizService.createQuestion(dto);
   }
 
   @Patch('questions/:id/validate')
   @Roles(Role.ADMIN)
-  validateQuestion(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+  validateQuestion(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<QuizQuestionAdminShape> {
     return this.quizService.validateQuestion(id, user.sub);
   }
 
   @Get('questions/:riteSheetId')
   @Roles(Role.PILGRIM, Role.GUIDE, Role.ADMIN)
-  getQuestionsForRite(@Param('riteSheetId') riteSheetId: string) {
+  getQuestionsForRite(
+    @Param('riteSheetId') riteSheetId: string,
+  ): Promise<QuizQuestionShape[]> {
     return this.quizService.getQuestionsForRite(riteSheetId);
   }
 
@@ -46,13 +59,13 @@ export class QuizController {
     @Param('id') questionId: string,
     @Body() dto: SubmitQuizAttemptDto,
     @CurrentUser() user: JwtPayload,
-  ) {
+  ): Promise<QuizAttemptResultShape> {
     return this.quizService.submitAttempt(questionId, user.sub, dto);
   }
 
   @Get('attempts/my-stats')
   @Roles(Role.PILGRIM)
-  getMyStats(@CurrentUser() user: JwtPayload) {
+  getMyStats(@CurrentUser() user: JwtPayload): Promise<QuizStatsShape> {
     return this.quizService.getMyStats(user.sub);
   }
 }

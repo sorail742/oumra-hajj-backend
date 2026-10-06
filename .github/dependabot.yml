@@ -1,42 +1,42 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     # Les mises à jour passent par develop, jamais directement en production
     # (main) — même flux que le reste du code.
-    target-branch: "develop"
+    target-branch: 'develop'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     open-pull-requests-limit: 10
     labels:
-      - "dependencies"
-      - "security"
+      - 'dependencies'
+      - 'security'
     groups:
       # Les paquets NestJS partagent leurs dépendances pairs (@nestjs/common,
       # @nestjs/core) : ils doivent évoluer ensemble, en une seule PR.
       nestjs:
         patterns:
-          - "@nestjs/*"
+          - '@nestjs/*'
     ignore:
       # Passer de NestJS 10 à 12 est une migration à part entière (tous les
       # paquets @nestjs/* à la fois, adaptation du code) : à traiter dans un
       # ticket dédié, pas par des PR Dependabot paquet par paquet qui ne
       # peuvent pas s'installer (conflit de dépendances pairs).
-      - dependency-name: "@nestjs/*"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: '@nestjs/*'
+        update-types: ['version-update:semver-major']
       # ESLint 9+ impose la configuration « flat » : migration à part.
-      - dependency-name: "eslint"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: 'eslint'
+        update-types: ['version-update:semver-major']
       # TypeScript 7 (compilateur réécrit) n'est pas encore accepté par
       # @typescript-eslint ni ts-jest : npm ci échoue (ERESOLVE).
-      - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    target-branch: "develop"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    target-branch: 'develop'
     schedule:
-      interval: "monthly"
+      interval: 'monthly'
     labels:
-      - "dependencies"
-      - "ci"
+      - 'dependencies'
+      - 'ci'

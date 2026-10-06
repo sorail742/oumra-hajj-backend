@@ -1,4 +1,8 @@
-import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
+import {
+  ApiHideProperty,
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
 import {
   IsEmail,
   IsOptional,
@@ -23,6 +27,8 @@ export class VerifyOtpDto {
   @IsEmail()
   email?: string;
 
+  // Champ technique de validation croisée, absent du contrat.
+  @ApiHideProperty()
   @Validate(ExactlyOneContact)
   readonly contact?: never;
 

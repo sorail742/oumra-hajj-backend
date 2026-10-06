@@ -1,9 +1,9 @@
-export interface CommunityMessageShape {
-  id: string;
-  groupId: string;
-  senderId: string;
+export class CommunityMessageShape {
+  id!: string;
+  groupId!: string;
+  senderId!: string;
   senderName?: string;
-  content: string;
-  clientSentAt: Date;
-  createdAt: Date;
+  content!: string;
+  clientSentAt!: Date;
+  createdAt!: Date;
 }

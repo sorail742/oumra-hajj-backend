@@ -15,6 +15,7 @@ import { JwtPayload } from '../../common/interfaces/authenticated-request.interf
 import { BudgetService } from './budget.service';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
+import { BudgetSimulationShape, SuccessShape } from '../../types';
 
 @ApiTags('budget')
 @ApiBearerAuth()
@@ -24,13 +25,16 @@ export class BudgetController {
 
   @Roles(Role.PILGRIM)
   @Get('mine')
-  listMine(@CurrentUser() user: JwtPayload) {
+  listMine(@CurrentUser() user: JwtPayload): Promise<BudgetSimulationShape[]> {
     return this.budgetService.findForPilgrim(user.sub);
   }
 
   @Roles(Role.PILGRIM)
   @Post()
-  create(@CurrentUser() user: JwtPayload, @Body() dto: CreateBudgetDto) {
+  create(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateBudgetDto,
+  ): Promise<BudgetSimulationShape> {
     return this.budgetService.create(user.sub, dto);
   }
 
@@ -40,13 +44,16 @@ export class BudgetController {
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() dto: UpdateBudgetDto,
-  ) {
+  ): Promise<BudgetSimulationShape> {
     return this.budgetService.update(user.sub, id, dto);
   }
 
   @Roles(Role.PILGRIM)
   @Delete(':id')
-  remove(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+  remove(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<SuccessShape> {
     return this.budgetService.remove(user.sub, id);
   }
 }

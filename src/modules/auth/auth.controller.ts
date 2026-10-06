@@ -4,6 +4,7 @@ import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
+import { SentShape } from '../../types';
 import { AuthService } from './auth.service';
 import { AgencyLoginDto } from './dto/agency-login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -29,7 +30,7 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('otp/request')
   @HttpCode(HttpStatus.OK)
-  requestOtp(@Body() dto: RequestOtpDto): Promise<{ sent: true }> {
+  requestOtp(@Body() dto: RequestOtpDto): Promise<SentShape> {
     return this.authService.requestOtp(toOtpContact(dto));
   }
 
@@ -58,7 +59,7 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @Post('password/forgot')
   @HttpCode(HttpStatus.OK)
-  forgotPassword(@Body() dto: ForgotPasswordDto): Promise<{ sent: true }> {
+  forgotPassword(@Body() dto: ForgotPasswordDto): Promise<SentShape> {
     return this.passwordResetService.requestReset(dto.email);
   }
 
