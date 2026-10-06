@@ -9,6 +9,7 @@ import { GroupsModule } from '../groups/groups.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { MessagingController } from './messaging.controller';
 import { MessagingGateway } from './messaging.gateway';
+import { MessagingInboxService } from './messaging-inbox.service';
 import { MessagingService } from './messaging.service';
 
 @Module({
@@ -29,7 +30,12 @@ import { MessagingService } from './messaging.service';
     }),
   ],
   controllers: [MessagingController],
-  providers: [MessagingService, MessagingGateway, WsJwtAuthGuard],
+  providers: [
+    MessagingService,
+    MessagingInboxService,
+    MessagingGateway,
+    WsJwtAuthGuard,
+  ],
   exports: [MessagingService],
 })
 export class MessagingModule {}

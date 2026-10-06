@@ -203,5 +203,65 @@ describe('Parcours réservation + paiement (e2e)', () => {
       booking.body.steps as Array<{ key: string; status: string }>
     ).find((s) => s.key === 'payment');
     expect(paymentStep?.status).toBe('done');
+
+    // 10. Le pèlerin écrit à l'agence ; le fil apparaît dans la boîte de
+    // réception de l'agence, non lu, puis lu (ticket web #67).
+    const conversation = await request(server)
+      .get(`/api/v1/messaging/bookings/${bookingId}/conversations/agency`)
+      .set('Authorization', `Bearer ${pilgrimToken}`)
+      .expect(200);
+    const conversationId = conversation.body.id as string;
+    await request(server)
+      .post(`/api/v1/messaging/conversations/${conversationId}/messages`)
+      .set('Authorization', `Bearer ${pilgrimToken}`)
+      .send({ content: 'Question factice', clientSentAt: new Date() })
+      .expect(201);
+
+    const inboxAgence = await request(server)
+      .get('/api/v1/messaging/conversations')
+      .set('Authorization', `Bearer ${agencyToken}`)
+      .expect(200);
+    expect(inboxAgence.body).toEqual([
+      expect.objectContaining({
+        id: conversationId,
+        channel: 'agency',
+        counterpartName: 'Pèlerin E2E',
+        packageTitle: 'Oumra Ramadan',
+        unreadCount: 1,
+        lastMessage: expect.objectContaining({ content: 'Question factice' }),
+      }),
+    ]);
+
+    await request(server)
+      .post(`/api/v1/messaging/conversations/${conversationId}/read`)
+      .set('Authorization', `Bearer ${agencyToken}`)
+      .expect(204);
+    const inboxLue = await request(server)
+      .get('/api/v1/messaging/conversations')
+      .set('Authorization', `Bearer ${agencyToken}`)
+      .expect(200);
+    expect(inboxLue.body[0].unreadCount).toBe(0);
+
+    // Côté pèlerin : l'interlocuteur est l'agence, son propre message ne
+    // compte jamais comme non lu ; un autre pèlerin ne voit rien.
+    const inboxPelerin = await request(server)
+      .get('/api/v1/messaging/conversations')
+      .set('Authorization', `Bearer ${pilgrimToken}`)
+      .expect(200);
+    expect(inboxPelerin.body).toEqual([
+      expect.objectContaining({
+        counterpartName: 'Agence E2E',
+        unreadCount: 0,
+      }),
+    ]);
+    const inboxAutre = await request(server)
+      .get('/api/v1/messaging/conversations')
+      .set('Authorization', `Bearer ${secondVerify.body.accessToken}`)
+      .expect(200);
+    expect(inboxAutre.body).toEqual([]);
+    await request(server)
+      .post(`/api/v1/messaging/conversations/${conversationId}/read`)
+      .set('Authorization', `Bearer ${secondVerify.body.accessToken}`)
+      .expect(403);
   });
 });
