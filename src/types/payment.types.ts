@@ -25,3 +25,16 @@ export class SavingsPlanShape {
   frequency?: string;
   nextDeductDate?: Date;
 }
+
+export class TreasuryProjectionItemShape {
+  // Format : YYYY-MM
+  month!: string;
+  expectedAmount!: number;
+}
+
+export class TreasuryProjectionShape {
+  totalExpected!: number;
+  totalCollected!: number;
+  outstandingBalance!: number;
+  projections!: TreasuryProjectionItemShape[];
+}
