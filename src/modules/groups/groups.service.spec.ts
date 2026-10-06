@@ -14,7 +14,7 @@ describe('GroupsService', () => {
     group: { findUnique: jest.Mock; findMany: jest.Mock; update: jest.Mock };
     groupMember: { create: jest.Mock };
     groupItineraryStep: { create: jest.Mock };
-    groupMemberLocation: { upsert: jest.Mock };
+    groupMemberLocation: { upsert: jest.Mock; deleteMany: jest.Mock };
   };
   let agenciesService: { findByOwnerOrFail: jest.Mock };
   let usersService: { findByIdOrFail: jest.Mock };
@@ -46,7 +46,7 @@ describe('GroupsService', () => {
       group: { findUnique: jest.fn(), findMany: jest.fn(), update: jest.fn() },
       groupMember: { create: jest.fn() },
       groupItineraryStep: { create: jest.fn() },
-      groupMemberLocation: { upsert: jest.fn() },
+      groupMemberLocation: { upsert: jest.fn(), deleteMany: jest.fn() },
     };
     agenciesService = { findByOwnerOrFail: jest.fn() };
     usersService = { findByIdOrFail: jest.fn() };
@@ -247,6 +247,16 @@ describe('GroupsService', () => {
         where: { groupId_userId: { groupId, userId: pilgrimId } },
         create: { groupId, userId: pilgrimId, lat: 21.4, lng: 39.8 },
         update: { lat: 21.4, lng: 39.8 },
+      });
+    });
+  });
+
+  describe('clearLocation', () => {
+    it('efface seulement la position du demandeur dans ce groupe', async () => {
+      await service.clearLocation(pilgrimId, groupId);
+
+      expect(prisma.groupMemberLocation.deleteMany).toHaveBeenCalledWith({
+        where: { groupId, userId: pilgrimId },
       });
     });
   });

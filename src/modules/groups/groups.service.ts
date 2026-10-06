@@ -228,6 +228,15 @@ export class GroupsService {
     return this.findByIdOrFail(groupId);
   }
 
+  // Arrêt du partage de position (ticket web #85) : la dernière position
+  // connue est effacée, pas seulement l'envoi suspendu — donnée sensible,
+  // jamais conservée au-delà du consentement. Idempotent.
+  async clearLocation(userId: string, groupId: string): Promise<void> {
+    await this.prisma.groupMemberLocation.deleteMany({
+      where: { groupId, userId },
+    });
+  }
+
   // Bouton SOS — cahier des charges §3.1/§3.3 : alerte immédiate au guide et
   // au contact famille du pèlerin (voir ADR 0009 pour le canal SMS de secours).
   async triggerSos(pilgrimUserId: string, groupId: string): Promise<void> {
