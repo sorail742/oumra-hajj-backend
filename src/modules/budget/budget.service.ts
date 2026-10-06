@@ -88,6 +88,6 @@ export class BudgetService {
       );
     }
     await this.prisma.budgetSimulation.delete({ where: { id } });
-    return { success: true };
+    return { success: true as const };
   }
 }

@@ -30,6 +30,7 @@ import { MicroCoursesModule } from './modules/micro-courses/micro-courses.module
 import { CommunityModule } from './modules/community/community.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { QuizModule } from './modules/quiz/quiz.module';
+import { RealtimeModule } from './modules/realtime/realtime.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { QuizModule } from './modules/quiz/quiz.module';
     ChecklistModule,
     MicroCoursesModule,
     CommunityModule,
+    RealtimeModule,
     QuizModule,
   ],
   providers: [

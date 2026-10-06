@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
@@ -26,6 +27,7 @@ describe('QuizService', () => {
               findUnique: jest.fn(),
               update: jest.fn(),
               findMany: jest.fn(),
+              delete: jest.fn(),
             },
             quizAttempt: {
               create: jest.fn(),
@@ -181,6 +183,58 @@ describe('QuizService', () => {
 
       const res = await service.getMyStats('p1');
       expect(res.scorePercentage).toBe(0);
+    });
+  });
+
+  describe('listPending', () => {
+    it('liste les questions non validées, options normalisées', async () => {
+      (prismaService.quizQuestion.findMany as jest.Mock).mockResolvedValue([
+        { id: 'q1', options: ['A', 2, 'B'], isValidated: false },
+      ]);
+
+      const result = await service.listPending();
+
+      expect(prismaService.quizQuestion.findMany).toHaveBeenCalledWith({
+        where: { isValidated: false },
+        orderBy: { createdAt: 'asc' },
+      });
+      expect(result[0]?.options).toEqual(['A', 'B']);
+    });
+  });
+
+  describe('rejectQuestion', () => {
+    it('supprime une question en attente', async () => {
+      (prismaService.quizQuestion.findUnique as jest.Mock).mockResolvedValue({
+        id: 'q1',
+        isValidated: false,
+      });
+
+      await service.rejectQuestion('q1');
+
+      expect(prismaService.quizQuestion.delete).toHaveBeenCalledWith({
+        where: { id: 'q1' },
+      });
+    });
+
+    it('refuse de retirer une question déjà publiée', async () => {
+      (prismaService.quizQuestion.findUnique as jest.Mock).mockResolvedValue({
+        id: 'q1',
+        isValidated: true,
+      });
+
+      await expect(service.rejectQuestion('q1')).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+      expect(prismaService.quizQuestion.delete).not.toHaveBeenCalled();
+    });
+
+    it('signale une question introuvable', async () => {
+      (prismaService.quizQuestion.findUnique as jest.Mock).mockResolvedValue(
+        null,
+      );
+      await expect(service.rejectQuestion('q1')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 });

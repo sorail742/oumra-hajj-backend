@@ -1,10 +1,10 @@
 import { AgencyValidationStatus } from '../common/enums/agency-validation-status.enum';
 
-export interface LegalDocumentShape {
-  id: string;
-  label: string;
-  storageRef: string;
-  uploadedAt: Date;
+export class LegalDocumentShape {
+  id!: string;
+  label!: string;
+  storageRef!: string;
+  uploadedAt!: Date;
   expiresAt?: Date;
 }
 
@@ -13,40 +13,40 @@ export interface LegalDocumentShape {
 // document sans `expiresAt` connu n'est jamais présumé expiré.
 export type LegalDocumentComplianceStatus = 'expired' | 'expiring_soon';
 
-export interface LegalDocumentAlertShape {
-  id: string;
-  label: string;
-  expiresAt: Date;
-  status: LegalDocumentComplianceStatus;
+export class LegalDocumentAlertShape {
+  id!: string;
+  label!: string;
+  expiresAt!: Date;
+  status!: LegalDocumentComplianceStatus;
 }
 
 // Idée #70 (backlog "Cent Fonctionnalités") : URL d'abonnement calendrier
 // (Google/Outlook) — chemin relatif, comme AccessUrl (voir
 // storage-provider.interface.ts), le client compose avec sa propre base.
-export interface CalendarSubscriptionShape {
-  token: string;
-  subscriptionUrl: string;
+export class CalendarSubscriptionShape {
+  token!: string;
+  subscriptionUrl!: string;
 }
 
-export interface BankDetailsShape {
-  accountName: string;
-  accountNumber: string;
-  bankName: string;
+export class BankDetailsShape {
+  accountName!: string;
+  accountNumber!: string;
+  bankName!: string;
 }
 
-export interface AgencyShape {
-  id: string;
-  legalName: string;
-  ownerId: string;
-  contactEmail: string;
-  contactPhone: string;
+export class AgencyShape {
+  id!: string;
+  legalName!: string;
+  ownerId!: string;
+  contactEmail!: string;
+  contactPhone!: string;
   address?: string;
-  legalDocuments: LegalDocumentShape[];
-  validationStatus: AgencyValidationStatus;
+  legalDocuments!: LegalDocumentShape[];
+  validationStatus!: AgencyValidationStatus;
   rejectionReason?: string;
   validatedById?: string;
   validatedAt?: Date;
-  commissionRate: number;
+  commissionRate!: number;
   bankDetails?: BankDetailsShape;
 }
 
@@ -55,18 +55,18 @@ export interface AgencyShape {
 // n'a pas de module dédié aujourd'hui — remplacé par le taux de réservations
 // menées à terme (COMPLETED / (COMPLETED + CANCELLED)), seul signal de
 // fiabilité objectif déjà disponible en base.
-export interface AgencyTrustScoreShape {
-  agencyId: string;
+export class AgencyTrustScoreShape {
+  agencyId!: string;
   // undefined si aucune des deux données n'est disponible (agence toute
   // nouvelle) — jamais une valeur fabriquée pour combler l'absence de
   // données.
   score?: number; // 0-100
   reviewAverage?: number; // 0-5
-  reviewCount: number;
+  reviewCount!: number;
   completionRate?: number; // 0-1
-  concludedBookingsCount: number;
+  concludedBookingsCount!: number;
   // Idée #61 : "verified" = agence validée par l'admin (ADR implicite
   // d'AgenciesService.approve) ; "trusted" ajoute un score et un volume
   // d'avis suffisants ; null = pas encore validée par l'admin.
-  badge: 'verified' | 'trusted' | null;
+  badge!: 'verified' | 'trusted' | null;
 }

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -89,6 +90,17 @@ export class GroupsController {
     @Body() dto: UpdateLocationDto,
   ): Promise<GroupShape> {
     return this.groupsService.updateLocation(user.sub, id, dto);
+  }
+
+  // Arrêt du partage : efface la dernière position du demandeur (#85).
+  @Roles(Role.PILGRIM, Role.GUIDE)
+  @Delete(':id/location')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  clearLocation(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<void> {
+    return this.groupsService.clearLocation(user.sub, id);
   }
 
   // Bouton SOS — cahier des charges §3.1.

@@ -9,6 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { WsJwtAuthGuard } from '../../common/guards/ws-jwt-auth.guard';
+import { RealtimeSessionsService } from '../realtime/realtime-sessions.service';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
 import { CommunityMessageShape } from '../../types/community.types';
 import { CommunityService } from './community.service';
@@ -28,11 +29,14 @@ export class CommunityGateway implements OnGatewayConnection {
   constructor(
     private readonly communityService: CommunityService,
     private readonly wsJwtAuthGuard: WsJwtAuthGuard,
+    private readonly realtimeSessions: RealtimeSessionsService,
   ) {}
 
   async handleConnection(client: Socket): Promise<void> {
     try {
-      client.data.user = await this.wsJwtAuthGuard.authenticate(client);
+      const user = await this.wsJwtAuthGuard.authenticate(client);
+      client.data.user = user;
+      this.realtimeSessions.register(client, user.sub);
     } catch {
       this.logger.warn(
         `Connexion refusée sur community (${client.id}) : token invalide`,
@@ -67,5 +71,11 @@ export class CommunityGateway implements OnGatewayConnection {
     );
     this.server.to(`group:${payload.groupId}`).emit('community:new', message);
     return message;
+  }
+
+  // Diffusion d'un message envoye en REST (le web envoie par le proxy
+  // authentifie et n'ecoute que les evenements — ADR 0027).
+  emitNewMessage(message: CommunityMessageShape): void {
+    this.server.to(`group:${message.groupId}`).emit('community:new', message);
   }
 }

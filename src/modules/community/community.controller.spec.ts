@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
 import { CommunityController } from './community.controller';
+import { CommunityGateway } from './community.gateway';
 import { CommunityService } from './community.service';
 
 describe('CommunityController', () => {
@@ -10,6 +11,7 @@ describe('CommunityController', () => {
     listMessages: jest.Mock;
     sendMessage: jest.Mock;
   };
+  let gateway: { emitNewMessage: jest.Mock };
 
   const user: JwtPayload = {
     sub: 'pilgrim-1',
@@ -31,10 +33,14 @@ describe('CommunityController', () => {
       listMessages: jest.fn(),
       sendMessage: jest.fn(),
     };
+    gateway = { emitNewMessage: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CommunityController],
-      providers: [{ provide: CommunityService, useValue: service }],
+      providers: [
+        { provide: CommunityService, useValue: service },
+        { provide: CommunityGateway, useValue: gateway },
+      ],
     }).compile();
 
     controller = module.get(CommunityController);
@@ -61,5 +67,7 @@ describe('CommunityController', () => {
 
     expect(service.sendMessage).toHaveBeenCalledWith('group-1', user, dto);
     expect(result).toEqual(mockMessage);
+    // Message envoyé en REST diffusé aux connexions temps réel (ADR 0027).
+    expect(gateway.emitNewMessage).toHaveBeenCalledWith(mockMessage);
   });
 });

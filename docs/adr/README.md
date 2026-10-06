@@ -32,7 +32,8 @@ Statuts : `proposé` · `accepté` · `déprécié` · `remplacé`
 | [0023](0023-communaute-pre-depart-chat-groupe.md) | Communauté pré-départ : Chat & Forum de groupe en temps réel | accepté |
 | [0024](0024-hebergement-neon-render-vercel.md) | Hébergement : Neon (PostgreSQL), Render (API), Vercel (web) | accepté |
 | [0025](0025-otp-par-email-emailjs.md) | Code OTP par email via EmailJS | accepté |
-| [0026](0026-reinitialisation-mot-de-passe.md) | Réinitialisation du mot de passe (agence / admin) par email | proposé |
+| [0026](0026-reinitialisation-mot-de-passe.md) | Réinitialisation du mot de passe (agence / admin) par email | accepté |
+| [0027](0027-temps-reel-ticket-websocket.md) | Temps réel : ticket WebSocket éphémère | accepté |
 
 Les ADR marqués `proposé` doivent être confirmés (passage à `accepté`) avant le
 début de la phase du plan de développement à laquelle ils se rattachent.

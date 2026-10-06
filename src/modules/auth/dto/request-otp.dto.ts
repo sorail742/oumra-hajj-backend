@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiHideProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsPhoneNumber, Validate, ValidateIf } from 'class-validator';
 import { ExactlyOneContact } from './otp-contact';
 
@@ -14,6 +14,8 @@ export class RequestOtpDto {
   @IsEmail()
   email?: string;
 
+  // Champ technique de validation croisée, absent du contrat.
+  @ApiHideProperty()
   @Validate(ExactlyOneContact)
   readonly contact?: never;
 }

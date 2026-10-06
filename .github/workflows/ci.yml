@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "**" ]
+    branches: ['**']
   pull_request:
-    branches: [ "develop", "main" ]
+    branches: ['develop', 'main']
 
 permissions:
   contents: read
@@ -80,6 +80,15 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
+      # Contrat d'API à jour : openapi.json doit correspondre au code
+      # compilé (schémas de réponse déduits par le plugin Swagger).
+      - name: Check openapi.json is up to date
+        run: |
+          node dist/scripts/export-openapi.js
+          git diff --exit-code openapi.json || {
+            echo "::error::openapi.json est obsolète : lancez npm run openapi:export et committez le fichier."
+            exit 1
+          }
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -106,4 +115,3 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
