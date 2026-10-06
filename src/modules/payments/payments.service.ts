@@ -17,7 +17,11 @@ import { NotificationType } from '../../common/enums/notification-type.enum';
 import { PaymentMethod } from '../../common/enums/payment-method.enum';
 import { PaymentStatus } from '../../common/enums/payment-status.enum';
 import { Role } from '../../common/enums/role.enum';
-import { PaymentShape, SavingsPlanShape } from '../../types/payment.types';
+import {
+  PaymentShape,
+  SavingsPlanShape,
+  TreasuryProjectionShape,
+} from '../../types/payment.types';
 import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -351,7 +355,7 @@ export class PaymentsService {
   // Ticket #38 : Trésorerie prévisionnelle
   async getTreasuryProjection(
     ownerId: string,
-  ): Promise<import('../../types/payment.types').TreasuryProjectionShape> {
+  ): Promise<TreasuryProjectionShape> {
     const agency = await this.agenciesService.findByOwnerOrFail(ownerId);
 
     const bookings = await this.prisma.booking.findMany({

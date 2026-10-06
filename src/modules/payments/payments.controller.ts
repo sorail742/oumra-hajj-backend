@@ -13,7 +13,10 @@ import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
-import { PaymentShape } from '../../types/payment.types';
+import {
+  PaymentShape,
+  TreasuryProjectionShape,
+} from '../../types/payment.types';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
 import { PaymentsService } from './payments.service';
@@ -45,6 +48,15 @@ export class PaymentsController {
   @Get('agency')
   listForAgency(@CurrentUser() user: JwtPayload): Promise<PaymentShape[]> {
     return this.paymentsService.findForAgency(user.sub);
+  }
+
+  // Ticket #38 : trésorerie prévisionnelle de l'agence. Déclarée avant
+  // `:id`, qui capturerait « agency ».
+  @ApiBearerAuth()
+  @Roles(Role.AGENCY)
+  @Get('agency/treasury')
+  treasury(@CurrentUser() user: JwtPayload): Promise<TreasuryProjectionShape> {
+    return this.paymentsService.getTreasuryProjection(user.sub);
   }
 
   // Endpoint de callback serveur-à-serveur du prestataire de paiement — non
