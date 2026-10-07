@@ -30,6 +30,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { PackagesService } from '../packages/packages.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
+import { balanceDueDate } from './payment-schedule';
 import { SetupSavingsPlanDto } from './dto/setup-savings-plan.dto';
 import {
   PaymentProvider,
@@ -451,8 +452,7 @@ export class PaymentsService {
             );
           }
         } else {
-          const dueDate = new Date(booking.package.startDate);
-          dueDate.setDate(dueDate.getDate() - 30);
+          const dueDate = balanceDueDate(booking.package.startDate);
 
           const effectiveDate = dueDate < new Date() ? new Date() : dueDate;
           const monthKey = `${effectiveDate.getFullYear()}-${String(effectiveDate.getMonth() + 1).padStart(2, '0')}`;
