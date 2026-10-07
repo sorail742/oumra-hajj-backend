@@ -21,6 +21,8 @@ const ACTIVE_STATUSES = [
   BookingStatus.CONFIRMED,
 ] as unknown as PrismaBookingStatus[];
 
+const REMINDER_DAYS = new Set<number>(BALANCE_REMINDER_OFFSETS_DAYS);
+
 const formatGnf = (amount: number) =>
   `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} GNF`;
 
@@ -80,13 +82,7 @@ export class PaymentRemindersService {
     for (const booking of bookings) {
       const dueDate = balanceDueDate(booking.package.startDate);
       const daysLeft = daysBetween(now, dueDate);
-      if (
-        !BALANCE_REMINDER_OFFSETS_DAYS.includes(
-          daysLeft as (typeof BALANCE_REMINDER_OFFSETS_DAYS)[number],
-        )
-      ) {
-        continue;
-      }
+      if (!REMINDER_DAYS.has(daysLeft)) continue;
       const collected = booking.payments.reduce((sum, p) => sum + p.amount, 0);
       const balance = booking.package.price - collected;
       if (balance <= 0) continue;
