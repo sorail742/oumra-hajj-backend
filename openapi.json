@@ -2320,6 +2320,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSavingsPlanDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "",
@@ -5327,6 +5337,31 @@
         "required": [
           "providerReference",
           "status"
+        ]
+      },
+      "SetupSavingsPlanDto": {
+        "type": "object",
+        "properties": {
+          "deductAmount": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Montant à prélever à chaque itération"
+          },
+          "frequency": {
+            "type": "string",
+            "enum": [
+              "weekly",
+              "monthly"
+            ],
+            "description": "Fréquence des cotisations"
+          },
+          "autoDeduct": {
+            "type": "boolean",
+            "description": "Activer ou désactiver les prélèvements automatiques / rappels"
+          }
+        },
+        "required": [
+          "autoDeduct"
         ]
       },
       "SavingsPlanShape": {

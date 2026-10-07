@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Inject,
@@ -9,6 +10,7 @@ import {
   Payment as PrismaPayment,
   PaymentMethod as PrismaPaymentMethod,
   PaymentStatus as PrismaPaymentStatus,
+  SavingsPlan as PrismaSavingsPlan,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus } from '../../common/enums/booking-status.enum';
@@ -28,6 +30,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { PackagesService } from '../packages/packages.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
+import { SetupSavingsPlanDto } from './dto/setup-savings-plan.dto';
 import {
   PaymentProvider,
   PAYMENT_PROVIDER,
@@ -45,6 +48,18 @@ const REFUND_POLICY: Record<BookingStatus, number> = {
   [BookingStatus.CANCELLED]: 0,
   [BookingStatus.COMPLETED]: 0, // voyage déjà effectué
 };
+
+function toSavingsPlanShape(plan: PrismaSavingsPlan): SavingsPlanShape {
+  return {
+    id: plan.id,
+    bookingId: plan.bookingId,
+    targetAmount: plan.targetAmount,
+    autoDeduct: plan.autoDeduct,
+    deductAmount: plan.deductAmount ?? undefined,
+    frequency: plan.frequency ?? undefined,
+    nextDeductDate: plan.nextDeductDate ?? undefined,
+  };
+}
 
 function toPaymentShape(payment: PrismaPayment): PaymentShape {
   return {
@@ -284,32 +299,44 @@ export class PaymentsService {
 
   // --- Plan d'épargne (Ticket 1) ---
 
+  // Lecture réservée au pèlerin titulaire de la réservation : sans ce
+  // contrôle, n'importe quel pèlerin lisait le plan d'un autre par son id.
   async findSavingsPlanByBooking(
+    pilgrimId: string,
     bookingId: string,
   ): Promise<SavingsPlanShape | null> {
+    const booking = await this.bookingsService.findByIdOrFail(bookingId);
+    if (booking.pilgrimId !== pilgrimId) {
+      throw new ForbiddenException('Cette réservation ne vous appartient pas');
+    }
     const plan = await this.prisma.savingsPlan.findUnique({
       where: { bookingId },
     });
     if (!plan) return null;
-    return {
-      id: plan.id,
-      bookingId: plan.bookingId,
-      targetAmount: plan.targetAmount,
-      autoDeduct: plan.autoDeduct,
-      deductAmount: plan.deductAmount ?? undefined,
-      frequency: plan.frequency ?? undefined,
-      nextDeductDate: plan.nextDeductDate ?? undefined,
-    };
+    return toSavingsPlanShape(plan);
   }
 
   async setupSavingsPlan(
     pilgrimId: string,
     bookingId: string,
-    dto: import('./dto/setup-savings-plan.dto').SetupSavingsPlanDto,
+    dto: SetupSavingsPlanDto,
   ): Promise<SavingsPlanShape> {
     const booking = await this.bookingsService.findByIdOrFail(bookingId);
     if (booking.pilgrimId !== pilgrimId) {
       throw new ForbiddenException('Cette réservation ne vous appartient pas');
+    }
+    if (
+      booking.status === BookingStatus.CANCELLED ||
+      booking.status === BookingStatus.COMPLETED
+    ) {
+      throw new ConflictException(
+        "Plan d'épargne impossible sur une réservation annulée ou terminée",
+      );
+    }
+    if (dto.autoDeduct && (!dto.deductAmount || !dto.frequency)) {
+      throw new BadRequestException(
+        'Montant et fréquence requis pour activer les cotisations automatiques',
+      );
     }
     const pkg = await this.packagesService.findByIdOrFail(booking.packageId);
 
@@ -341,15 +368,7 @@ export class PaymentsService {
       },
     });
 
-    return {
-      id: plan.id,
-      bookingId: plan.bookingId,
-      targetAmount: plan.targetAmount,
-      autoDeduct: plan.autoDeduct,
-      deductAmount: plan.deductAmount ?? undefined,
-      frequency: plan.frequency ?? undefined,
-      nextDeductDate: plan.nextDeductDate ?? undefined,
-    };
+    return toSavingsPlanShape(plan);
   }
 
   // Ticket #38 : Trésorerie prévisionnelle
