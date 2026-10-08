@@ -217,7 +217,7 @@ strings** :
   id: string; packageId: string; agencyId: string; title: string;
   guideId?: string; memberIds: string[];
   itinerary: { label: string; date: Date; location?: string }[];
-  locations: { userId: string; lat: number; lng: number; updatedAt: Date }[];
+  locations: { userId: string; fullName: string; lat: number; lng: number; updatedAt: Date }[];
 }
 ```
 

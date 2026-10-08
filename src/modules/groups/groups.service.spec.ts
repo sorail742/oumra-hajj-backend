@@ -132,6 +132,48 @@ describe('GroupsService', () => {
       ).resolves.toBeDefined();
     });
 
+    it('joint le nom du membre à chaque position partagée, sans autre donnée personnelle', async () => {
+      const updatedAt = new Date('2026-10-08T12:00:00.000Z');
+      prisma.group.findUnique.mockResolvedValue({
+        ...buildGroup({ members: [{ userId: pilgrimId }] }),
+        locations: [
+          {
+            id: 'loc-1',
+            groupId,
+            userId: pilgrimId,
+            lat: 21.4225,
+            lng: 39.8262,
+            updatedAt,
+            user: { fullName: 'Pèlerin Factice' },
+          },
+        ],
+      });
+
+      const groupe = await service.findAuthorizedOrFail(
+        pilgrimId,
+        Role.PILGRIM,
+        groupId,
+      );
+
+      expect(groupe.locations).toEqual([
+        {
+          userId: pilgrimId,
+          fullName: 'Pèlerin Factice',
+          lat: 21.4225,
+          lng: 39.8262,
+          updatedAt,
+        },
+      ]);
+      // Seul le nom est lu sur l'utilisateur (requête Prisma).
+      expect(prisma.group.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.objectContaining({
+            locations: { include: { user: { select: { fullName: true } } } },
+          }),
+        }),
+      );
+    });
+
     it("refuse une agence qui n'est pas propriétaire du groupe", async () => {
       prisma.group.findUnique.mockResolvedValue(buildGroup({}));
       agenciesService.findByOwnerOrFail.mockResolvedValue({ id: 'other' });
