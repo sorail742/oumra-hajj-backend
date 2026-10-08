@@ -32,6 +32,7 @@ import { CreateGuideDto } from './dto/create-guide.dto';
 import { RegisterAgencyDto } from './dto/register-agency.dto';
 import { RejectAgencyDto } from './dto/reject-agency.dto';
 import { UpdateAgencyDto } from './dto/update-agency.dto';
+import { Audited } from '../audit/audited.decorator';
 
 const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024; // 10 Mo — même limite que les documents pèlerins.
 
@@ -73,6 +74,7 @@ export class AgenciesController {
 
   @ApiBearerAuth()
   @Roles(Role.AGENCY)
+  @Audited({ action: 'agency.add_guide', entityType: 'user' })
   @Post('me/guides')
   addGuide(
     @CurrentUser() user: JwtPayload,
@@ -181,6 +183,7 @@ export class AgenciesController {
 
   @ApiBearerAuth()
   @Roles(Role.ADMIN)
+  @Audited({ action: 'agency.approve', entityType: 'agency' })
   @Patch(':id/approve')
   approve(
     @Param('id') id: string,
@@ -191,6 +194,7 @@ export class AgenciesController {
 
   @ApiBearerAuth()
   @Roles(Role.ADMIN)
+  @Audited({ action: 'agency.reject', entityType: 'agency' })
   @Patch(':id/reject')
   reject(
     @Param('id') id: string,

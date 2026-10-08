@@ -25,6 +25,7 @@ import {
   QuizQuestionShape,
   QuizStatsShape,
 } from '../../types';
+import { Audited } from '../audit/audited.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('quiz')
@@ -39,6 +40,7 @@ export class QuizController {
     return this.quizService.createQuestion(dto);
   }
 
+  @Audited({ action: 'quiz_question.validate', entityType: 'quiz_question' })
   @Patch('questions/:id/validate')
   @Roles(Role.ADMIN)
   validateQuestion(
@@ -55,6 +57,7 @@ export class QuizController {
     return this.quizService.listPending();
   }
 
+  @Audited({ action: 'quiz_question.reject', entityType: 'quiz_question' })
   @Delete('questions/:id')
   @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)

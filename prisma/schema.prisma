@@ -910,3 +910,25 @@ model DisputeMessage {
   @@index([disputeId])
   @@map("dispute_messages")
 }
+
+// Idée #85 (backlog "Cent Fonctionnalités") — piste d'audit : qui a fait
+// quelle action sensible, quand, sur quelle entité. Ajout seul : aucune
+// route ne modifie ni ne supprime une entrée. `metadata` ne porte jamais
+// de contenu sensible (document, santé, message) — seulement des
+// références et des montants (ADR 0008).
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actorRole  Role?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}

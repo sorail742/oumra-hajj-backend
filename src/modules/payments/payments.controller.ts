@@ -29,6 +29,7 @@ import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
 import { SetupSavingsPlanDto } from './dto/setup-savings-plan.dto';
 import { PaymentsService } from './payments.service';
+import { Audited, champ } from '../audit/audited.decorator';
 
 @ApiTags('payments')
 @Controller('payments')
@@ -110,6 +111,16 @@ export class PaymentsController {
   // vérification de signature devra être ajoutée une fois l'agrégateur
   // retenu (voir ADR 0006).
   @Public()
+  @Audited({
+    action: 'payment.status_callback',
+    entityType: 'payment',
+    metadata: (r) => ({
+      status: champ(r, 'status'),
+      amount: champ(r, 'amount'),
+      currency: champ(r, 'currency'),
+      providerReference: champ(r, 'providerReference'),
+    }),
+  })
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   webhook(@Body() dto: PaymentWebhookDto): Promise<PaymentShape> {
@@ -129,6 +140,15 @@ export class PaymentsController {
   // PaymentsService.requestRefund.
   @ApiBearerAuth()
   @Roles(Role.PILGRIM, Role.AGENCY, Role.ADMIN)
+  @Audited({
+    action: 'payment.refund',
+    entityType: 'payment',
+    metadata: (r) => ({
+      refundedAmount: champ(r, 'refundedAmount'),
+      currency: champ(r, 'currency'),
+      providerReference: champ(r, 'providerReference'),
+    }),
+  })
   @Post(':id/refund')
   requestRefund(
     @CurrentUser() user: JwtPayload,

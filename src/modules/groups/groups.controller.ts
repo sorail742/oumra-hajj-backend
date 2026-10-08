@@ -22,6 +22,7 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { GroupRosterService } from './group-roster.service';
 import { GroupsService } from './groups.service';
+import { Audited, champ } from '../audit/audited.decorator';
 
 @ApiBearerAuth()
 @ApiTags('groups')
@@ -89,6 +90,11 @@ export class GroupsController {
   }
 
   @Roles(Role.AGENCY)
+  @Audited({
+    action: 'group.assign_guide',
+    entityType: 'group',
+    metadata: (r) => ({ guideId: champ(r, 'guideId') }),
+  })
   @Patch(':id/guide')
   assignGuide(
     @CurrentUser() user: JwtPayload,
