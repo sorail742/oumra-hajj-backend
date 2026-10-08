@@ -31,6 +31,7 @@ import { CommunityModule } from './modules/community/community.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
+import { DisputesModule } from './modules/disputes/disputes.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { EmergencyModule } from './modules/emergency/emergency.module';
 import { DirectoryModule } from './modules/directory/directory.module';
@@ -73,6 +74,7 @@ import { DirectoryModule } from './modules/directory/directory.module';
     DirectoryModule,
     QuizModule,
     RoomsModule,
+    DisputesModule,
   ],
   providers: [
     {

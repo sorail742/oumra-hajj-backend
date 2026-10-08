@@ -2303,6 +2303,104 @@
         ]
       }
     },
+    "/api/v1/payments/agency/accounting": {
+      "get": {
+        "operationId": "PaymentsController_accountingJournal",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Début de période inclus (défaut : 1er du mois courant)",
+            "schema": {
+              "pattern": "DATE_JOUR",
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Fin de période incluse (défaut : aujourd'hui)",
+            "schema": {
+              "pattern": "DATE_JOUR",
+              "example": "2026-10-31",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountingExportShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payments/agency/accounting/csv": {
+      "get": {
+        "operationId": "PaymentsController_accountingJournalCsv",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Début de période inclus (défaut : 1er du mois courant)",
+            "schema": {
+              "pattern": "DATE_JOUR",
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Fin de période incluse (défaut : aujourd'hui)",
+            "schema": {
+              "pattern": "DATE_JOUR",
+              "example": "2026-10-31",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/payments/webhook": {
       "post": {
         "operationId": "PaymentsController_webhook",
@@ -4262,6 +4360,608 @@
           }
         }
       }
+    },
+    "/api/v1/rooms/mine": {
+      "get": {
+        "operationId": "RoomsController_findMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyRoomShape"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "rooms"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/rooms/blocks": {
+      "get": {
+        "operationId": "RoomsController_listBlocks",
+        "parameters": [
+          {
+            "name": "packageId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoomBlockShape"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "rooms"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "RoomsController_createBlock",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoomBlockDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomBlockShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "rooms"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/rooms/blocks/{id}": {
+      "get": {
+        "operationId": "RoomsController_getBlock",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomBlockShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "rooms"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "RoomsController_updateBlock",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoomBlockDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomBlockShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "rooms"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "RoomsController_deleteBlock",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rooms"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/rooms/blocks/{id}/assignments": {
+      "put": {
+        "operationId": "RoomsController_assign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRoomDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomBlockShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "rooms"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/rooms/blocks/{id}/assignments/{bookingId}": {
+      "delete": {
+        "operationId": "RoomsController_unassign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bookingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomBlockShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "rooms"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/rooms/blocks/{id}/rooming-list/csv": {
+      "get": {
+        "operationId": "RoomsController_roomingList",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "rooms"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/disputes": {
+      "post": {
+        "operationId": "DisputesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDisputeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputeShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "disputes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "DisputesController_list",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "open",
+                "agency_responded",
+                "escalated",
+                "resolved",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DisputeShape"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "disputes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/disputes/{id}": {
+      "get": {
+        "operationId": "DisputesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputeShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "disputes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/disputes/{id}/messages": {
+      "post": {
+        "operationId": "DisputesController_addMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisputeMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputeShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "disputes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/disputes/{id}/resolve": {
+      "post": {
+        "operationId": "DisputesController_resolve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputeShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "disputes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/disputes/{id}/escalate": {
+      "post": {
+        "operationId": "DisputesController_escalate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputeShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "disputes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/disputes/{id}/decision": {
+      "post": {
+        "operationId": "DisputesController_decide",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisputeDecisionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputeShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "disputes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -5750,6 +6450,109 @@
           "totalCollected",
           "outstandingBalance",
           "projections"
+        ]
+      },
+      "AccountingEntryShape": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "journal": {
+            "type": "object"
+          },
+          "pieceRef": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "debit": {
+            "type": "number"
+          },
+          "credit": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "mobile_money_orange",
+              "mobile_money_mtn",
+              "card"
+            ]
+          },
+          "providerReference": {
+            "type": "string"
+          },
+          "bookingId": {
+            "type": "string"
+          },
+          "installmentNumber": {
+            "type": "number"
+          },
+          "pilgrimName": {
+            "type": "string"
+          },
+          "packageTitle": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "journal",
+          "pieceRef",
+          "label",
+          "debit",
+          "credit",
+          "currency",
+          "method",
+          "providerReference",
+          "bookingId",
+          "installmentNumber",
+          "pilgrimName",
+          "packageTitle"
+        ]
+      },
+      "AccountingExportShape": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "totalCollected": {
+            "type": "number"
+          },
+          "totalRefunded": {
+            "type": "number"
+          },
+          "net": {
+            "type": "number"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountingEntryShape"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "currency",
+          "totalCollected",
+          "totalRefunded",
+          "net",
+          "entries"
         ]
       },
       "PaymentWebhookDto": {
@@ -7462,6 +8265,413 @@
           "correctAttempts",
           "scorePercentage",
           "attempts"
+        ]
+      },
+      "MyRoomShape": {
+        "type": "object",
+        "properties": {
+          "hotelName": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "roomType": {
+            "type": "object"
+          },
+          "roomNumber": {
+            "type": "number"
+          },
+          "packageTitle": {
+            "type": "string"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hotelName",
+          "city",
+          "roomType",
+          "roomNumber",
+          "packageTitle"
+        ]
+      },
+      "RoomOccupantShape": {
+        "type": "object",
+        "properties": {
+          "bookingId": {
+            "type": "string"
+          },
+          "pilgrimName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bookingId",
+          "pilgrimName"
+        ]
+      },
+      "RoomShape": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "number"
+          },
+          "occupants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoomOccupantShape"
+            }
+          }
+        },
+        "required": [
+          "number",
+          "occupants"
+        ]
+      },
+      "RoomBlockShape": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "packageId": {
+            "type": "string"
+          },
+          "packageTitle": {
+            "type": "string"
+          },
+          "stageId": {
+            "type": "string"
+          },
+          "hotelName": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "roomType": {
+            "type": "object"
+          },
+          "roomCount": {
+            "type": "number"
+          },
+          "bedsPerRoom": {
+            "type": "number"
+          },
+          "totalBeds": {
+            "type": "number"
+          },
+          "assignedBeds": {
+            "type": "number"
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoomShape"
+            }
+          },
+          "unassigned": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoomOccupantShape"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "packageId",
+          "packageTitle",
+          "hotelName",
+          "city",
+          "roomType",
+          "roomCount",
+          "bedsPerRoom",
+          "totalBeds",
+          "assignedBeds",
+          "rooms",
+          "unassigned"
+        ]
+      },
+      "CreateRoomBlockDto": {
+        "type": "object",
+        "properties": {
+          "packageId": {
+            "type": "string"
+          },
+          "stageId": {
+            "type": "string"
+          },
+          "hotelName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "city": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "roomType": {
+            "type": "string",
+            "enum": [
+              "double",
+              "triple",
+              "quadruple",
+              "quintuple"
+            ]
+          },
+          "roomCount": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 500
+          },
+          "releaseDate": {
+            "type": "string",
+            "description": "Date limite de rétrocession à l’hôtel"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "packageId",
+          "roomType",
+          "roomCount"
+        ]
+      },
+      "UpdateRoomBlockDto": {
+        "type": "object",
+        "properties": {
+          "hotelName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "city": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "roomCount": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 500
+          },
+          "releaseDate": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "AssignRoomDto": {
+        "type": "object",
+        "properties": {
+          "bookingId": {
+            "type": "string"
+          },
+          "roomNumber": {
+            "type": "number",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "bookingId"
+        ]
+      },
+      "CreateDisputeDto": {
+        "type": "object",
+        "properties": {
+          "bookingId": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "payment",
+              "refund",
+              "accommodation",
+              "transport",
+              "documents",
+              "service",
+              "other"
+            ]
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 140
+          },
+          "message": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "bookingId",
+          "category",
+          "subject",
+          "message"
+        ]
+      },
+      "DisputeMessageShape": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "authorRole": {
+            "type": "string",
+            "enum": [
+              "pilgrim",
+              "agency",
+              "guide",
+              "admin"
+            ]
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "authorRole",
+          "authorName",
+          "content",
+          "createdAt"
+        ]
+      },
+      "DisputeShape": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "bookingId": {
+            "type": "string"
+          },
+          "packageTitle": {
+            "type": "string"
+          },
+          "agencyId": {
+            "type": "string"
+          },
+          "agencyName": {
+            "type": "string"
+          },
+          "pilgrimName": {
+            "type": "string"
+          },
+          "category": {
+            "type": "object"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "agency_responded",
+              "escalated",
+              "resolved",
+              "closed"
+            ],
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "escalatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "escalationAvailableAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DisputeMessageShape"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "bookingId",
+          "packageTitle",
+          "agencyId",
+          "agencyName",
+          "pilgrimName",
+          "category",
+          "subject",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "escalationAvailableAt"
+        ]
+      },
+      "DisputeMessageDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "DisputeDecisionDto": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "decision"
         ]
       }
     }
