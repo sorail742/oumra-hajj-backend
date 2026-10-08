@@ -383,6 +383,49 @@ l'agence, ou 7 jours sans réponse — `escalationAvailableAt`). Admin :
 `POST …/decision` (`decision` 10–2000) sur un litige escaladé → `closed`.
 Litiges clos purgés après 24 mois.
 
+## Barème de remboursement (`/refund-policies`) — idée #58
+
+Agence : `GET /refund-policies/mine`, `PUT /refund-policies/mine`
+(`tiers[]` de `{ minDaysBeforeDeparture` 0–730, `rate` 0–1 `}`, 10 au plus,
+seuils distincts, taux qui ne remonte pas à l'approche du départ ; liste
+vide = barème par défaut). Public : `GET /refund-policies/agency/:agencyId`.
+Le barème est figé sur chaque réservation à sa création. Règle :
+non confirmée 100 %, annulée/terminée 0 %, confirmée → palier atteint le
+plus élevé (0 % sous le dernier), 50 % sans barème.
+`GET /payments/:id/refund-preview` (pèlerin, agence, admin) :
+`eligibleRate`, `refundableAmount`, `rule` (`unpaid_booking`,
+`agency_tier`, `platform_default`, `not_refundable`),
+`daysBeforeDeparture`, `tiers`.
+
+## Facture et contrat (`/bookings/:id/invoice`, `/contract`) — idée #37
+
+Pèlerin concerné, agence de la réservation, admin. `GET …/invoice` émet la
+facture à la première demande (`FAC-AAAA-NNNNN`, séquence par agence et
+par année, montant figé) puis la relit : vendeur (NIF `taxId`, RCCM
+`tradeRegister` — renseignés par `PATCH /agencies/me`), acheteur, forfait,
+versements, `paid`, `refunded`, `balanceDue`. `GET …/contract` : parties,
+forfait (étapes, inclusions), prix, `balanceDueDate`, `refundTiers` figés.
+
+## Planning des guides (`/guide-planning`) — idée #42
+
+Agence : `GET /guide-planning?from&to` (défaut aujourd'hui → un an) — par
+guide, `entries[]` (`group` aux dates du forfait, `unavailability`) et
+`conflicts[]` (paires qui se chevauchent, jours communs).
+`POST /guide-planning/unavailabilities` (`guideId`, `startDate`, `endDate`,
+`reason?` 80 car.), `DELETE /guide-planning/unavailabilities/:id`. Guide :
+`GET /guide-planning/mine`. `PATCH /groups/:id/guide` répond désormais
+409 si le guide mène déjà un groupe ou est indisponible sur ces dates.
+
+## Piste d'audit (`/admin/audit`) — idée #85
+
+Admin : `GET /admin/audit?from&to&action&entityType&entityId&actorId`
+(30 derniers jours par défaut, 366 jours au plus, 500 entrées) et
+`GET /admin/audit/csv` (10 000 entrées, export lui-même tracé).
+`AuditLogShape` : `action` (`agency.approve`, `payment.refund`,
+`dispute.decide`…), `entityType`, `entityId`, auteur (`actorId`,
+`actorName`, `actorRole`), `metadata` (références et montants seulement),
+`createdAt`. Aucune route de modification ni de suppression.
+
 ## Ce qui n'est PAS encore branché (ne pas construire l'UI en le supposant fonctionnel)
 
 - **Upload de documents légaux d'agence** : champ `legalDocuments` existe
