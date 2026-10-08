@@ -13,9 +13,14 @@ import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
-import { PaymentShape } from '../../types/payment.types';
+import {
+  PaymentShape,
+  SavingsPlanShape,
+  TreasuryProjectionShape,
+} from '../../types/payment.types';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
+import { SetupSavingsPlanDto } from './dto/setup-savings-plan.dto';
 import { PaymentsService } from './payments.service';
 
 @ApiTags('payments')
@@ -45,6 +50,15 @@ export class PaymentsController {
   @Get('agency')
   listForAgency(@CurrentUser() user: JwtPayload): Promise<PaymentShape[]> {
     return this.paymentsService.findForAgency(user.sub);
+  }
+
+  // Ticket #38 : trésorerie prévisionnelle de l'agence. Déclarée avant
+  // `:id`, qui capturerait « agency ».
+  @ApiBearerAuth()
+  @Roles(Role.AGENCY)
+  @Get('agency/treasury')
+  treasury(@CurrentUser() user: JwtPayload): Promise<TreasuryProjectionShape> {
+    return this.paymentsService.getTreasuryProjection(user.sub);
   }
 
   // Endpoint de callback serveur-à-serveur du prestataire de paiement — non
@@ -85,9 +99,10 @@ export class PaymentsController {
   @Roles(Role.PILGRIM)
   @Get('bookings/:bookingId/savings-plan')
   getSavingsPlan(
+    @CurrentUser() user: JwtPayload,
     @Param('bookingId') bookingId: string,
-  ): Promise<import('../../types/payment.types').SavingsPlanShape | null> {
-    return this.paymentsService.findSavingsPlanByBooking(bookingId);
+  ): Promise<SavingsPlanShape | null> {
+    return this.paymentsService.findSavingsPlanByBooking(user.sub, bookingId);
   }
 
   @ApiBearerAuth()
@@ -96,8 +111,8 @@ export class PaymentsController {
   setupSavingsPlan(
     @CurrentUser() user: JwtPayload,
     @Param('bookingId') bookingId: string,
-    @Body() dto: import('./dto/setup-savings-plan.dto').SetupSavingsPlanDto,
-  ): Promise<import('../../types/payment.types').SavingsPlanShape> {
+    @Body() dto: SetupSavingsPlanDto,
+  ): Promise<SavingsPlanShape> {
     return this.paymentsService.setupSavingsPlan(user.sub, bookingId, dto);
   }
 }
