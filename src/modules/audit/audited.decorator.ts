@@ -10,6 +10,8 @@ export interface AuditedOptions {
   // Paramètre de route portant l'identifiant de l'entité (défaut : `id`) ;
   // à défaut, l'`id` de la réponse (création).
   idParam?: string;
+  // Champ de la réponse portant l'identifiant (défaut : `id`).
+  idField?: string;
   // Références et montants tirés de la réponse — jamais de contenu
   // sensible (ADR 0008).
   metadata?: (reponse: unknown) => AuditMetadata | undefined;

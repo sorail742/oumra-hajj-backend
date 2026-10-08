@@ -37,7 +37,7 @@ export class AuditInterceptor implements NestInterceptor {
       mergeMap(async (reponse: unknown) => {
         const brut: unknown = requete.params?.[options.idParam ?? 'id'];
         const parametre = typeof brut === 'string' ? brut : undefined;
-        const idReponse = champ(reponse, 'id');
+        const idReponse = champ(reponse, options.idField ?? 'id');
         await this.auditService.record({
           actorId: requete.user?.sub,
           actorRole: requete.user?.role,

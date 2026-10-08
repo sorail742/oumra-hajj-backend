@@ -20,6 +20,7 @@ import { JwtPayload } from '../../common/interfaces/authenticated-request.interf
 import {
   AccountingExportShape,
   PaymentShape,
+  RefundPreviewShape,
   SavingsPlanShape,
   TreasuryProjectionShape,
 } from '../../types/payment.types';
@@ -134,6 +135,18 @@ export class PaymentsController {
     @Param('id') id: string,
   ): Promise<PaymentShape> {
     return this.paymentsService.findAuthorizedOrFail(user.sub, user.role, id);
+  }
+
+  // Idée #58 — ce que rembourserait ce paiement, maintenant, selon le
+  // barème figé sur la réservation. Rien n'est remboursé ici.
+  @ApiBearerAuth()
+  @Roles(Role.PILGRIM, Role.AGENCY, Role.ADMIN)
+  @Get(':id/refund-preview')
+  refundPreview(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<RefundPreviewShape> {
+    return this.paymentsService.previewRefund(user.sub, user.role, id);
   }
 
   // Idée #58 (backlog "Cent Fonctionnalités") — barème clair, voir
