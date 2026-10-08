@@ -162,6 +162,7 @@ model User {
   disputesOpened         Dispute[]             @relation("DisputePilgrim")
   disputesDecided        Dispute[]             @relation("DisputeDecidedBy")
   disputeMessages        DisputeMessage[]      @relation("DisputeMessageAuthor")
+  unavailabilities       GuideUnavailability[] @relation("GuideUnavailabilities")
 
   @@map("users")
 }
@@ -246,16 +247,17 @@ model Agency {
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
 
-  legalDocuments    AgencyLegalDocument[]
-  guides            User[]                @relation("AgencyGuides")
-  packages          Package[]
-  groups            Group[]
-  bookings          Booking[]
-  reviews           Review[]
-  roomBlocks        RoomBlock[]
-  disputes          Dispute[]
-  refundPolicyTiers RefundPolicyTier[]
-  invoices          Invoice[]
+  legalDocuments        AgencyLegalDocument[]
+  guides                User[]                @relation("AgencyGuides")
+  packages              Package[]
+  groups                Group[]
+  bookings              Booking[]
+  reviews               Review[]
+  roomBlocks            RoomBlock[]
+  disputes              Dispute[]
+  refundPolicyTiers     RefundPolicyTier[]
+  invoices              Invoice[]
+  guideUnavailabilities GuideUnavailability[]
 
   @@index([validationStatus])
   @@map("agencies")
@@ -980,4 +982,23 @@ model Invoice {
 
   @@unique([agencyId, year, sequence])
   @@map("invoices")
+}
+
+// Idée #42 (backlog "Cent Fonctionnalités") — planning des guides :
+// période où un guide de l'agence n'est pas disponible (congé, autre
+// mission, maladie). Bornes incluses.
+model GuideUnavailability {
+  id        String   @id @default(uuid())
+  agencyId  String
+  agency    Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  guideId   String
+  guide     User     @relation("GuideUnavailabilities", fields: [guideId], references: [id], onDelete: Cascade)
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([agencyId])
+  @@index([guideId])
+  @@map("guide_unavailabilities")
 }
