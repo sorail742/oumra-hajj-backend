@@ -36,3 +36,19 @@ export class UserSummaryShape {
   isActive!: boolean;
   createdAt!: Date;
 }
+
+// Idée #69 (backlog "Cent Fonctionnalités") — besoins spéciaux déclarés par
+// le pèlerin. Données de santé : jamais journalisées ; visibles du pèlerin,
+// de l'agence de ses réservations et du guide de ses groupes (liste de
+// groupe, idée #41), jamais de l'administration.
+export const MOBILITY_LEVELS = ['none', 'reduced', 'wheelchair'] as const;
+export type MobilityLevel = (typeof MOBILITY_LEVELS)[number];
+
+export class SpecialNeedsShape {
+  mobility!: MobilityLevel;
+  dietary?: string;
+  medical?: string;
+  assistance?: string;
+  // Absent tant que le pèlerin n'a rien déclaré.
+  updatedAt?: Date;
+}

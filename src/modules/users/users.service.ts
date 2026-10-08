@@ -1,10 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { User as PrismaUser, Role as PrismaRole } from '@prisma/client';
+import {
+  User as PrismaUser,
+  Role as PrismaRole,
+  SpecialNeeds as PrismaSpecialNeeds,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role } from '../../common/enums/role.enum';
-import { UserShape, UserSummaryShape } from '../../types/user.types';
+import {
+  MobilityLevel,
+  SpecialNeedsShape,
+  UserShape,
+  UserSummaryShape,
+} from '../../types/user.types';
 import { CreateUserInternalDto } from './dto/create-user-internal.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateSpecialNeedsDto } from './dto/update-special-needs.dto';
 
 // Le stockage Postgres est plat (emergencyContact* en colonnes séparées,
 // voir schema.prisma) mais le contrat public (src/types/user.types.ts)
@@ -51,6 +61,24 @@ function toUserShape(user: UserRecord): UserShape {
     isActive: user.isActive,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
+  };
+}
+
+/** Chaîne vide ou absente → null : rien de vide n'est stocké. */
+function texteOuNull(valeur: string | undefined): string | null {
+  const nettoye = valeur?.trim();
+  return nettoye ? nettoye : null;
+}
+
+export function toSpecialNeedsShape(
+  besoins: PrismaSpecialNeeds,
+): SpecialNeedsShape {
+  return {
+    mobility: besoins.mobility as MobilityLevel,
+    dietary: besoins.dietary ?? undefined,
+    medical: besoins.medical ?? undefined,
+    assistance: besoins.assistance ?? undefined,
+    updatedAt: besoins.updatedAt,
   };
 }
 
@@ -161,5 +189,31 @@ export class UsersService {
     isActive: boolean,
   ): Promise<UserSummaryShape> {
     return toUserSummary(await this.setActive(userId, isActive));
+  }
+
+  // Idée #69 — besoins spéciaux. Le contenu n'est jamais journalisé.
+  async getSpecialNeeds(userId: string): Promise<SpecialNeedsShape> {
+    const besoins = await this.prisma.specialNeeds.findUnique({
+      where: { userId },
+    });
+    return besoins ? toSpecialNeedsShape(besoins) : { mobility: 'none' };
+  }
+
+  async replaceSpecialNeeds(
+    userId: string,
+    dto: UpdateSpecialNeedsDto,
+  ): Promise<SpecialNeedsShape> {
+    const donnees = {
+      mobility: dto.mobility,
+      dietary: texteOuNull(dto.dietary),
+      medical: texteOuNull(dto.medical),
+      assistance: texteOuNull(dto.assistance),
+    };
+    const besoins = await this.prisma.specialNeeds.upsert({
+      where: { userId },
+      create: { userId, ...donnees },
+      update: donnees,
+    });
+    return toSpecialNeedsShape(besoins);
   }
 }
