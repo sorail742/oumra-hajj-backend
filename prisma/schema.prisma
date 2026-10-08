@@ -158,6 +158,7 @@ model User {
   validatedQuizQuestions QuizQuestion[]        @relation("QuizQuestionValidatedBy")
   quizAttempts           QuizAttempt[]
   budgetSimulations      BudgetSimulation[]    @relation("PilgrimBudgetSimulations")
+  specialNeeds           SpecialNeeds?
 
   @@map("users")
 }
@@ -766,4 +767,40 @@ model QuizAttempt {
   @@index([pilgrimId])
   @@index([questionId])
   @@map("quiz_attempts")
+}
+
+// Idée #21 (backlog "Cent Fonctionnalités") — annuaire des numéros
+// d'urgence tenu par l'administration. Aucun numéro n'est pré-rempli par le
+// code : une erreur (ambassade, secours) aurait des conséquences graves,
+// seule l'administration saisit des numéros vérifiés.
+model EmergencyNumber {
+  id        String   @id @default(uuid())
+  label     String
+  category  String // "police", "medical", "civil_defense", "embassy", "other"
+  phone     String
+  country   String // ISO 3166-1 alpha-2 : "SA", "GN"…
+  city      String?
+  notes     String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("emergency_numbers")
+}
+
+// Idée #69 (backlog "Cent Fonctionnalités") — besoins spéciaux déclarés par
+// le pèlerin, pour que l'agence et le guide s'organisent. Données de santé :
+// jamais journalisées, visibles seulement de l'agence d'une réservation
+// active et du guide d'un groupe du pèlerin (liste de groupe, idée #41).
+model SpecialNeeds {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mobility   String   @default("none") // "none", "reduced", "wheelchair"
+  dietary    String?
+  medical    String?
+  assistance String?
+  updatedAt  DateTime @updatedAt
+
+  @@map("special_needs")
 }

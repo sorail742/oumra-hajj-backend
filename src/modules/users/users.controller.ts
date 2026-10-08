@@ -1,11 +1,24 @@
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
-import { UserShape, UserSummaryShape } from '../../types/user.types';
+import {
+  SpecialNeedsShape,
+  UserShape,
+  UserSummaryShape,
+} from '../../types/user.types';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateSpecialNeedsDto } from './dto/update-special-needs.dto';
 import { UsersService } from './users.service';
 
 @ApiBearerAuth()
@@ -25,6 +38,22 @@ export class UsersController {
     @Body() dto: UpdateProfileDto,
   ): Promise<UserShape> {
     return this.usersService.updateProfile(user.sub, dto);
+  }
+
+  // Idée #69 — besoins spéciaux du pèlerin, déclarés par lui seul.
+  @Roles(Role.PILGRIM)
+  @Get('me/special-needs')
+  getSpecialNeeds(@CurrentUser() user: JwtPayload): Promise<SpecialNeedsShape> {
+    return this.usersService.getSpecialNeeds(user.sub);
+  }
+
+  @Roles(Role.PILGRIM)
+  @Put('me/special-needs')
+  replaceSpecialNeeds(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: UpdateSpecialNeedsDto,
+  ): Promise<SpecialNeedsShape> {
+    return this.usersService.replaceSpecialNeeds(user.sub, dto);
   }
 
   // Réservé à l'admin plateforme (supervision des utilisateurs — cahier des
