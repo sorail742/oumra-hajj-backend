@@ -6,6 +6,10 @@ export class ItineraryStepShape {
 
 export class MemberLocationShape {
   userId!: string;
+  // Nom du membre, pour le reconnaître sur la carte de suivi. Visible des
+  // mêmes personnes que la position elle-même (membres, guide, agence,
+  // administration — `GroupsService.findAuthorizedOrFail`).
+  fullName!: string;
   lat!: number;
   lng!: number;
   updatedAt!: Date;

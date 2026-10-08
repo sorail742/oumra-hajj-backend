@@ -21,16 +21,19 @@ import { AddItineraryStepDto } from './dto/add-itinerary-step.dto';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 
+// Le nom de chaque membre qui partage sa position accompagne celle-ci
+// (écran de suivi web, ADR-0007 du dépôt web) : seul `fullName` est lu,
+// jamais le téléphone, le passeport ni le contact d'urgence.
 const GROUP_INCLUDE = {
   members: true,
   itinerary: true,
-  locations: true,
+  locations: { include: { user: { select: { fullName: true } } } },
 } as const;
 
 type GroupRecord = PrismaGroup & {
   members: PrismaGroupMember[];
   itinerary: PrismaGroupItineraryStep[];
-  locations: PrismaGroupMemberLocation[];
+  locations: (PrismaGroupMemberLocation & { user: { fullName: string } })[];
 };
 
 function toGroupShape(group: GroupRecord): GroupShape {
@@ -48,6 +51,7 @@ function toGroupShape(group: GroupRecord): GroupShape {
     })),
     locations: group.locations.map((location) => ({
       userId: location.userId,
+      fullName: location.user.fullName,
       lat: location.lat,
       lng: location.lng,
       updatedAt: location.updatedAt,
