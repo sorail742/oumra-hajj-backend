@@ -339,6 +339,50 @@ passeport ni de groupe sanguin. `GET /groups/:id/roster/csv` : même contenu en
 CSV (UTF-8 avec BOM, `Content-Disposition: attachment`). Chaque consultation
 est journalisée (qui, quel groupe), jamais son contenu.
 
+## Export comptable (`/payments/agency/accounting`) — idée #57
+
+`GET /payments/agency/accounting?from=AAAA-MM-JJ&to=AAAA-MM-JJ` (agence) :
+`AccountingExportShape` — `from`, `to` (bornes incluses ; défaut : mois en
+cours jusqu'à aujourd'hui, 366 jours au plus), `currency`,
+`totalCollected`, `totalRefunded`, `net`, `entries[]` (une écriture par
+encaissement `ENC` — débit — et par remboursement `REM` — crédit — de la
+période : `date`, `pieceRef`, `label`, `debit`, `credit`, `method`,
+`providerReference`, `bookingId`, `installmentNumber`, `pilgrimName`,
+`packageTitle`). `GET …/accounting/csv` : même journal pour Excel FR / Sage
+(BOM, `;`, dates JJ/MM/AAAA, virgule décimale). Chaque export est
+journalisé (agence, période, nombre d'écritures).
+
+## Allotement des chambres (`/rooms`) — idée #40
+
+Agence : `GET /rooms/blocks?packageId=`, `POST /rooms/blocks`
+(`packageId`, `stageId?` — hôtel et ville repris de l'étape —, `hotelName?`,
+`city?`, `roomType` `double`…`quintuple`, `roomCount` 1–500,
+`releaseDate?`, `notes?`), `GET|PATCH|DELETE /rooms/blocks/:id` (pas de
+réduction sous une chambre occupée, pas de suppression d'un bloc occupé).
+`RoomBlockShape` : capacité (`bedsPerRoom`, `totalBeds`, `assignedBeds`),
+`rooms[]` numérotées avec leurs occupants, `unassigned[]` (réservations
+actives du forfait sans place dans ce bloc).
+`PUT /rooms/blocks/:id/assignments` (`bookingId`, `roomNumber?` — absent :
+première chambre libre) place ou déplace ; `DELETE
+/rooms/blocks/:id/assignments/:bookingId` libère.
+`GET /rooms/blocks/:id/rooming-list/csv` : rooming list pour l'hôtel.
+Pèlerin : `GET /rooms/mine` (hôtel, ville, type, numéro de chambre, dates).
+
+## Médiation des litiges (`/disputes`) — idée #62
+
+Pèlerin : `POST /disputes` (`bookingId`, `category` — `payment`, `refund`,
+`accommodation`, `transport`, `documents`, `service`, `other` —, `subject`
+5–140, `message` 10–2000) ; un seul litige en cours par réservation.
+`GET /disputes?status=` : pèlerin → les siens, agence → ceux de son agence,
+admin → seulement `escalated` et `closed`. `GET /disputes/:id` : détail avec
+`messages[]` (consultation journalisée). `POST /disputes/:id/messages`
+(`content`) : l'agence qui répond passe le litige en `agency_responded`, le
+pèlerin qui relance le repasse en `open`. Pèlerin : `POST …/resolve`
+(clos à l'amiable, `resolved`), `POST …/escalate` (après une réponse de
+l'agence, ou 7 jours sans réponse — `escalationAvailableAt`). Admin :
+`POST …/decision` (`decision` 10–2000) sur un litige escaladé → `closed`.
+Litiges clos purgés après 24 mois.
+
 ## Ce qui n'est PAS encore branché (ne pas construire l'UI en le supposant fonctionnel)
 
 - **Upload de documents légaux d'agence** : champ `legalDocuments` existe
@@ -351,7 +395,7 @@ est journalisée (qui, quel groupe), jamais son contenu.
   sont des simulations/stockage in-app.
 - **Visionneuse de documents pèlerins** : pas d'endpoint pour récupérer le
   fichier réel, seulement sa référence.
-- **Export compta / génération de reçu PDF** : rien côté API.
+- **Génération de reçu PDF** : rien côté API (l'export comptable existe, voir plus haut).
 - **Messagerie agence↔pèlerin** : aucune API, malgré la mention au cahier
   des charges.
 

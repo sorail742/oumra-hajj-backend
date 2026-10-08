@@ -3,7 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Role } from '../../common/enums/role.enum';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AgenciesService } from '../agencies/agencies.service';
-import { celluleCsv, GroupRosterService } from './group-roster.service';
+import { celluleCsv } from '../../common/utils/csv';
+import { GroupRosterService } from './group-roster.service';
 import { GroupsService } from './groups.service';
 
 describe('GroupRosterService — listes de groupe (idée #41)', () => {

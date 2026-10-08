@@ -159,6 +159,9 @@ model User {
   quizAttempts           QuizAttempt[]
   budgetSimulations      BudgetSimulation[]    @relation("PilgrimBudgetSimulations")
   specialNeeds           SpecialNeeds?
+  disputesOpened         Dispute[]             @relation("DisputePilgrim")
+  disputesDecided        Dispute[]             @relation("DisputeDecidedBy")
+  disputeMessages        DisputeMessage[]      @relation("DisputeMessageAuthor")
 
   @@map("users")
 }
@@ -245,6 +248,8 @@ model Agency {
   groups         Group[]
   bookings       Booking[]
   reviews        Review[]
+  roomBlocks     RoomBlock[]
+  disputes       Dispute[]
 
   @@index([validationStatus])
   @@map("agencies")
@@ -291,6 +296,7 @@ model Package {
   bookings          Booking[]
   groups            Group[]
   budgetSimulations BudgetSimulation[]
+  roomBlocks        RoomBlock[]
 
   @@index([type])
   @@index([status])
@@ -301,14 +307,15 @@ model Package {
 // Mecque) — Package.startDate/endDate restent les bornes globales du voyage,
 // distinctes des dates propres a chaque etape.
 model PackageStage {
-  id                     String   @id @default(uuid())
+  id                     String      @id @default(uuid())
   packageId              String
-  package                Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  package                Package     @relation(fields: [packageId], references: [id], onDelete: Cascade)
   city                   String
   hotelName              String
   distanceToMosqueMeters Int?
   startDate              DateTime
   endDate                DateTime
+  roomBlocks             RoomBlock[]
 
   @@index([packageId])
   @@map("package_stages")
@@ -451,13 +458,15 @@ model Booking {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  steps         BookingStep[]
-  payments      Payment[]
-  documents     PilgrimDocument[]
-  review        Review?
-  savingsPlan   SavingsPlan?
-  conversations Conversation[]
-  checklists    ChecklistItem[]
+  steps           BookingStep[]
+  payments        Payment[]
+  documents       PilgrimDocument[]
+  review          Review?
+  savingsPlan     SavingsPlan?
+  conversations   Conversation[]
+  checklists      ChecklistItem[]
+  roomAssignments RoomAssignment[]
+  disputes        Dispute[]
 
   @@index([pilgrimId])
   @@index([packageId])
@@ -803,4 +812,101 @@ model SpecialNeeds {
   updatedAt  DateTime @updatedAt
 
   @@map("special_needs")
+}
+
+// Idée #40 (backlog "Cent Fonctionnalités") — allotement : bloc de chambres
+// réservé à l'avance par l'agence auprès d'un hôtel, pour un forfait, puis
+// attribué progressivement aux réservations. `releaseDate` : date limite
+// fixée par l'hôtel pour lui rendre les chambres non vendues.
+model RoomBlock {
+  id          String        @id @default(uuid())
+  agencyId    String
+  agency      Agency        @relation(fields: [agencyId], references: [id])
+  packageId   String
+  package     Package       @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  stageId     String?
+  stage       PackageStage? @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  hotelName   String
+  city        String
+  roomType    String // "double", "triple", "quadruple", "quintuple"
+  roomCount   Int
+  releaseDate DateTime?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  assignments RoomAssignment[]
+
+  @@index([agencyId])
+  @@index([packageId])
+  @@map("room_blocks")
+}
+
+// Une place dans une chambre du bloc (numérotée de 1 à roomCount).
+model RoomAssignment {
+  id          String    @id @default(uuid())
+  roomBlockId String
+  roomBlock   RoomBlock @relation(fields: [roomBlockId], references: [id], onDelete: Cascade)
+  bookingId   String
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  roomNumber  Int
+  createdAt   DateTime  @default(now())
+
+  @@unique([roomBlockId, bookingId])
+  @@index([bookingId])
+  @@map("room_assignments")
+}
+
+// Idée #62 (backlog "Cent Fonctionnalités") — médiation structurée : le
+// pèlerin ouvre un litige sur une réservation, dialogue d'abord avec
+// l'agence, et ne peut escalader vers l'administration qu'après une
+// réponse de l'agence ou un délai sans réponse. Purgé après un délai de
+// conservation une fois clos (minimisation).
+enum DisputeStatus {
+  open // en attente de l'agence
+  agency_responded // l'agence a répondu, au pèlerin de réagir
+  escalated // arbitrage de l'administration demandé
+  resolved // clos à l'amiable par le pèlerin
+  closed // clos par décision de l'administration
+}
+
+model Dispute {
+  id          String        @id @default(uuid())
+  bookingId   String
+  booking     Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  pilgrimId   String
+  pilgrim     User          @relation("DisputePilgrim", fields: [pilgrimId], references: [id])
+  agencyId    String
+  agency      Agency        @relation(fields: [agencyId], references: [id])
+  category    String // "payment", "refund", "accommodation", "transport", "documents", "service", "other"
+  subject     String
+  status      DisputeStatus @default(open)
+  decision    String?
+  decidedById String?
+  decidedBy   User?         @relation("DisputeDecidedBy", fields: [decidedById], references: [id])
+  escalatedAt DateTime?
+  closedAt    DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  messages DisputeMessage[]
+
+  @@index([agencyId])
+  @@index([pilgrimId])
+  @@index([status])
+  @@map("disputes")
+}
+
+model DisputeMessage {
+  id         String   @id @default(uuid())
+  disputeId  String
+  dispute    Dispute  @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User     @relation("DisputeMessageAuthor", fields: [authorId], references: [id])
+  authorRole Role
+  content    String
+  createdAt  DateTime @default(now())
+
+  @@index([disputeId])
+  @@map("dispute_messages")
 }
