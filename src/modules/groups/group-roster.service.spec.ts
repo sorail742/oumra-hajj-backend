@@ -135,6 +135,14 @@ describe('GroupRosterService — listes de groupe (idée #41)', () => {
     expect(ligneZeinab).toContain(`"'=FORMULE()"`);
   });
 
+  it('garde les numéros de téléphone intacts, neutralise les vraies formules', () => {
+    expect(celluleCsv('+224620000099')).toBe('"+224620000099"');
+    expect(celluleCsv('+224 620 00 00 99')).toBe('"+224 620 00 00 99"');
+    expect(celluleCsv('+SOMME(A1)')).toBe(`"'+SOMME(A1)"`);
+    expect(celluleCsv('-2+3')).toBe(`"'-2+3"`);
+    expect(celluleCsv('@cmd')).toBe(`"'@cmd"`);
+  });
+
   it('échappe les guillemets', () => {
     expect(celluleCsv('Dit "bonjour"')).toBe('"Dit ""bonjour"""');
     expect(celluleCsv(undefined)).toBe('""');
