@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { BookingStatus } from '../../common/enums/booking-status.enum';
 import { Role } from '../../common/enums/role.enum';
+import { BOM_UTF8, celluleCsv } from '../../common/utils/csv';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   GroupRosterMemberShape,
@@ -23,21 +24,6 @@ const LIBELLE_STATUT: Record<BookingStatus, string> = {
   [BookingStatus.CANCELLED]: 'annulée',
   [BookingStatus.COMPLETED]: 'terminée',
 };
-
-/**
- * Cellule CSV : guillemets doublés, et neutralisation des formules — un
- * texte saisi par un utilisateur commençant par = @ + - serait sinon
- * interprété par un tableur à l'ouverture. Exception : un numéro
- * (« +224 620… », « -5 ») reste intact, sinon chaque téléphone
- * international de la liste serait altéré.
- */
-const DEBUT_DE_FORMULE = /^[=@\t\r]|^[+-](?![\d\s]+$)/;
-
-export function celluleCsv(valeur: string | undefined): string {
-  const texte = valeur ?? '';
-  const neutralise = DEBUT_DE_FORMULE.test(texte) ? `'${texte}` : texte;
-  return `"${neutralise.replace(/"/g, '""')}"`;
-}
 
 // Idée #41 (backlog "Cent Fonctionnalités") — listes de groupe générées
 // au lieu d'être recopiées à la main. Réservées à l'agence propriétaire et
@@ -148,8 +134,7 @@ export class GroupRosterService {
         .map(celluleCsv)
         .join(','),
     );
-    // BOM UTF-8 : Excel affiche alors correctement les accents.
-    return `﻿${[entete, ...lignes].join('\n')}`;
+    return `${BOM_UTF8}${[entete, ...lignes].join('\n')}`;
   }
 
   private async assertCanReadRoster(

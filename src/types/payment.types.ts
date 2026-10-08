@@ -38,3 +38,34 @@ export class TreasuryProjectionShape {
   outstandingBalance!: number;
   projections!: TreasuryProjectionItemShape[];
 }
+
+// Idée #57 (backlog "Cent Fonctionnalités") — export comptable.
+export type AccountingJournal = 'ENC' | 'REM';
+
+export class AccountingEntryShape {
+  date!: Date;
+  // ENC : encaissement (débit trésorerie) ; REM : remboursement (crédit).
+  journal!: AccountingJournal;
+  pieceRef!: string;
+  label!: string;
+  debit!: number;
+  credit!: number;
+  currency!: string;
+  method!: PaymentMethod;
+  providerReference!: string;
+  bookingId!: string;
+  installmentNumber!: number;
+  pilgrimName!: string;
+  packageTitle!: string;
+}
+
+export class AccountingExportShape {
+  // Bornes incluses, format YYYY-MM-DD.
+  from!: string;
+  to!: string;
+  currency!: string;
+  totalCollected!: number;
+  totalRefunded!: number;
+  net!: number;
+  entries!: AccountingEntryShape[];
+}
