@@ -4830,6 +4830,9 @@
           "userId": {
             "type": "string"
           },
+          "fullName": {
+            "type": "string"
+          },
           "lat": {
             "type": "number"
           },
@@ -4843,6 +4846,7 @@
         },
         "required": [
           "userId",
+          "fullName",
           "lat",
           "lng",
           "updatedAt"
