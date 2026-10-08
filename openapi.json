@@ -316,6 +316,66 @@
         ]
       }
     },
+    "/api/v1/users/me/special-needs": {
+      "get": {
+        "operationId": "UsersController_getSpecialNeeds",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecialNeedsShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "UsersController_replaceSpecialNeeds",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSpecialNeedsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecialNeedsShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/users": {
       "get": {
         "operationId": "UsersController_listByRole",
@@ -1331,6 +1391,76 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GroupShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "groups"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/groups/{id}/roster": {
+      "get": {
+        "operationId": "GroupsController_getRoster",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupRosterShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "groups"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/groups/{id}/roster/csv": {
+      "get": {
+        "operationId": "GroupsController_getRosterCsv",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -3773,6 +3903,185 @@
         ]
       }
     },
+    "/api/v1/emergency/numbers": {
+      "get": {
+        "operationId": "EmergencyController_listNumbers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmergencyNumberShape"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "emergency"
+        ]
+      },
+      "post": {
+        "operationId": "EmergencyController_createNumber",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEmergencyNumberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyNumberShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "emergency"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/emergency/numbers/{id}": {
+      "patch": {
+        "operationId": "EmergencyController_updateNumber",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEmergencyNumberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyNumberShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "emergency"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "EmergencyController_deleteNumber",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "emergency"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/emergency/contacts/mine": {
+      "get": {
+        "operationId": "EmergencyController_findMyContacts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyEmergencyContactsShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "emergency"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/directory/agencies": {
+      "get": {
+        "operationId": "DirectoryController_listAgencies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgencyDirectoryEntryShape"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "directory"
+        ]
+      }
+    },
     "/api/v1/quiz/questions": {
       "post": {
         "operationId": "QuizController_createQuestion",
@@ -4244,6 +4553,61 @@
             "type": "string"
           }
         }
+      },
+      "SpecialNeedsShape": {
+        "type": "object",
+        "properties": {
+          "mobility": {
+            "type": "object"
+          },
+          "dietary": {
+            "type": "string"
+          },
+          "medical": {
+            "type": "string"
+          },
+          "assistance": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mobility"
+        ]
+      },
+      "UpdateSpecialNeedsDto": {
+        "type": "object",
+        "properties": {
+          "mobility": {
+            "type": "string",
+            "enum": [
+              "none",
+              "reduced",
+              "wheelchair"
+            ]
+          },
+          "dietary": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Régime alimentaire"
+          },
+          "medical": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Traitement, allergie, condition à connaître"
+          },
+          "assistance": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Accompagnement souhaité"
+          }
+        },
+        "required": [
+          "mobility"
+        ]
       },
       "UserSummaryShape": {
         "type": "object",
@@ -4897,6 +5261,72 @@
           "memberIds",
           "itinerary",
           "locations"
+        ]
+      },
+      "GroupRosterMemberShape": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "bookingId": {
+            "type": "string"
+          },
+          "bookingStatus": {
+            "type": "string",
+            "enum": [
+              "pending_payment",
+              "confirmed",
+              "cancelled",
+              "completed"
+            ]
+          },
+          "emergencyContact": {
+            "$ref": "#/components/schemas/EmergencyContactShape"
+          },
+          "specialNeeds": {
+            "$ref": "#/components/schemas/SpecialNeedsShape"
+          }
+        },
+        "required": [
+          "userId",
+          "fullName"
+        ]
+      },
+      "GroupRosterShape": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "groupTitle": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupRosterMemberShape"
+            }
+          }
+        },
+        "required": [
+          "groupId",
+          "groupTitle",
+          "generatedAt",
+          "members"
         ]
       },
       "AssignGuideDto": {
@@ -6573,6 +7003,223 @@
         "required": [
           "content",
           "clientSentAt"
+        ]
+      },
+      "EmergencyNumberShape": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "category": {
+            "type": "object"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "category",
+          "phone",
+          "country",
+          "order"
+        ]
+      },
+      "CreateEmergencyNumberDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 2,
+            "description": "Intitulé affiché (ex. : « Police »)"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "police",
+              "medical",
+              "civil_defense",
+              "embassy",
+              "other"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "pattern": "/^\\+?[0-9][0-9 ]{1,19}$/",
+            "description": "Numéro à composer"
+          },
+          "country": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "/^[A-Z]{2}$/",
+            "description": "Pays, code ISO 3166-1 alpha-2 (SA, GN…)"
+          },
+          "city": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          }
+        },
+        "required": [
+          "label",
+          "category",
+          "phone",
+          "country"
+        ]
+      },
+      "UpdateEmergencyNumberDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 2,
+            "description": "Intitulé affiché (ex. : « Police »)"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "police",
+              "medical",
+              "civil_defense",
+              "embassy",
+              "other"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "pattern": "/^\\+?[0-9][0-9 ]{1,19}$/",
+            "description": "Numéro à composer"
+          },
+          "country": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "/^[A-Z]{2}$/",
+            "description": "Pays, code ISO 3166-1 alpha-2 (SA, GN…)"
+          },
+          "city": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          }
+        }
+      },
+      "EmergencyAgencyContactShape": {
+        "type": "object",
+        "properties": {
+          "agencyId": {
+            "type": "string"
+          },
+          "legalName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "agencyId",
+          "legalName",
+          "phone"
+        ]
+      },
+      "EmergencyGuideContactShape": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "groupTitle": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "groupTitle",
+          "fullName"
+        ]
+      },
+      "MyEmergencyContactsShape": {
+        "type": "object",
+        "properties": {
+          "agencies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmergencyAgencyContactShape"
+            }
+          },
+          "guides": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmergencyGuideContactShape"
+            }
+          }
+        },
+        "required": [
+          "agencies",
+          "guides"
+        ]
+      },
+      "AgencyDirectoryEntryShape": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "legalName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "validatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "trustScore": {
+            "$ref": "#/components/schemas/AgencyTrustScoreShape"
+          }
+        },
+        "required": [
+          "id",
+          "legalName",
+          "trustScore"
         ]
       },
       "CreateQuizQuestionDto": {

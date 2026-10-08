@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Param,
@@ -14,18 +15,22 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
-import { GroupShape } from '../../types/group.types';
+import { GroupRosterShape, GroupShape } from '../../types/group.types';
 import { AddItineraryStepDto } from './dto/add-itinerary-step.dto';
 import { AssignGuideDto } from './dto/assign-guide.dto';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
+import { GroupRosterService } from './group-roster.service';
 import { GroupsService } from './groups.service';
 
 @ApiBearerAuth()
 @ApiTags('groups')
 @Controller('groups')
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(
+    private readonly groupsService: GroupsService,
+    private readonly groupRosterService: GroupRosterService,
+  ) {}
 
   @Roles(Role.AGENCY)
   @Post()
@@ -60,6 +65,27 @@ export class GroupsController {
     @Param('id') id: string,
   ): Promise<GroupShape> {
     return this.groupsService.findAuthorizedOrFail(user.sub, user.role, id);
+  }
+
+  // Idée #41 — liste du groupe (agence propriétaire, guide du groupe).
+  @Roles(Role.AGENCY, Role.GUIDE)
+  @Get(':id/roster')
+  getRoster(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<GroupRosterShape> {
+    return this.groupRosterService.getRoster(user.sub, user.role, id);
+  }
+
+  @Roles(Role.AGENCY, Role.GUIDE)
+  @Get(':id/roster/csv')
+  @Header('Content-Type', 'text/csv; charset=utf-8')
+  @Header('Content-Disposition', 'attachment; filename="liste-groupe.csv"')
+  getRosterCsv(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<string> {
+    return this.groupRosterService.getRosterCsv(user.sub, user.role, id);
   }
 
   @Roles(Role.AGENCY)

@@ -70,3 +70,15 @@ export class AgencyTrustScoreShape {
   // d'avis suffisants ; null = pas encore validée par l'admin.
   badge!: 'verified' | 'trusted' | null;
 }
+
+// Annuaire public des agences validées par la plateforme (idée #71, volet
+// plateforme — le registre national, lui, relève de l'ADR 0015, proposé).
+// Uniquement des données d'entreprise déjà publiques : ni coordonnées
+// bancaires, ni documents, ni taux de commission.
+export class AgencyDirectoryEntryShape {
+  id!: string;
+  legalName!: string;
+  address?: string;
+  validatedAt?: Date;
+  trustScore!: AgencyTrustScoreShape;
+}
