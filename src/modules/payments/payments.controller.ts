@@ -2,11 +2,15 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Param,
   Post,
+  Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -14,10 +18,13 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { JwtPayload } from '../../common/interfaces/authenticated-request.interface';
 import {
+  AccountingExportShape,
   PaymentShape,
   SavingsPlanShape,
   TreasuryProjectionShape,
 } from '../../types/payment.types';
+import { AccountingExportService } from './accounting-export.service';
+import { AccountingExportQueryDto } from './dto/accounting-export-query.dto';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
 import { SetupSavingsPlanDto } from './dto/setup-savings-plan.dto';
@@ -26,7 +33,10 @@ import { PaymentsService } from './payments.service';
 @ApiTags('payments')
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(
+    private readonly paymentsService: PaymentsService,
+    private readonly accountingExportService: AccountingExportService,
+  ) {}
 
   @ApiBearerAuth()
   @Roles(Role.PILGRIM)
@@ -59,6 +69,40 @@ export class PaymentsController {
   @Get('agency/treasury')
   treasury(@CurrentUser() user: JwtPayload): Promise<TreasuryProjectionShape> {
     return this.paymentsService.getTreasuryProjection(user.sub);
+  }
+
+  // Idée #57 : journal comptable de l'agence sur une période — aperçu
+  // JSON, puis le même contenu en CSV pour Sage ou un tableur. Déclarées
+  // avant `:id`, comme la trésorerie.
+  @ApiBearerAuth()
+  @Roles(Role.AGENCY)
+  @Get('agency/accounting')
+  accountingJournal(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: AccountingExportQueryDto,
+  ): Promise<AccountingExportShape> {
+    return this.accountingExportService.getJournal(user.sub, query);
+  }
+
+  @ApiBearerAuth()
+  @Roles(Role.AGENCY)
+  @Get('agency/accounting/csv')
+  @Header('Content-Type', 'text/csv; charset=utf-8')
+  async accountingJournalCsv(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: AccountingExportQueryDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<string> {
+    const csv = await this.accountingExportService.getJournalCsv(
+      user.sub,
+      query,
+    );
+    const periode = [query.from, query.to].filter(Boolean).join('_');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="export-comptable${periode ? `-${periode}` : ''}.csv"`,
+    );
+    return csv;
   }
 
   // Endpoint de callback serveur-à-serveur du prestataire de paiement — non
