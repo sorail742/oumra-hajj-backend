@@ -224,6 +224,10 @@ model Agency {
   contactEmail      String
   contactPhone      String
   address           String?
+  // Idée #37 : mentions légales imprimées sur factures et contrats —
+  // NIF (numéro d'identification fiscale) et RCCM (registre du commerce).
+  taxId             String?
+  tradeRegister     String?
   validationStatus  AgencyValidationStatus @default(pending)
   rejectionReason   String?
   validatedById     String?
@@ -251,6 +255,7 @@ model Agency {
   roomBlocks        RoomBlock[]
   disputes          Dispute[]
   refundPolicyTiers RefundPolicyTier[]
+  invoices          Invoice[]
 
   @@index([validationStatus])
   @@map("agencies")
@@ -472,6 +477,7 @@ model Booking {
   checklists      ChecklistItem[]
   roomAssignments RoomAssignment[]
   disputes        Dispute[]
+  invoice         Invoice?
 
   @@index([pilgrimId])
   @@index([packageId])
@@ -953,4 +959,25 @@ model RefundPolicyTier {
 
   @@unique([agencyId, minDaysBeforeDeparture])
   @@map("refund_policy_tiers")
+}
+
+// Idée #37 (backlog "Cent Fonctionnalités") — facture d'une réservation,
+// numérotée sans trou par agence et par année (FAC-2026-00001), émise
+// une seule fois et jamais modifiée : son montant est celui du forfait à
+// l'émission.
+model Invoice {
+  id          String   @id @default(uuid())
+  agencyId    String
+  agency      Agency   @relation(fields: [agencyId], references: [id])
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  year        Int
+  sequence    Int
+  number      String
+  totalAmount Float
+  currency    String
+  issuedAt    DateTime @default(now())
+
+  @@unique([agencyId, year, sequence])
+  @@map("invoices")
 }

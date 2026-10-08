@@ -86,10 +86,7 @@ export class RefundPolicyShape {
 }
 
 export type RefundRule =
-  | 'unpaid_booking'
-  | 'agency_tier'
-  | 'platform_default'
-  | 'not_refundable';
+  'unpaid_booking' | 'agency_tier' | 'platform_default' | 'not_refundable';
 
 export class RefundPreviewShape {
   paymentId!: string;
