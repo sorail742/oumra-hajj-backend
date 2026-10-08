@@ -305,6 +305,40 @@ forme Mongo (`_id` au lieu de `id`). Forme cible (`BookingShape`) :
   pas de série temporelle, pas d'export. `totalRevenue` = somme des
   paiements `succeeded` uniquement, toutes agences confondues.
 
+## Numéros d'urgence (`/emergency`) — idée #21
+
+| Méthode | Route | Rôle | Corps / réponse |
+|---|---|---|---|
+| GET | `/emergency/numbers` | public | `EmergencyNumberShape[]` (ordre `order`, puis libellé) |
+| POST | `/emergency/numbers` | admin | `label`, `category` (`police`, `medical`, `civil_defense`, `embassy`, `other`), `phone`, `country` (ISO alpha-2), `city?`, `notes?`, `order?` |
+| PATCH / DELETE | `/emergency/numbers/:id` | admin | mise à jour partielle / 204 |
+| GET | `/emergency/contacts/mine` | pèlerin, guide | `{ agencies[], guides[] }` déduits des réservations actives et des groupes |
+
+Aucun numéro n'est pré-rempli : l'administration saisit des numéros vérifiés.
+
+## Annuaire public des agences (`/directory/agencies`) — idée #71
+
+`GET /directory/agencies` (public) : agences **approuvées**, triées par nom —
+`id`, `legalName`, `address?`, `validatedAt?`, `trustScore`
+(`AgencyTrustScoreShape`). Volet plateforme seulement : le registre national
+de l'État relève de l'ADR 0015 (proposé).
+
+## Besoins spéciaux (`/users/me/special-needs`) — idée #69
+
+`GET` / `PUT` (pèlerin) : `mobility` (`none` | `reduced` | `wheelchair`),
+`dietary?`, `medical?`, `assistance?` (500 caractères max). `PUT` remplace la
+déclaration : un champ absent ou vide est effacé. Données de santé : jamais
+journalisées, jamais visibles de l'administration.
+
+## Liste de groupe (`/groups/:id/roster`) — idée #41
+
+`GET /groups/:id/roster` (agence propriétaire, guide du groupe) :
+`GroupRosterShape` — membres triés par nom avec téléphone, e-mail,
+réservation et statut, contact d'urgence, besoins spéciaux. Jamais de
+passeport ni de groupe sanguin. `GET /groups/:id/roster/csv` : même contenu en
+CSV (UTF-8 avec BOM, `Content-Disposition: attachment`). Chaque consultation
+est journalisée (qui, quel groupe), jamais son contenu.
+
 ## Ce qui n'est PAS encore branché (ne pas construire l'UI en le supposant fonctionnel)
 
 - **Upload de documents légaux d'agence** : champ `legalDocuments` existe
