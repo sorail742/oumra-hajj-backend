@@ -19,3 +19,4 @@ export * from './community.types';
 export * from './checklist.types';
 export * from './budget.types';
 export * from './quiz.types';
+export * from './emergency.types';
