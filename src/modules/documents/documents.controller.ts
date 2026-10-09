@@ -25,6 +25,7 @@ import { DocumentsService } from './documents.service';
 import { RejectDocumentDto } from './dto/reject-document.dto';
 import { UploadDocumentDto } from './dto/upload-document.dto';
 import { AccessUrl } from '../storage/storage-provider.interface';
+import { Audited } from '../audit/audited.decorator';
 
 const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024; // 10 Mo — passeport/visa/billet scannés.
 
@@ -96,6 +97,7 @@ export class DocumentsController {
   }
 
   @Roles(Role.AGENCY)
+  @Audited({ action: 'document.validate', entityType: 'pilgrim_document' })
   @Patch(':id/validate')
   validate(
     @CurrentUser() user: JwtPayload,
@@ -105,6 +107,7 @@ export class DocumentsController {
   }
 
   @Roles(Role.AGENCY)
+  @Audited({ action: 'document.reject', entityType: 'pilgrim_document' })
   @Patch(':id/reject')
   reject(
     @CurrentUser() user: JwtPayload,

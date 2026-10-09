@@ -20,6 +20,7 @@ import {
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UpdateSpecialNeedsDto } from './dto/update-special-needs.dto';
 import { UsersService } from './users.service';
+import { Audited } from '../audit/audited.decorator';
 
 @ApiBearerAuth()
 @ApiTags('users')
@@ -68,12 +69,14 @@ export class UsersController {
   }
 
   @Roles(Role.ADMIN)
+  @Audited({ action: 'user.suspend', entityType: 'user' })
   @Patch(':id/suspend')
   suspend(@Param('id') id: string): Promise<UserSummaryShape> {
     return this.usersService.setActiveForAdmin(id, false);
   }
 
   @Roles(Role.ADMIN)
+  @Audited({ action: 'user.reactivate', entityType: 'user' })
   @Patch(':id/reactivate')
   reactivate(@Param('id') id: string): Promise<UserSummaryShape> {
     return this.usersService.setActiveForAdmin(id, true);

@@ -14,6 +14,7 @@ import { AgenciesService } from '../agencies/agencies.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PackagesService } from '../packages/packages.service';
+import { RefundPolicyService } from './refund-policy.service';
 import { PaymentsService } from './payments.service';
 import { PAYMENT_PROVIDER } from './providers/payment-provider.interface';
 
@@ -34,6 +35,7 @@ describe('PaymentsService', () => {
   let agenciesService: { findByOwnerOrFail: jest.Mock };
   let notificationsService: { send: jest.Mock };
   let paymentProvider: { initiate: jest.Mock; refund: jest.Mock };
+  let refundPolicyService: { contextFor: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
@@ -51,6 +53,8 @@ describe('PaymentsService', () => {
     agenciesService = { findByOwnerOrFail: jest.fn() };
     notificationsService = { send: jest.fn().mockResolvedValue([]) };
     paymentProvider = { initiate: jest.fn(), refund: jest.fn() };
+    // Le barème lui-même est testé dans refund-policy.spec.ts.
+    refundPolicyService = { contextFor: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -61,6 +65,7 @@ describe('PaymentsService', () => {
         { provide: AgenciesService, useValue: agenciesService },
         { provide: NotificationsService, useValue: notificationsService },
         { provide: PAYMENT_PROVIDER, useValue: paymentProvider },
+        { provide: RefundPolicyService, useValue: refundPolicyService },
       ],
     }).compile();
 
@@ -302,6 +307,12 @@ describe('PaymentsService', () => {
         pilgrimId,
         status: BookingStatus.COMPLETED,
       });
+      refundPolicyService.contextFor.mockResolvedValue({
+        rate: 0,
+        rule: 'not_refundable',
+        daysBeforeDeparture: 40,
+        tiers: [],
+      });
 
       await expect(
         service.requestRefund(pilgrimId, Role.PILGRIM, paymentId),
@@ -315,6 +326,12 @@ describe('PaymentsService', () => {
         id: bookingId,
         pilgrimId,
         status: BookingStatus.PENDING_PAYMENT,
+      });
+      refundPolicyService.contextFor.mockResolvedValue({
+        rate: 1,
+        rule: 'unpaid_booking',
+        daysBeforeDeparture: 40,
+        tiers: [],
       });
       paymentProvider.refund.mockResolvedValue({
         providerRefundReference: 'dev-refund-1',
@@ -345,6 +362,12 @@ describe('PaymentsService', () => {
         id: bookingId,
         pilgrimId,
         status: BookingStatus.CONFIRMED,
+      });
+      refundPolicyService.contextFor.mockResolvedValue({
+        rate: 0.5,
+        rule: 'platform_default',
+        daysBeforeDeparture: 40,
+        tiers: [],
       });
       paymentProvider.refund.mockResolvedValue({
         providerRefundReference: 'dev-refund-1',

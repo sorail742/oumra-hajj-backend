@@ -2467,6 +2467,41 @@
         ]
       }
     },
+    "/api/v1/payments/{id}/refund-preview": {
+      "get": {
+        "operationId": "PaymentsController_refundPreview",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundPreviewShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/payments/{id}/refund": {
       "post": {
         "operationId": "PaymentsController_requestRefund",
@@ -2577,6 +2612,96 @@
           {
             "bearer": []
           }
+        ]
+      }
+    },
+    "/api/v1/refund-policies/mine": {
+      "get": {
+        "operationId": "RefundPolicyController_getMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundPolicyShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "RefundPolicyController_replaceMine",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceRefundPolicyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundPolicyShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/refund-policies/agency/{agencyId}": {
+      "get": {
+        "operationId": "RefundPolicyController_getForAgency",
+        "parameters": [
+          {
+            "name": "agencyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundPolicyShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "payments"
         ]
       }
     },
@@ -4963,6 +5088,412 @@
         ]
       }
     },
+    "/api/v1/admin/audit": {
+      "get": {
+        "operationId": "AuditController_list",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Début inclus (défaut : il y a 30 jours)",
+            "schema": {
+              "pattern": "DATE_JOUR",
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Fin incluse (défaut : aujourd'hui)",
+            "schema": {
+              "pattern": "DATE_JOUR",
+              "example": "2026-10-31",
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 60,
+              "example": "agency.approve",
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 40,
+              "example": "agency",
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 60,
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditLogShape"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/audit/csv": {
+      "get": {
+        "operationId": "AuditController_exportCsv",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Début inclus (défaut : il y a 30 jours)",
+            "schema": {
+              "pattern": "DATE_JOUR",
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Fin incluse (défaut : aujourd'hui)",
+            "schema": {
+              "pattern": "DATE_JOUR",
+              "example": "2026-10-31",
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 60,
+              "example": "agency.approve",
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 40,
+              "example": "agency",
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 60,
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/{id}/invoice": {
+      "get": {
+        "operationId": "BillingController_getInvoice",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "bookings"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/{id}/contract": {
+      "get": {
+        "operationId": "BillingController_getContract",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "bookings"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/guide-planning": {
+      "get": {
+        "operationId": "GuidePlanningController_getAgencySchedule",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Début (défaut : aujourd'hui)",
+            "schema": {
+              "pattern": "DATE_JOUR",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Fin incluse (défaut : dans un an)",
+            "schema": {
+              "pattern": "DATE_JOUR",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GuideScheduleShape"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "guide-planning"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/guide-planning/mine": {
+      "get": {
+        "operationId": "GuidePlanningController_getMine",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Début (défaut : aujourd'hui)",
+            "schema": {
+              "pattern": "DATE_JOUR",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Fin incluse (défaut : dans un an)",
+            "schema": {
+              "pattern": "DATE_JOUR",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuideScheduleShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "guide-planning"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/guide-planning/unavailabilities": {
+      "post": {
+        "operationId": "GuidePlanningController_addUnavailability",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUnavailabilityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuideScheduleShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "guide-planning"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/guide-planning/unavailabilities/{id}": {
+      "delete": {
+        "operationId": "GuidePlanningController_deleteUnavailability",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "guide-planning"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/on-call/booking/{bookingId}": {
       "get": {
         "operationId": "OnCallController_findForBooking",
@@ -5764,6 +6295,12 @@
           "address": {
             "type": "string"
           },
+          "taxId": {
+            "type": "string"
+          },
+          "tradeRegister": {
+            "type": "string"
+          },
           "legalDocuments": {
             "type": "array",
             "items": {
@@ -5834,6 +6371,16 @@
           "address": {
             "type": "string",
             "maxLength": 300
+          },
+          "taxId": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "NIF — numéro d'identification fiscale"
+          },
+          "tradeRegister": {
+            "type": "string",
+            "maxLength": 60,
+            "description": "RCCM — registre du commerce"
           },
           "bankDetails": {
             "$ref": "#/components/schemas/BankDetailsDto"
@@ -6892,6 +7439,59 @@
           "status"
         ]
       },
+      "RefundPolicyTierShape": {
+        "type": "object",
+        "properties": {
+          "minDaysBeforeDeparture": {
+            "type": "number"
+          },
+          "rate": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "minDaysBeforeDeparture",
+          "rate"
+        ]
+      },
+      "RefundPreviewShape": {
+        "type": "object",
+        "properties": {
+          "paymentId": {
+            "type": "string"
+          },
+          "eligibleRate": {
+            "type": "number"
+          },
+          "refundableAmount": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "rule": {
+            "type": "object"
+          },
+          "daysBeforeDeparture": {
+            "type": "number"
+          },
+          "tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefundPolicyTierShape"
+            }
+          }
+        },
+        "required": [
+          "paymentId",
+          "eligibleRate",
+          "refundableAmount",
+          "currency",
+          "rule",
+          "daysBeforeDeparture",
+          "tiers"
+        ]
+      },
       "SetupSavingsPlanDto": {
         "type": "object",
         "properties": {
@@ -6948,6 +7548,59 @@
           "bookingId",
           "targetAmount",
           "autoDeduct"
+        ]
+      },
+      "RefundPolicyShape": {
+        "type": "object",
+        "properties": {
+          "agencyId": {
+            "type": "string"
+          },
+          "tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefundPolicyTierShape"
+            }
+          }
+        },
+        "required": [
+          "agencyId",
+          "tiers"
+        ]
+      },
+      "RefundPolicyTierDto": {
+        "type": "object",
+        "properties": {
+          "minDaysBeforeDeparture": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 730,
+            "example": 30
+          },
+          "rate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.5
+          }
+        },
+        "required": [
+          "minDaysBeforeDeparture",
+          "rate"
+        ]
+      },
+      "ReplaceRefundPolicyDto": {
+        "type": "object",
+        "properties": {
+          "tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefundPolicyTierDto"
+            }
+          }
+        },
+        "required": [
+          "tiers"
         ]
       },
       "UploadDocumentDto": {
@@ -8988,6 +9641,415 @@
         },
         "required": [
           "decision"
+        ]
+      },
+      "AuditLogShape": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "actorName": {
+            "type": "string"
+          },
+          "actorRole": {
+            "type": "string",
+            "enum": [
+              "pilgrim",
+              "agency",
+              "guide",
+              "admin"
+            ]
+          },
+          "action": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "entityType",
+          "createdAt"
+        ]
+      },
+      "BillingPartyShape": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "taxId": {
+            "type": "string"
+          },
+          "tradeRegister": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "InvoicePaymentShape": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "mobile_money_orange",
+              "mobile_money_mtn",
+              "card"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "succeeded",
+              "failed",
+              "refunded"
+            ]
+          },
+          "receiptRef": {
+            "type": "string"
+          },
+          "refundedAmount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "amount",
+          "method",
+          "status"
+        ]
+      },
+      "InvoiceShape": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "issuedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "bookingId": {
+            "type": "string"
+          },
+          "seller": {
+            "$ref": "#/components/schemas/BillingPartyShape"
+          },
+          "buyer": {
+            "$ref": "#/components/schemas/BillingPartyShape"
+          },
+          "packageTitle": {
+            "type": "string"
+          },
+          "packageType": {
+            "type": "string"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "totalAmount": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoicePaymentShape"
+            }
+          },
+          "paid": {
+            "type": "number"
+          },
+          "refunded": {
+            "type": "number"
+          },
+          "balanceDue": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "number",
+          "issuedAt",
+          "bookingId",
+          "seller",
+          "buyer",
+          "packageTitle",
+          "packageType",
+          "startDate",
+          "endDate",
+          "totalAmount",
+          "currency",
+          "payments",
+          "paid",
+          "refunded",
+          "balanceDue"
+        ]
+      },
+      "ContractStageShape": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "hotelName": {
+            "type": "string"
+          },
+          "distanceToMosqueMeters": {
+            "type": "number"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "hotelName",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "ContractShape": {
+        "type": "object",
+        "properties": {
+          "bookingId": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "bookedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "agency": {
+            "$ref": "#/components/schemas/BillingPartyShape"
+          },
+          "pilgrim": {
+            "$ref": "#/components/schemas/BillingPartyShape"
+          },
+          "packageTitle": {
+            "type": "string"
+          },
+          "packageType": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractStageShape"
+            }
+          },
+          "inclusions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "price": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "balanceDueDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "refundTiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefundPolicyTierShape"
+            }
+          }
+        },
+        "required": [
+          "bookingId",
+          "generatedAt",
+          "bookedAt",
+          "agency",
+          "pilgrim",
+          "packageTitle",
+          "packageType",
+          "startDate",
+          "endDate",
+          "stages",
+          "inclusions",
+          "price",
+          "currency",
+          "balanceDueDate",
+          "refundTiers"
+        ]
+      },
+      "PlanningEntryShape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "packageTitle": {
+            "type": "string"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "label",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "PlanningConflictShape": {
+        "type": "object",
+        "properties": {
+          "firstId": {
+            "type": "string"
+          },
+          "secondId": {
+            "type": "string"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "firstId",
+          "secondId",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "GuideScheduleShape": {
+        "type": "object",
+        "properties": {
+          "guideId": {
+            "type": "string"
+          },
+          "guideName": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanningEntryShape"
+            }
+          },
+          "conflicts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanningConflictShape"
+            }
+          }
+        },
+        "required": [
+          "guideId",
+          "guideName",
+          "entries",
+          "conflicts"
+        ]
+      },
+      "CreateUnavailabilityDto": {
+        "type": "object",
+        "properties": {
+          "guideId": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-11-01"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-11-10",
+            "description": "Incluse"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 80
+          }
+        },
+        "required": [
+          "guideId",
+          "startDate",
+          "endDate"
         ]
       },
       "OnCallContactShape": {

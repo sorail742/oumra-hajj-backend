@@ -20,6 +20,7 @@ import { DisputeDecisionDto } from './dto/dispute-decision.dto';
 import { DisputeMessageDto } from './dto/dispute-message.dto';
 import { ListDisputesQueryDto } from './dto/list-disputes-query.dto';
 import { DisputesService } from './disputes.service';
+import { Audited } from '../audit/audited.decorator';
 
 // Idée #62 (backlog "Cent Fonctionnalités") — médiation des litiges.
 @ApiTags('disputes')
@@ -81,6 +82,7 @@ export class DisputesController {
   }
 
   @Roles(Role.PILGRIM)
+  @Audited({ action: 'dispute.escalate', entityType: 'dispute' })
   @Post(':id/escalate')
   @HttpCode(HttpStatus.OK)
   escalate(
@@ -91,6 +93,7 @@ export class DisputesController {
   }
 
   @Roles(Role.ADMIN)
+  @Audited({ action: 'dispute.decide', entityType: 'dispute' })
   @Post(':id/decision')
   @HttpCode(HttpStatus.OK)
   decide(

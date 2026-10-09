@@ -19,6 +19,7 @@ import { SyncRiteProgressDto } from './dto/sync-rite-progress.dto';
 import { UpdateRiteSheetDto } from './dto/update-rite-sheet.dto';
 import { RiteProgressService } from './rite-progress.service';
 import { RiteSheetsService } from './rite-sheets.service';
+import { Audited } from '../audit/audited.decorator';
 
 @ApiTags('rites')
 @Controller('rites')
@@ -64,6 +65,7 @@ export class RitesController {
   // Relecture par une personne qualifiée avant publication (voir CLAUDE.md).
   @ApiBearerAuth()
   @Roles(Role.ADMIN)
+  @Audited({ action: 'rite_sheet.validate', entityType: 'rite_sheet' })
   @Patch('sheets/:id/validate')
   validateSheet(
     @CurrentUser() reviewer: JwtPayload,

@@ -4,6 +4,8 @@ import { BookingsModule } from '../bookings/bookings.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PackagesModule } from '../packages/packages.module';
 import { PaymentsController } from './payments.controller';
+import { RefundPolicyController } from './refund-policy.controller';
+import { RefundPolicyService } from './refund-policy.service';
 import { AccountingExportService } from './accounting-export.service';
 import { PaymentsService } from './payments.service';
 import { PaymentRemindersService } from './payment-reminders.service';
@@ -18,10 +20,11 @@ import { PAYMENT_PROVIDER } from './providers/payment-provider.interface';
     PackagesModule,
     NotificationsModule,
   ],
-  controllers: [PaymentsController],
+  controllers: [PaymentsController, RefundPolicyController],
   providers: [
     PaymentsService,
     AccountingExportService,
+    RefundPolicyService,
     SavingsSchedulerService,
     PaymentRemindersService,
     { provide: PAYMENT_PROVIDER, useClass: MockPaymentProvider },

@@ -38,6 +38,19 @@ export class UpdateAgencyDto {
   @MaxLength(300)
   address?: string;
 
+  // Idée #37 : mentions légales des factures et contrats.
+  @ApiPropertyOptional({ description: "NIF — numéro d'identification fiscale" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  taxId?: string;
+
+  @ApiPropertyOptional({ description: 'RCCM — registre du commerce' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  tradeRegister?: string;
+
   @ApiPropertyOptional({ type: BankDetailsDto })
   @IsOptional()
   @ValidateNested()
