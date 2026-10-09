@@ -32,6 +32,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
 import { DisputesModule } from './modules/disputes/disputes.module';
+import { OnCallModule } from './modules/on-call/on-call.module';
+import { CapacityModule } from './modules/capacity/capacity.module';
+import { ProfitabilityModule } from './modules/profitability/profitability.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { EmergencyModule } from './modules/emergency/emergency.module';
 import { DirectoryModule } from './modules/directory/directory.module';
@@ -75,6 +78,9 @@ import { DirectoryModule } from './modules/directory/directory.module';
     QuizModule,
     RoomsModule,
     DisputesModule,
+    OnCallModule,
+    CapacityModule,
+    ProfitabilityModule,
   ],
   providers: [
     {

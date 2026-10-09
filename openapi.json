@@ -4962,6 +4962,322 @@
           }
         ]
       }
+    },
+    "/api/v1/on-call/booking/{bookingId}": {
+      "get": {
+        "operationId": "OnCallController_findForBooking",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyOnCallShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "on-call"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/on-call/shifts": {
+      "get": {
+        "operationId": "OnCallController_listShifts",
+        "parameters": [
+          {
+            "name": "packageId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OnCallShiftShape"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "on-call"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "OnCallController_createShift",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOnCallShiftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnCallShiftShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "on-call"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/on-call/shifts/{id}": {
+      "patch": {
+        "operationId": "OnCallController_updateShift",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOnCallShiftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnCallShiftShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "on-call"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "OnCallController_deleteShift",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "on-call"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/on-call/coverage/{packageId}": {
+      "get": {
+        "operationId": "OnCallController_coverage",
+        "parameters": [
+          {
+            "name": "packageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnCallCoverageShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "on-call"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/capacity/simulation": {
+      "get": {
+        "operationId": "CapacityController_simulate",
+        "parameters": [
+          {
+            "name": "pilgrimsPerGuide",
+            "required": false,
+            "in": "query",
+            "description": "Pèlerins encadrés par guide — repère propre à l’agence",
+            "schema": {
+              "minimum": 5,
+              "maximum": 200,
+              "default": 40,
+              "type": "number"
+            }
+          },
+          {
+            "name": "extraGuides",
+            "required": false,
+            "in": "query",
+            "description": "Guides hypothétiques ajoutés (recrutement saisonnier)",
+            "schema": {
+              "minimum": 0,
+              "maximum": 200,
+              "default": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapacitySimulationShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "capacity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/profitability/simulation": {
+      "post": {
+        "operationId": "ProfitabilityController_simulate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfitabilitySimulationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfitabilitySimulationShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "profitability"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -8672,6 +8988,538 @@
         },
         "required": [
           "decision"
+        ]
+      },
+      "OnCallContactShape": {
+        "type": "object",
+        "properties": {
+          "staffName": {
+            "type": "string"
+          },
+          "staffRole": {
+            "type": "object"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "staffName",
+          "staffRole",
+          "phone",
+          "startsAt",
+          "endsAt"
+        ]
+      },
+      "MyOnCallShape": {
+        "type": "object",
+        "properties": {
+          "bookingId": {
+            "type": "string"
+          },
+          "agencyName": {
+            "type": "string"
+          },
+          "agencyPhone": {
+            "type": "string"
+          },
+          "current": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnCallContactShape"
+            }
+          },
+          "next": {
+            "$ref": "#/components/schemas/OnCallContactShape"
+          }
+        },
+        "required": [
+          "bookingId",
+          "agencyName",
+          "agencyPhone",
+          "current"
+        ]
+      },
+      "OnCallShiftShape": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "packageId": {
+            "type": "string"
+          },
+          "packageTitle": {
+            "type": "string"
+          },
+          "staffName": {
+            "type": "string"
+          },
+          "staffRole": {
+            "type": "object"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "staffName",
+          "staffRole",
+          "phone",
+          "startsAt",
+          "endsAt"
+        ]
+      },
+      "CreateOnCallShiftDto": {
+        "type": "object",
+        "properties": {
+          "packageId": {
+            "type": "string"
+          },
+          "staffName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "staffRole": {
+            "type": "string",
+            "enum": [
+              "guide",
+              "coordinator",
+              "manager",
+              "other"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "example": "+224620000000"
+          },
+          "startsAt": {
+            "type": "string"
+          },
+          "endsAt": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "Consigne interne, non montrée au pèlerin"
+          }
+        },
+        "required": [
+          "staffName",
+          "staffRole",
+          "phone",
+          "startsAt",
+          "endsAt"
+        ]
+      },
+      "UpdateOnCallShiftDto": {
+        "type": "object",
+        "properties": {
+          "staffName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "staffRole": {
+            "type": "string",
+            "enum": [
+              "guide",
+              "coordinator",
+              "manager",
+              "other"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "example": "+224620000000"
+          },
+          "startsAt": {
+            "type": "string"
+          },
+          "endsAt": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      },
+      "OnCallPeriodShape": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ]
+      },
+      "OnCallCoverageShape": {
+        "type": "object",
+        "properties": {
+          "packageId": {
+            "type": "string"
+          },
+          "packageTitle": {
+            "type": "string"
+          },
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "coveredHours": {
+            "type": "number"
+          },
+          "totalHours": {
+            "type": "number"
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnCallPeriodShape"
+            }
+          }
+        },
+        "required": [
+          "packageId",
+          "packageTitle",
+          "from",
+          "to",
+          "coveredHours",
+          "totalHours",
+          "gaps"
+        ]
+      },
+      "CapacityTripShape": {
+        "type": "object",
+        "properties": {
+          "packageId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "capacity": {
+            "type": "number"
+          },
+          "seatsTaken": {
+            "type": "number"
+          },
+          "guidesNeeded": {
+            "type": "number"
+          },
+          "guidesAssigned": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "packageId",
+          "title",
+          "startDate",
+          "endDate",
+          "capacity",
+          "seatsTaken",
+          "guidesNeeded",
+          "guidesAssigned"
+        ]
+      },
+      "CapacityPeriodShape": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "packageIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "plannedPilgrims": {
+            "type": "number"
+          },
+          "soldPilgrims": {
+            "type": "number"
+          },
+          "guidesNeeded": {
+            "type": "number"
+          },
+          "guidesNeededForSold": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "packageIds",
+          "plannedPilgrims",
+          "soldPilgrims",
+          "guidesNeeded",
+          "guidesNeededForSold"
+        ]
+      },
+      "CapacitySimulationShape": {
+        "type": "object",
+        "properties": {
+          "pilgrimsPerGuide": {
+            "type": "number"
+          },
+          "guides": {
+            "type": "number"
+          },
+          "extraGuides": {
+            "type": "number"
+          },
+          "staff": {
+            "type": "number"
+          },
+          "trips": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapacityTripShape"
+            }
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapacityPeriodShape"
+            }
+          },
+          "peak": {
+            "$ref": "#/components/schemas/CapacityPeriodShape"
+          },
+          "spareGuidesAtPeak": {
+            "type": "number"
+          },
+          "extraPilgrimsAtPeak": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "pilgrimsPerGuide",
+          "guides",
+          "extraGuides",
+          "staff",
+          "trips",
+          "periods",
+          "spareGuidesAtPeak",
+          "extraPilgrimsAtPeak"
+        ]
+      },
+      "CostLineDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "example": "Billet d’avion"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000000000
+          }
+        },
+        "required": [
+          "label",
+          "amount"
+        ]
+      },
+      "ProfitabilitySimulationDto": {
+        "type": "object",
+        "properties": {
+          "packageId": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "maximum": 1000000000000,
+            "minimum": 1,
+            "description": "Requis sans packageId"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "/^[A-Z]{3}$/",
+            "description": "Ignorée avec packageId",
+            "example": "GNF"
+          },
+          "capacity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 10000,
+            "description": "Requis sans packageId"
+          },
+          "expectedPilgrims": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10000,
+            "description": "Défaut : la capacité"
+          },
+          "costsPerPilgrim": {
+            "description": "Coûts par pèlerin",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostLineDto"
+            }
+          },
+          "fixedCosts": {
+            "description": "Coûts fixes du voyage",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostLineDto"
+            }
+          }
+        },
+        "required": [
+          "costsPerPilgrim",
+          "fixedCosts"
+        ]
+      },
+      "ProfitabilityScenarioShape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "object"
+          },
+          "pilgrims": {
+            "type": "number"
+          },
+          "revenue": {
+            "type": "number"
+          },
+          "platformCommission": {
+            "type": "number"
+          },
+          "variableCosts": {
+            "type": "number"
+          },
+          "fixedCosts": {
+            "type": "number"
+          },
+          "margin": {
+            "type": "number"
+          },
+          "marginRate": {
+            "type": "number"
+          },
+          "marginPerPilgrim": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "pilgrims",
+          "revenue",
+          "platformCommission",
+          "variableCosts",
+          "fixedCosts",
+          "margin"
+        ]
+      },
+      "ProfitabilitySimulationShape": {
+        "type": "object",
+        "properties": {
+          "packageId": {
+            "type": "string"
+          },
+          "packageTitle": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "capacity": {
+            "type": "number"
+          },
+          "commissionRate": {
+            "type": "number"
+          },
+          "costPerPilgrim": {
+            "type": "number"
+          },
+          "fixedCostsTotal": {
+            "type": "number"
+          },
+          "unitContribution": {
+            "type": "number"
+          },
+          "breakEvenPilgrims": {
+            "type": "number"
+          },
+          "breakEvenReachable": {
+            "type": "boolean"
+          },
+          "minimumPrice": {
+            "type": "number"
+          },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfitabilityScenarioShape"
+            }
+          }
+        },
+        "required": [
+          "currency",
+          "price",
+          "capacity",
+          "commissionRate",
+          "costPerPilgrim",
+          "fixedCostsTotal",
+          "unitContribution",
+          "breakEvenReachable",
+          "scenarios"
         ]
       }
     }

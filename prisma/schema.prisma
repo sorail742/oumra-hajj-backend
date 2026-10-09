@@ -250,6 +250,7 @@ model Agency {
   reviews        Review[]
   roomBlocks     RoomBlock[]
   disputes       Dispute[]
+  onCallShifts   OnCallShift[]
 
   @@index([validationStatus])
   @@map("agencies")
@@ -297,6 +298,7 @@ model Package {
   groups            Group[]
   budgetSimulations BudgetSimulation[]
   roomBlocks        RoomBlock[]
+  onCallShifts      OnCallShift[]
 
   @@index([type])
   @@index([status])
@@ -909,4 +911,28 @@ model DisputeMessage {
 
   @@index([disputeId])
   @@map("dispute_messages")
+}
+
+// Idée #63 (backlog "Cent Fonctionnalités") — astreinte 24/7 : créneaux de
+// permanence de l'équipe de l'agence, visibles du pèlerin pendant son
+// voyage. `packageId` absent : créneau valable pour tous les voyages de
+// l'agence. Numéro professionnel saisi par l'agence, pas celui d'un compte.
+model OnCallShift {
+  id        String   @id @default(uuid())
+  agencyId  String
+  agency    Agency   @relation(fields: [agencyId], references: [id])
+  packageId String?
+  package   Package? @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  staffName String
+  staffRole String // "guide", "coordinator", "manager", "other"
+  phone     String
+  startsAt  DateTime
+  endsAt    DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([agencyId, startsAt])
+  @@index([packageId])
+  @@map("on_call_shifts")
 }
