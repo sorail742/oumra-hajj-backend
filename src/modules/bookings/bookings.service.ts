@@ -92,6 +92,13 @@ export class BookingsService {
     dto: CreateBookingDto,
   ): Promise<BookingShape> {
     const pkg = await this.packagesService.findByIdOrFail(dto.packageId);
+    // Idée #58 : le barème de remboursement de l'agence est figé sur la
+    // réservation — un changement ultérieur ne s'applique qu'aux suivantes.
+    const paliers = await this.prisma.refundPolicyTier.findMany({
+      where: { agencyId: pkg.agencyId },
+      orderBy: { minDaysBeforeDeparture: 'desc' },
+      select: { minDaysBeforeDeparture: true, rate: true },
+    });
     await this.packagesService.reserveSeat(dto.packageId);
 
     const booking = await this.prisma.booking.create({
@@ -99,6 +106,7 @@ export class BookingsService {
         pilgrimId,
         packageId: pkg.id,
         agencyId: pkg.agencyId,
+        ...(paliers.length > 0 && { refundPolicySnapshot: paliers }),
         steps: {
           create: DEFAULT_STEPS.map((key) => ({
             key: key as unknown as PrismaDossierStepKey,

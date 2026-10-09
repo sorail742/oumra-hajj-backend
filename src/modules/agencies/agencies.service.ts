@@ -68,6 +68,8 @@ function toAgencyShape(agency: AgencyRecord): AgencyShape {
     contactEmail: agency.contactEmail,
     contactPhone: agency.contactPhone,
     address: agency.address ?? undefined,
+    taxId: agency.taxId ?? undefined,
+    tradeRegister: agency.tradeRegister ?? undefined,
     legalDocuments: agency.legalDocuments.map((doc) => ({
       id: doc.id,
       label: doc.label,
@@ -171,6 +173,8 @@ export class AgenciesService {
       where: { id: owned.id },
       data: {
         address: dto.address,
+        taxId: dto.taxId,
+        tradeRegister: dto.tradeRegister,
         ...(dto.bankDetails && {
           bankAccountName: dto.bankDetails.accountName,
           bankAccountNumber: dto.bankDetails.accountNumber,

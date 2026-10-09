@@ -4,6 +4,7 @@ import { BookingsService } from '../bookings/bookings.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PackagesService } from '../packages/packages.service';
 import { PaymentsService } from './payments.service';
+import { RefundPolicyService } from './refund-policy.service';
 import { PaymentProvider } from './providers/payment-provider.interface';
 
 // Montants explicitement factices (ticket #38).
@@ -23,6 +24,7 @@ describe('PaymentsService.getTreasuryProjection', () => {
       } as unknown as AgenciesService,
       {} as NotificationsService,
       {} as PaymentProvider,
+      {} as RefundPolicyService,
     );
   });
   afterEach(() => jest.useRealTimers());

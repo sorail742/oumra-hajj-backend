@@ -9,6 +9,7 @@ import { BookingsService } from './bookings.service';
 import { AssignGroupDto } from './dto/assign-group.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
+import { Audited } from '../audit/audited.decorator';
 
 @ApiBearerAuth()
 @ApiTags('bookings')
@@ -66,6 +67,7 @@ export class BookingsController {
   }
 
   @Roles(Role.PILGRIM)
+  @Audited({ action: 'booking.cancel', entityType: 'booking' })
   @Patch(':id/cancel')
   cancel(
     @CurrentUser() user: JwtPayload,

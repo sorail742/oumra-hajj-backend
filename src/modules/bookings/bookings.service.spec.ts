@@ -25,6 +25,7 @@ describe('BookingsService', () => {
       count: jest.Mock;
     };
     bookingStep: { update: jest.Mock };
+    refundPolicyTier: { findMany: jest.Mock };
   };
   let packagesService: {
     findByIdOrFail: jest.Mock;
@@ -84,6 +85,7 @@ describe('BookingsService', () => {
         count: jest.fn().mockResolvedValue(0),
       },
       bookingStep: { update: jest.fn() },
+      refundPolicyTier: { findMany: jest.fn().mockResolvedValue([]) },
     };
     packagesService = {
       findByIdOrFail: jest.fn(),
@@ -136,6 +138,27 @@ describe('BookingsService', () => {
       expect(prisma.booking.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ agencyId, packageId }),
+        }),
+      );
+    });
+
+    it("fige le barème de remboursement de l'agence sur la réservation (idée #58)", async () => {
+      const bareme = [{ minDaysBeforeDeparture: 30, rate: 0.5 }];
+      packagesService.findByIdOrFail.mockResolvedValue({
+        id: packageId,
+        agencyId,
+      });
+      prisma.refundPolicyTier.findMany.mockResolvedValue(bareme);
+      prisma.booking.create.mockResolvedValue(buildBooking({}));
+
+      await service.create(pilgrimId, { packageId });
+
+      expect(prisma.refundPolicyTier.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { agencyId } }),
+      );
+      expect(prisma.booking.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ refundPolicySnapshot: bareme }),
         }),
       );
     });

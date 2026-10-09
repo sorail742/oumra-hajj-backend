@@ -21,6 +21,7 @@ import { PaymentStatus } from '../../common/enums/payment-status.enum';
 import { Role } from '../../common/enums/role.enum';
 import {
   PaymentShape,
+  RefundPreviewShape,
   SavingsPlanShape,
   TreasuryProjectionShape,
 } from '../../types/payment.types';
@@ -32,23 +33,13 @@ import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
 import { balanceDueDate } from './payment-schedule';
 import { SetupSavingsPlanDto } from './dto/setup-savings-plan.dto';
+import { RefundPolicyService } from './refund-policy.service';
 import {
   PaymentProvider,
   PAYMENT_PROVIDER,
 } from './providers/payment-provider.interface';
 
 const DEFAULT_CURRENCY = 'GNF';
-
-// Idée #58 (backlog "Cent Fonctionnalités") : "Barème clair au lieu de
-// décisions au cas par cas génératrices de litiges" — le taux éligible
-// dépend uniquement du statut de la réservation au moment de la demande,
-// jamais d'une appréciation de l'agence.
-const REFUND_POLICY: Record<BookingStatus, number> = {
-  [BookingStatus.PENDING_PAYMENT]: 1, // rien n'est encore engagé côté agence
-  [BookingStatus.CONFIRMED]: 0.5, // visa/hôtel déjà engagés par l'agence
-  [BookingStatus.CANCELLED]: 0,
-  [BookingStatus.COMPLETED]: 0, // voyage déjà effectué
-};
 
 function toSavingsPlanShape(plan: PrismaSavingsPlan): SavingsPlanShape {
   return {
@@ -88,7 +79,35 @@ export class PaymentsService {
     private readonly agenciesService: AgenciesService,
     private readonly notificationsService: NotificationsService,
     @Inject(PAYMENT_PROVIDER) private readonly paymentProvider: PaymentProvider,
+    private readonly refundPolicyService: RefundPolicyService,
   ) {}
+
+  /** Aperçu du remboursement avant de le demander — même règle que requestRefund. */
+  async previewRefund(
+    requesterId: string,
+    requesterRole: Role,
+    paymentId: string,
+  ): Promise<RefundPreviewShape> {
+    const payment = await this.findAuthorizedOrFail(
+      requesterId,
+      requesterRole,
+      paymentId,
+    );
+    const contexte = await this.refundPolicyService.contextFor(
+      payment.bookingId,
+    );
+    const remboursable = payment.status === PaymentStatus.SUCCEEDED;
+    const eligibleRate = remboursable ? contexte.rate : 0;
+    return {
+      paymentId: payment.id,
+      eligibleRate,
+      refundableAmount: Math.round(payment.amount * eligibleRate * 100) / 100,
+      currency: payment.currency,
+      rule: remboursable ? contexte.rule : 'not_refundable',
+      daysBeforeDeparture: contexte.daysBeforeDeparture,
+      tiers: contexte.tiers,
+    };
+  }
 
   async initiate(
     pilgrimId: string,
@@ -212,7 +231,8 @@ export class PaymentsService {
   }
 
   // Idée #58 (backlog "Cent Fonctionnalités") : remboursement selon le
-  // barème REFUND_POLICY, jamais une négociation au cas par cas.
+  // barème de remboursement figé sur la réservation (RefundPolicyService),
+  // jamais une négociation au cas par cas.
   async requestRefund(
     requesterId: string,
     requesterRole: Role,
@@ -232,7 +252,9 @@ export class PaymentsService {
     const booking = await this.bookingsService.findByIdOrFail(
       payment.bookingId,
     );
-    const eligibleRate = REFUND_POLICY[booking.status];
+    const { rate: eligibleRate } = await this.refundPolicyService.contextFor(
+      booking.id,
+    );
     if (eligibleRate === 0) {
       throw new ConflictException(
         "Ce paiement n'est plus remboursable au statut actuel de la réservation",
@@ -263,7 +285,7 @@ export class PaymentsService {
       title: 'Remboursement traité',
       content:
         eligibleRate < 1
-          ? `Remboursement partiel de ${refundedAmount} ${updated.currency} (${Math.round(eligibleRate * 100)}% du paiement, selon le statut de votre dossier).`
+          ? `Remboursement partiel de ${refundedAmount} ${updated.currency} (${Math.round(eligibleRate * 100)}% du paiement, selon le barème de remboursement de votre réservation).`
           : `Remboursement intégral de ${refundedAmount} ${updated.currency}.`,
       isCritical: false,
     });

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -169,12 +170,50 @@ export class GroupsService {
       );
     }
 
+    await this.assertGuideAvailable(guide.id, group);
+
     const updated = await this.prisma.group.update({
       where: { id: group.id },
       data: { guideId: guide.id },
       include: GROUP_INCLUDE,
     });
     return toGroupShape(updated);
+  }
+
+  // Idée #42 — un guide ne mène pas deux groupes à la fois, ni pendant
+  // une indisponibilité déclarée : l'affectation est refusée, avec ce qui
+  // la bloque.
+  private async assertGuideAvailable(
+    guideId: string,
+    group: GroupShape,
+  ): Promise<void> {
+    const forfait = await this.prisma.package.findUnique({
+      where: { id: group.packageId },
+      select: { startDate: true, endDate: true },
+    });
+    if (!forfait) return;
+    const periode = {
+      startDate: { lte: forfait.endDate },
+      endDate: { gte: forfait.startDate },
+    };
+    const autreGroupe = await this.prisma.group.findFirst({
+      where: { guideId, NOT: { id: group.id }, package: periode },
+      select: { title: true },
+    });
+    if (autreGroupe) {
+      throw new ConflictException(
+        `Ce guide mène déjà le groupe « ${autreGroupe.title} » sur ces dates`,
+      );
+    }
+    const absence = await this.prisma.guideUnavailability.findFirst({
+      where: { guideId, ...periode },
+      select: { startDate: true },
+    });
+    if (absence) {
+      throw new ConflictException(
+        'Ce guide est déclaré indisponible sur ces dates',
+      );
+    }
   }
 
   async addMember(
