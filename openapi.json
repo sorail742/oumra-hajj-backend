@@ -5809,6 +5809,510 @@
           }
         ]
       }
+    },
+    "/api/v1/loyalty/mine": {
+      "get": {
+        "operationId": "LoyaltyController_getMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyLoyaltyShape"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "loyalty"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/loyalty/program/mine": {
+      "get": {
+        "operationId": "LoyaltyController_getOwnProgram",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoyaltyProgramShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "loyalty"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "LoyaltyController_replaceOwnTiers",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceLoyaltyTiersDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoyaltyProgramShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "loyalty"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/loyalty/members": {
+      "get": {
+        "operationId": "LoyaltyController_listMembers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LoyaltyMemberShape"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "loyalty"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/loyalty/program/agency/{agencyId}": {
+      "get": {
+        "operationId": "LoyaltyController_getProgram",
+        "parameters": [
+          {
+            "name": "agencyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoyaltyProgramShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "loyalty"
+        ]
+      }
+    },
+    "/api/v1/quotes/shared/{token}": {
+      "get": {
+        "operationId": "QuotesController_getShared",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedQuoteShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/quotes/shared/{token}/accept": {
+      "post": {
+        "operationId": "QuotesController_accept",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedQuoteShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/quotes/shared/{token}/decline": {
+      "post": {
+        "operationId": "QuotesController_decline",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedQuoteShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/quotes": {
+      "get": {
+        "operationId": "QuotesController_list",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "draft",
+                "sent",
+                "accepted",
+                "declined"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuoteShape"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "quotes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "QuotesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "quotes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/quotes/{id}": {
+      "get": {
+        "operationId": "QuotesController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "quotes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "QuotesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQuoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "quotes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "QuotesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "quotes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/quotes/{id}/send": {
+      "post": {
+        "operationId": "QuotesController_send",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "quotes"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/seasons/comparison": {
+      "get": {
+        "operationId": "SeasonsController_compare",
+        "parameters": [
+          {
+            "name": "fromYear",
+            "required": false,
+            "in": "query",
+            "description": "Défaut : deux ans avant `toYear`",
+            "schema": {
+              "minimum": 2000,
+              "maximum": 2100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "toYear",
+            "required": false,
+            "in": "query",
+            "description": "Défaut : année en cours",
+            "schema": {
+              "minimum": 2000,
+              "maximum": 2100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeasonComparisonShape"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "seasons"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -10582,6 +11086,654 @@
           "unitContribution",
           "breakEvenReachable",
           "scenarios"
+        ]
+      },
+      "LoyaltyTierShape": {
+        "type": "object",
+        "properties": {
+          "minTrips": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          },
+          "benefit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "minTrips",
+          "label",
+          "benefit"
+        ]
+      },
+      "LoyaltyNextTierShape": {
+        "type": "object",
+        "properties": {
+          "minTrips": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          },
+          "benefit": {
+            "type": "string"
+          },
+          "tripsToGo": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "minTrips",
+          "label",
+          "benefit",
+          "tripsToGo"
+        ]
+      },
+      "MyLoyaltyShape": {
+        "type": "object",
+        "properties": {
+          "agencyId": {
+            "type": "string"
+          },
+          "agencyName": {
+            "type": "string"
+          },
+          "trips": {
+            "type": "number"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/LoyaltyTierShape"
+          },
+          "nextTier": {
+            "$ref": "#/components/schemas/LoyaltyNextTierShape"
+          }
+        },
+        "required": [
+          "agencyId",
+          "agencyName",
+          "trips"
+        ]
+      },
+      "LoyaltyProgramShape": {
+        "type": "object",
+        "properties": {
+          "agencyId": {
+            "type": "string"
+          },
+          "agencyName": {
+            "type": "string"
+          },
+          "tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LoyaltyTierShape"
+            }
+          }
+        },
+        "required": [
+          "agencyId",
+          "agencyName",
+          "tiers"
+        ]
+      },
+      "LoyaltyTierDto": {
+        "type": "object",
+        "properties": {
+          "minTrips": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50,
+            "example": 2
+          },
+          "label": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 40,
+            "example": "Fidèle"
+          },
+          "benefit": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 200,
+            "example": "Transfert aéroport offert"
+          }
+        },
+        "required": [
+          "minTrips",
+          "label",
+          "benefit"
+        ]
+      },
+      "ReplaceLoyaltyTiersDto": {
+        "type": "object",
+        "properties": {
+          "tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LoyaltyTierDto"
+            }
+          }
+        },
+        "required": [
+          "tiers"
+        ]
+      },
+      "LoyaltyMemberShape": {
+        "type": "object",
+        "properties": {
+          "pilgrimId": {
+            "type": "string"
+          },
+          "pilgrimName": {
+            "type": "string"
+          },
+          "trips": {
+            "type": "number"
+          },
+          "lastTripEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/LoyaltyTierShape"
+          }
+        },
+        "required": [
+          "pilgrimId",
+          "pilgrimName",
+          "trips",
+          "lastTripEnd"
+        ]
+      },
+      "QuoteIssuerShape": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "email"
+        ]
+      },
+      "QuoteLineShape": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "label",
+          "quantity",
+          "unitPrice",
+          "total"
+        ]
+      },
+      "SharedQuoteShape": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "issuer": {
+            "$ref": "#/components/schemas/QuoteIssuerShape"
+          },
+          "clientName": {
+            "type": "string"
+          },
+          "packageTitle": {
+            "type": "string"
+          },
+          "pilgrimsCount": {
+            "type": "number"
+          },
+          "conditions": {
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "sent",
+              "accepted",
+              "declined"
+            ],
+            "type": "string"
+          },
+          "expired": {
+            "type": "boolean"
+          },
+          "respondedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteLineShape"
+            }
+          },
+          "subtotal": {
+            "type": "number"
+          },
+          "discountRate": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "totalAmount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "number",
+          "issuer",
+          "clientName",
+          "pilgrimsCount",
+          "validUntil",
+          "status",
+          "expired",
+          "currency",
+          "lines",
+          "subtotal",
+          "discountRate",
+          "discountAmount",
+          "totalAmount"
+        ]
+      },
+      "QuoteShape": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "packageId": {
+            "type": "string"
+          },
+          "packageTitle": {
+            "type": "string"
+          },
+          "clientName": {
+            "type": "string"
+          },
+          "clientType": {
+            "type": "object"
+          },
+          "contactName": {
+            "type": "string"
+          },
+          "contactPhone": {
+            "type": "string"
+          },
+          "contactEmail": {
+            "type": "string"
+          },
+          "pilgrimsCount": {
+            "type": "number"
+          },
+          "conditions": {
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "sent",
+              "accepted",
+              "declined"
+            ],
+            "type": "string"
+          },
+          "expired": {
+            "type": "boolean"
+          },
+          "shareToken": {
+            "type": "string"
+          },
+          "sentAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "respondedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteLineShape"
+            }
+          },
+          "subtotal": {
+            "type": "number"
+          },
+          "discountRate": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "totalAmount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "clientName",
+          "clientType",
+          "contactName",
+          "pilgrimsCount",
+          "validUntil",
+          "status",
+          "expired",
+          "createdAt",
+          "currency",
+          "lines",
+          "subtotal",
+          "discountRate",
+          "discountAmount",
+          "totalAmount"
+        ]
+      },
+      "QuoteLineDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "example": "Forfait Oumra — chambre quadruple"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "unitPrice": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000000000
+          }
+        },
+        "required": [
+          "label",
+          "quantity",
+          "unitPrice"
+        ]
+      },
+      "CreateQuoteDto": {
+        "type": "object",
+        "properties": {
+          "packageId": {
+            "type": "string",
+            "description": "Forfait de référence (devise reprise)"
+          },
+          "clientName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120,
+            "example": "Mosquée de quartier (fictive)"
+          },
+          "clientType": {
+            "type": "string",
+            "enum": [
+              "company",
+              "mosque",
+              "association",
+              "other"
+            ]
+          },
+          "contactName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "contactPhone": {
+            "type": "string",
+            "example": "+224620000000"
+          },
+          "contactEmail": {
+            "type": "string"
+          },
+          "pilgrimsCount": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "/^[A-Z]{3}$/",
+            "description": "Ignorée avec packageId",
+            "example": "GNF"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteLineDto"
+            }
+          },
+          "discountRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.5,
+            "default": 0
+          },
+          "conditions": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Conditions négociées (acompte, échéances...)"
+          },
+          "validUntil": {
+            "type": "string",
+            "description": "Date limite de validité du devis"
+          }
+        },
+        "required": [
+          "clientName",
+          "clientType",
+          "contactName",
+          "pilgrimsCount",
+          "lines",
+          "validUntil"
+        ]
+      },
+      "UpdateQuoteDto": {
+        "type": "object",
+        "properties": {
+          "clientName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120,
+            "example": "Mosquée de quartier (fictive)"
+          },
+          "clientType": {
+            "type": "string",
+            "enum": [
+              "company",
+              "mosque",
+              "association",
+              "other"
+            ]
+          },
+          "contactName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "contactPhone": {
+            "type": "string",
+            "example": "+224620000000"
+          },
+          "contactEmail": {
+            "type": "string"
+          },
+          "pilgrimsCount": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteLineDto"
+            }
+          },
+          "discountRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.5,
+            "default": 0
+          },
+          "conditions": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Conditions négociées (acompte, échéances...)"
+          },
+          "validUntil": {
+            "type": "string",
+            "description": "Date limite de validité du devis"
+          }
+        }
+      },
+      "SeasonAmountShape": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "currency",
+          "amount"
+        ]
+      },
+      "SeasonShape": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string"
+          },
+          "packages": {
+            "type": "number"
+          },
+          "capacity": {
+            "type": "number"
+          },
+          "bookings": {
+            "type": "number"
+          },
+          "cancellations": {
+            "type": "number"
+          },
+          "fillRate": {
+            "type": "number"
+          },
+          "cancellationRate": {
+            "type": "number"
+          },
+          "averagePrice": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeasonAmountShape"
+            }
+          },
+          "collected": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeasonAmountShape"
+            }
+          },
+          "reviews": {
+            "type": "number"
+          },
+          "averageRating": {
+            "type": "number"
+          },
+          "disputes": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "year",
+          "type",
+          "packages",
+          "capacity",
+          "bookings",
+          "cancellations",
+          "collected",
+          "reviews",
+          "disputes"
+        ]
+      },
+      "SeasonComparisonShape": {
+        "type": "object",
+        "properties": {
+          "fromYear": {
+            "type": "number"
+          },
+          "toYear": {
+            "type": "number"
+          },
+          "seasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeasonShape"
+            }
+          }
+        },
+        "required": [
+          "fromYear",
+          "toYear",
+          "seasons"
         ]
       }
     }

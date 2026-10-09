@@ -467,6 +467,46 @@ perte au remplissage attendu), `scenarios[]` (`expected`, `sold` avec un
 forfait, `half`, `three_quarters`, `full` : chiffre d'affaires, commission,
 coûts, marge, `marginRate`, `marginPerPilgrim`).
 
+## Programme de fidélité (`/loyalty`) — idée #47
+
+Agence : `GET|PUT /loyalty/program/mine` (`tiers[]` de `{ minTrips` 1–50,
+`label` 2–40, `benefit` 2–200 `}`, 5 au plus, seuils distincts ; liste
+vide = pas de programme). L'avantage est accordé par l'agence elle-même :
+**aucune remise automatique** sur les paiements. `GET /loyalty/members` :
+pèlerins ayant voyagé avec l'agence (`pilgrimName`, `trips`,
+`lastTripEnd`, `tier?`), du plus fidèle au moins fidèle — ni téléphone ni
+document. Voyage effectué : réservation `completed`, ou `confirmed` dont le
+forfait est revenu. Public : `GET /loyalty/program/agency/:agencyId`.
+Pèlerin : `GET /loyalty/mine` → par agence, `trips`, `tier?`, `nextTier?`
+(`tripsToGo`).
+
+## Devis groupes et entreprises (`/quotes`) — idée #49
+
+Agence : `GET /quotes?status=`, `POST /quotes` (`packageId?` — devise
+reprise —, `clientName`, `clientType` `company` | `mosque` |
+`association` | `other`, `contactName`, `contactPhone?`, `contactEmail?`,
+`pilgrimsCount`, `lines[]` 1–30 de `{ label, quantity, unitPrice }`,
+`discountRate?` 0–0,5, `conditions?`, `validUntil` à venir, un an au plus).
+Numéro `DEV-AAAA-NNNNN` sans trou par agence et par année ; **totaux
+toujours recalculés par le serveur** (un `totalAmount` envoyé est refusé).
+`GET|PATCH|DELETE /quotes/:id` (modification et suppression en brouillon
+seulement, 409 sinon). `POST /quotes/:id/send` : fige le devis et renvoie
+`shareToken` pour le lien client. Public, sans compte :
+`GET /quotes/shared/:token` (`SharedQuoteShape` : émetteur, lignes,
+totaux, conditions, validité, `expired` — ni contacts saisis, ni jeton),
+`POST /quotes/shared/:token/accept|decline` (une seule réponse, tant que le
+devis est valable ; l'agence est notifiée sans montant). Envoi et réponses
+tracés dans l'audit, jamais le jeton.
+
+## Comparatif inter-saisons (`/seasons/comparison`) — idée #65
+
+`GET /seasons/comparison?fromYear=&toYear=` (agence ; défaut : les trois
+dernières années, 10 au plus) : `seasons[]` par année de départ et type
+(`oumra` | `hadj`) — `packages`, `capacity`, `bookings` (non annulées),
+`cancellations`, `fillRate`, `cancellationRate`, `averagePrice[]` et
+`collected[]` (net des remboursements) par devise, `reviews`,
+`averageRating`, `disputes`. Lecture seule.
+
 ## Ce qui n'est PAS encore branché (ne pas construire l'UI en le supposant fonctionnel)
 
 - **Upload de documents légaux d'agence** : champ `legalDocuments` existe

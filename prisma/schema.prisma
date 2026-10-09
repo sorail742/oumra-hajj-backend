@@ -259,6 +259,8 @@ model Agency {
   invoices              Invoice[]
   guideUnavailabilities GuideUnavailability[]
   onCallShifts          OnCallShift[]
+  loyaltyTiers          LoyaltyTier[]
+  quotes                Quote[]
 
   @@index([validationStatus])
   @@map("agencies")
@@ -307,6 +309,7 @@ model Package {
   budgetSimulations BudgetSimulation[]
   roomBlocks        RoomBlock[]
   onCallShifts      OnCallShift[]
+  quotes            Quote[]
 
   @@index([type])
   @@index([status])
@@ -1027,4 +1030,82 @@ model OnCallShift {
   @@index([agencyId, startsAt])
   @@index([packageId])
   @@map("on_call_shifts")
+}
+
+// Idée #47 (backlog "Cent Fonctionnalités") — programme de fidélité : à
+// partir de `minTrips` voyages effectués avec l'agence, le pèlerin atteint
+// ce palier et son avantage. Avantage accordé par l'agence elle-même :
+// aucune remise automatique sur les paiements (hors ADR 0006).
+model LoyaltyTier {
+  id       String @id @default(uuid())
+  agencyId String
+  agency   Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  minTrips Int
+  label    String
+  benefit  String
+
+  @@unique([agencyId, minTrips])
+  @@map("loyalty_tiers")
+}
+
+// Idée #49 (backlog "Cent Fonctionnalités") — devis pour un groupe
+// (entreprise, mosquée, association), numéroté sans trou par agence et par
+// année (DEV-2026-00001). Totaux toujours recalculés par le serveur à
+// partir des lignes ; figé une fois envoyé. Le client répond par un lien à
+// jeton, sans compte.
+enum QuoteStatus {
+  draft
+  sent
+  accepted
+  declined
+}
+
+model Quote {
+  id             String      @id @default(uuid())
+  agencyId       String
+  agency         Agency      @relation(fields: [agencyId], references: [id])
+  packageId      String?
+  package        Package?    @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  year           Int
+  sequence       Int
+  number         String
+  clientName     String
+  clientType     String // "company", "mosque", "association", "other"
+  contactName    String
+  contactPhone   String?
+  contactEmail   String?
+  pilgrimsCount  Int
+  currency       String
+  discountRate   Float       @default(0)
+  subtotal       Float
+  discountAmount Float
+  totalAmount    Float
+  conditions     String?
+  validUntil     DateTime
+  status         QuoteStatus @default(draft)
+  shareToken     String?     @unique
+  sentAt         DateTime?
+  respondedAt    DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  lines QuoteLine[]
+
+  @@unique([agencyId, year, sequence])
+  @@index([agencyId, status])
+  @@map("quotes")
+}
+
+model QuoteLine {
+  id        String @id @default(uuid())
+  quoteId   String
+  quote     Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  position  Int
+  label     String
+  quantity  Int
+  unitPrice Float
+  total     Float
+
+  @@index([quoteId])
+  @@map("quote_lines")
 }
