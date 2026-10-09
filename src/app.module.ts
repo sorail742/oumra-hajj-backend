@@ -35,6 +35,9 @@ import { DisputesModule } from './modules/disputes/disputes.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { GuidePlanningModule } from './modules/guide-planning/guide-planning.module';
+import { OnCallModule } from './modules/on-call/on-call.module';
+import { CapacityModule } from './modules/capacity/capacity.module';
+import { ProfitabilityModule } from './modules/profitability/profitability.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { EmergencyModule } from './modules/emergency/emergency.module';
 import { DirectoryModule } from './modules/directory/directory.module';
@@ -81,6 +84,9 @@ import { DirectoryModule } from './modules/directory/directory.module';
     AuditModule,
     BillingModule,
     GuidePlanningModule,
+    OnCallModule,
+    CapacityModule,
+    ProfitabilityModule,
   ],
   providers: [
     {

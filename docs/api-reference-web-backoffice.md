@@ -425,6 +425,47 @@ Admin : `GET /admin/audit?from&to&action&entityType&entityId&actorId`
 `dispute.decide`…), `entityType`, `entityId`, auteur (`actorId`,
 `actorName`, `actorRole`), `metadata` (références et montants seulement),
 `createdAt`. Aucune route de modification ni de suppression.
+## Astreinte 24/7 (`/on-call`) — idée #63
+
+Agence : `GET /on-call/shifts?packageId=&from=&to=` (créneaux qui se
+terminent après `from`, défaut maintenant ; avec `packageId`, ceux du
+forfait et ceux valables pour tous les voyages), `POST /on-call/shifts`
+(`packageId?` — absent : tous les voyages —, `staffName`, `staffRole`
+`guide` | `coordinator` | `manager` | `other`, `phone` au format
+international, `startsAt`, `endsAt` — après le début, 14 jours au plus —,
+`notes?` interne), `PATCH|DELETE /on-call/shifts/:id` (le forfait ne change
+pas). `GET /on-call/coverage/:packageId` : `OnCallCoverageShape` —
+`from`/`to` (premier jour → minuit du dernier jour), `totalHours`,
+`coveredHours`, `gaps[]` (périodes sans personne d'astreinte).
+Pèlerin : `GET /on-call/booking/:bookingId` → `MyOnCallShape` (`current[]`
+joignables maintenant, `next?`, `agencyPhone` en dernier recours ; jamais les
+notes internes).
+
+## Simulateur de capacité (`/capacity/simulation`) — idée #68
+
+`GET /capacity/simulation?pilgrimsPerGuide=40&extraGuides=0` (agence) :
+`CapacitySimulationShape` — `guides` (guides actifs de l'agence), `staff`
+(+ `extraGuides` hypothétiques), `trips[]` (voyages non terminés :
+`capacity`, `seatsTaken`, `guidesNeeded` au ratio, `guidesAssigned` aux
+groupes), `periods[]` (périodes où le même ensemble de voyages est en
+cours : pèlerins prévus/vendus, guides nécessaires — un guide n'encadre
+qu'un voyage à la fois), `peak?`, `spareGuidesAtPeak` (négatif : il en
+manque), `extraPilgrimsAtPeak`. Le ratio (5–200, défaut 40) est un repère
+de l'agence, pas une norme réglementaire ; rien n'est enregistré.
+
+## Simulateur de rentabilité (`/profitability/simulation`) — idée #48
+
+`POST /profitability/simulation` (agence, réponse 200, rien n'est
+enregistré) : `packageId?` (prix, devise, capacité et places vendues repris
+du forfait), `price?`/`capacity?` (requis sans forfait, ou pour tester une
+autre valeur), `currency?`, `expectedPilgrims?` (défaut : capacité),
+`costsPerPilgrim[]` et `fixedCosts[]` (`label`, `amount` ≥ 0, 30 lignes au
+plus). `ProfitabilitySimulationShape` : `commissionRate` (fraction, lue en
+base — jamais fournie par le client), `unitContribution`,
+`breakEvenPilgrims?`, `breakEvenReachable`, `minimumPrice?` (prix sans
+perte au remplissage attendu), `scenarios[]` (`expected`, `sold` avec un
+forfait, `half`, `three_quarters`, `full` : chiffre d'affaires, commission,
+coûts, marge, `marginRate`, `marginPerPilgrim`).
 
 ## Ce qui n'est PAS encore branché (ne pas construire l'UI en le supposant fonctionnel)
 

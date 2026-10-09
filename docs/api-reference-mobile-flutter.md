@@ -276,6 +276,15 @@ aujourd'hui) :
   FCM réelles** — voir ci-dessous. L'app doit poller `GET /notifications`
   (pas de WebSocket/SSE non plus) pour se tenir à jour.
 
+## Astreinte de l'agence (`/on-call`) — idée #63
+
+`GET /on-call/booking/:bookingId` (pèlerin titulaire, réservation non
+annulée) : `agencyName`, `agencyPhone` (dernier recours), `current[]`
+(personnes d'astreinte joignables maintenant : `staffName`, `staffRole`
+`guide` | `coordinator` | `manager` | `other`, `phone`, `startsAt`,
+`endsAt`), `next?` (prochain créneau). À afficher en accès direct pendant
+le voyage, avec appel en un geste.
+
 ## Ce qui n'est PAS encore branché (ne pas construire l'UI en le supposant fonctionnel)
 
 - **SMS/OTP réel** : aucun fournisseur SMS choisi (ADR 0006 `proposé`) — en

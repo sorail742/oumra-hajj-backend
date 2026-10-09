@@ -75,6 +75,9 @@ Les 92 autres idées ne nécessitent aucune décision d'architecture préalable
 - ✅ **#70** Calendrier partagé des échéances clés, synchronisable Google/Outlook (`GET /calendar/agency/:token/calendar.ics`)
 - ✅ **#59** Vérification croisée des documents (`GET /documents/expiry-alerts`)
 - ✅ **#28** Espace famille simplifié (`GET /family-view/:token`, lien généré via `bookings/:id/family-view-link`)
+- ✅ **#63** Astreinte 24/7 pendant le voyage (`/on-call/shifts`, couverture `/on-call/coverage/:packageId`, vue pèlerin `/on-call/booking/:bookingId`)
+- ✅ **#68** Simulateur de capacité (`GET /capacity/simulation`)
+- ✅ **#48** Simulateur de rentabilité par forfait (`POST /profitability/simulation`)
 
 ## Priorité suggérée pour la suite
 
