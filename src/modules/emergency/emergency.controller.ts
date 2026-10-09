@@ -22,6 +22,7 @@ import {
 import { CreateEmergencyNumberDto } from './dto/create-emergency-number.dto';
 import { UpdateEmergencyNumberDto } from './dto/update-emergency-number.dto';
 import { EmergencyService } from './emergency.service';
+import { Audited } from '../audit/audited.decorator';
 
 @ApiTags('emergency')
 @Controller('emergency')
@@ -38,6 +39,10 @@ export class EmergencyController {
 
   @ApiBearerAuth()
   @Roles(Role.ADMIN)
+  @Audited({
+    action: 'emergency_number.create',
+    entityType: 'emergency_number',
+  })
   @Post('numbers')
   createNumber(
     @Body() dto: CreateEmergencyNumberDto,
@@ -47,6 +52,10 @@ export class EmergencyController {
 
   @ApiBearerAuth()
   @Roles(Role.ADMIN)
+  @Audited({
+    action: 'emergency_number.update',
+    entityType: 'emergency_number',
+  })
   @Patch('numbers/:id')
   updateNumber(
     @Param('id') id: string,
@@ -57,6 +66,10 @@ export class EmergencyController {
 
   @ApiBearerAuth()
   @Roles(Role.ADMIN)
+  @Audited({
+    action: 'emergency_number.delete',
+    entityType: 'emergency_number',
+  })
   @Delete('numbers/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteNumber(@Param('id') id: string): Promise<void> {

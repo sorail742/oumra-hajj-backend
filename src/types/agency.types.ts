@@ -41,6 +41,9 @@ export class AgencyShape {
   contactEmail!: string;
   contactPhone!: string;
   address?: string;
+  // Idée #37 : NIF et RCCM, imprimés sur factures et contrats.
+  taxId?: string;
+  tradeRegister?: string;
   legalDocuments!: LegalDocumentShape[];
   validationStatus!: AgencyValidationStatus;
   rejectionReason?: string;

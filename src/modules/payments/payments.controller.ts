@@ -20,6 +20,7 @@ import { JwtPayload } from '../../common/interfaces/authenticated-request.interf
 import {
   AccountingExportShape,
   PaymentShape,
+  RefundPreviewShape,
   SavingsPlanShape,
   TreasuryProjectionShape,
 } from '../../types/payment.types';
@@ -29,6 +30,7 @@ import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { PaymentWebhookDto } from './dto/payment-webhook.dto';
 import { SetupSavingsPlanDto } from './dto/setup-savings-plan.dto';
 import { PaymentsService } from './payments.service';
+import { Audited, champ } from '../audit/audited.decorator';
 
 @ApiTags('payments')
 @Controller('payments')
@@ -110,6 +112,16 @@ export class PaymentsController {
   // vérification de signature devra être ajoutée une fois l'agrégateur
   // retenu (voir ADR 0006).
   @Public()
+  @Audited({
+    action: 'payment.status_callback',
+    entityType: 'payment',
+    metadata: (r) => ({
+      status: champ(r, 'status'),
+      amount: champ(r, 'amount'),
+      currency: champ(r, 'currency'),
+      providerReference: champ(r, 'providerReference'),
+    }),
+  })
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   webhook(@Body() dto: PaymentWebhookDto): Promise<PaymentShape> {
@@ -125,10 +137,31 @@ export class PaymentsController {
     return this.paymentsService.findAuthorizedOrFail(user.sub, user.role, id);
   }
 
+  // Idée #58 — ce que rembourserait ce paiement, maintenant, selon le
+  // barème figé sur la réservation. Rien n'est remboursé ici.
+  @ApiBearerAuth()
+  @Roles(Role.PILGRIM, Role.AGENCY, Role.ADMIN)
+  @Get(':id/refund-preview')
+  refundPreview(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<RefundPreviewShape> {
+    return this.paymentsService.previewRefund(user.sub, user.role, id);
+  }
+
   // Idée #58 (backlog "Cent Fonctionnalités") — barème clair, voir
   // PaymentsService.requestRefund.
   @ApiBearerAuth()
   @Roles(Role.PILGRIM, Role.AGENCY, Role.ADMIN)
+  @Audited({
+    action: 'payment.refund',
+    entityType: 'payment',
+    metadata: (r) => ({
+      refundedAmount: champ(r, 'refundedAmount'),
+      currency: champ(r, 'currency'),
+      providerReference: champ(r, 'providerReference'),
+    }),
+  })
   @Post(':id/refund')
   requestRefund(
     @CurrentUser() user: JwtPayload,

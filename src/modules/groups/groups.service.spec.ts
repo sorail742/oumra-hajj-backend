@@ -1,4 +1,8 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationType } from '../../common/enums/notification-type.enum';
@@ -11,7 +15,14 @@ import { GroupsService } from './groups.service';
 describe('GroupsService', () => {
   let service: GroupsService;
   let prisma: {
-    group: { findUnique: jest.Mock; findMany: jest.Mock; update: jest.Mock };
+    group: {
+      findUnique: jest.Mock;
+      findMany: jest.Mock;
+      findFirst: jest.Mock;
+      update: jest.Mock;
+    };
+    package: { findUnique: jest.Mock };
+    guideUnavailability: { findFirst: jest.Mock };
     groupMember: { create: jest.Mock };
     groupItineraryStep: { create: jest.Mock };
     groupMemberLocation: { upsert: jest.Mock; deleteMany: jest.Mock };
@@ -43,7 +54,19 @@ describe('GroupsService', () => {
 
   beforeEach(async () => {
     prisma = {
-      group: { findUnique: jest.fn(), findMany: jest.fn(), update: jest.fn() },
+      group: {
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue(null),
+        update: jest.fn(),
+      },
+      package: {
+        findUnique: jest.fn().mockResolvedValue({
+          startDate: new Date('2026-12-01T00:00:00Z'),
+          endDate: new Date('2026-12-15T00:00:00Z'),
+        }),
+      },
+      guideUnavailability: { findFirst: jest.fn().mockResolvedValue(null) },
       groupMember: { create: jest.fn() },
       groupItineraryStep: { create: jest.fn() },
       groupMemberLocation: { upsert: jest.fn(), deleteMany: jest.fn() },
@@ -217,6 +240,52 @@ describe('GroupsService', () => {
         expect.objectContaining({ data: { guideId } }),
       );
       expect(result.guideId).toBe(guideId);
+    });
+  });
+
+  describe('assignGuide — disponibilité (idée #42)', () => {
+    beforeEach(() => {
+      prisma.group.findUnique.mockResolvedValue(buildGroup({}));
+      agenciesService.findByOwnerOrFail.mockResolvedValue({ id: 'agency-1' });
+      usersService.findByIdOrFail.mockResolvedValue({
+        id: guideId,
+        role: Role.GUIDE,
+        agencyId: 'agency-1',
+      });
+    });
+
+    it('refuse un guide qui mène déjà un groupe sur ces dates', async () => {
+      prisma.group.findFirst.mockResolvedValue({
+        title: '[DÉMO] Autre groupe',
+      });
+
+      await expect(
+        service.assignGuide('owner-1', groupId, guideId),
+      ).rejects.toThrow('« [DÉMO] Autre groupe »');
+      expect(prisma.group.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            guideId,
+            NOT: { id: groupId },
+            package: {
+              startDate: { lte: new Date('2026-12-15T00:00:00Z') },
+              endDate: { gte: new Date('2026-12-01T00:00:00Z') },
+            },
+          }),
+        }),
+      );
+      expect(prisma.group.update).not.toHaveBeenCalled();
+    });
+
+    it('refuse un guide déclaré indisponible sur ces dates', async () => {
+      prisma.guideUnavailability.findFirst.mockResolvedValue({
+        startDate: new Date('2026-12-10T00:00:00Z'),
+      });
+
+      await expect(
+        service.assignGuide('owner-1', groupId, guideId),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(prisma.group.update).not.toHaveBeenCalled();
     });
   });
 

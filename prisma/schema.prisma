@@ -162,6 +162,7 @@ model User {
   disputesOpened         Dispute[]             @relation("DisputePilgrim")
   disputesDecided        Dispute[]             @relation("DisputeDecidedBy")
   disputeMessages        DisputeMessage[]      @relation("DisputeMessageAuthor")
+  unavailabilities       GuideUnavailability[] @relation("GuideUnavailabilities")
 
   @@map("users")
 }
@@ -224,6 +225,10 @@ model Agency {
   contactEmail      String
   contactPhone      String
   address           String?
+  // Idée #37 : mentions légales imprimées sur factures et contrats —
+  // NIF (numéro d'identification fiscale) et RCCM (registre du commerce).
+  taxId             String?
+  tradeRegister     String?
   validationStatus  AgencyValidationStatus @default(pending)
   rejectionReason   String?
   validatedById     String?
@@ -242,14 +247,17 @@ model Agency {
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
 
-  legalDocuments AgencyLegalDocument[]
-  guides         User[]                @relation("AgencyGuides")
-  packages       Package[]
-  groups         Group[]
-  bookings       Booking[]
-  reviews        Review[]
-  roomBlocks     RoomBlock[]
-  disputes       Dispute[]
+  legalDocuments        AgencyLegalDocument[]
+  guides                User[]                @relation("AgencyGuides")
+  packages              Package[]
+  groups                Group[]
+  bookings              Booking[]
+  reviews               Review[]
+  roomBlocks            RoomBlock[]
+  disputes              Dispute[]
+  refundPolicyTiers     RefundPolicyTier[]
+  invoices              Invoice[]
+  guideUnavailabilities GuideUnavailability[]
 
   @@index([validationStatus])
   @@map("agencies")
@@ -439,24 +447,28 @@ model GroupMemberLocation {
 // ---------------------------------------------------------------------------
 
 model Booking {
-  id              String        @id @default(uuid())
-  pilgrimId       String
-  pilgrim         User          @relation("BookingPilgrim", fields: [pilgrimId], references: [id])
-  packageId       String
-  package         Package       @relation(fields: [packageId], references: [id])
-  agencyId        String
-  agency          Agency        @relation(fields: [agencyId], references: [id])
-  groupId         String?
-  group           Group?        @relation(fields: [groupId], references: [id])
-  status          BookingStatus @default(pending_payment)
+  id                   String        @id @default(uuid())
+  pilgrimId            String
+  pilgrim              User          @relation("BookingPilgrim", fields: [pilgrimId], references: [id])
+  packageId            String
+  package              Package       @relation(fields: [packageId], references: [id])
+  agencyId             String
+  agency               Agency        @relation(fields: [agencyId], references: [id])
+  groupId              String?
+  group                Group?        @relation(fields: [groupId], references: [id])
+  status               BookingStatus @default(pending_payment)
   // Idée #28 (backlog "Cent Fonctionnalités") : jeton opaque et non expirant
   // pour un lien de suivi en lecture seule, partagé par le pèlerin à sa
   // famille — pas de compte pèlerin à créer pour un proche peu digitalisé.
   // Révocable via régénération, même principe que Agency.calendarToken
   // (idée #70).
-  familyViewToken String?       @unique
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  familyViewToken      String?       @unique
+  // Idée #58 : barème de remboursement de l'agence au moment de la
+  // réservation ([{ minDaysBeforeDeparture, rate }]) ; null = barème par
+  // défaut de la plateforme.
+  refundPolicySnapshot Json?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
   steps           BookingStep[]
   payments        Payment[]
@@ -467,6 +479,7 @@ model Booking {
   checklists      ChecklistItem[]
   roomAssignments RoomAssignment[]
   disputes        Dispute[]
+  invoice         Invoice?
 
   @@index([pilgrimId])
   @@index([packageId])
@@ -909,4 +922,83 @@ model DisputeMessage {
 
   @@index([disputeId])
   @@map("dispute_messages")
+}
+
+// Idée #85 (backlog "Cent Fonctionnalités") — piste d'audit : qui a fait
+// quelle action sensible, quand, sur quelle entité. Ajout seul : aucune
+// route ne modifie ni ne supprime une entrée. `metadata` ne porte jamais
+// de contenu sensible (document, santé, message) — seulement des
+// références et des montants (ADR 0008).
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actorRole  Role?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+// Idée #58 (backlog "Cent Fonctionnalités") — barème de remboursement de
+// l'agence : à partir de `minDaysBeforeDeparture` jours avant le départ,
+// `rate` (0 à 1) du paiement est remboursé. Le barème en vigueur à la
+// réservation est figé sur celle-ci (Booking.refundPolicySnapshot) : une
+// agence ne peut pas durcir après coup les conditions d'un pèlerin déjà
+// inscrit.
+model RefundPolicyTier {
+  id                     String @id @default(uuid())
+  agencyId               String
+  agency                 Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  minDaysBeforeDeparture Int
+  rate                   Float
+
+  @@unique([agencyId, minDaysBeforeDeparture])
+  @@map("refund_policy_tiers")
+}
+
+// Idée #37 (backlog "Cent Fonctionnalités") — facture d'une réservation,
+// numérotée sans trou par agence et par année (FAC-2026-00001), émise
+// une seule fois et jamais modifiée : son montant est celui du forfait à
+// l'émission.
+model Invoice {
+  id          String   @id @default(uuid())
+  agencyId    String
+  agency      Agency   @relation(fields: [agencyId], references: [id])
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  year        Int
+  sequence    Int
+  number      String
+  totalAmount Float
+  currency    String
+  issuedAt    DateTime @default(now())
+
+  @@unique([agencyId, year, sequence])
+  @@map("invoices")
+}
+
+// Idée #42 (backlog "Cent Fonctionnalités") — planning des guides :
+// période où un guide de l'agence n'est pas disponible (congé, autre
+// mission, maladie). Bornes incluses.
+model GuideUnavailability {
+  id        String   @id @default(uuid())
+  agencyId  String
+  agency    Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  guideId   String
+  guide     User     @relation("GuideUnavailabilities", fields: [guideId], references: [id], onDelete: Cascade)
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([agencyId])
+  @@index([guideId])
+  @@map("guide_unavailabilities")
 }

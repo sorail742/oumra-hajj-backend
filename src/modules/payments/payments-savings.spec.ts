@@ -10,6 +10,7 @@ import { BookingsService } from '../bookings/bookings.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PackagesService } from '../packages/packages.service';
 import { PaymentsService } from './payments.service';
+import { RefundPolicyService } from './refund-policy.service';
 import { PaymentProvider } from './providers/payment-provider.interface';
 
 // Identifiants et montants explicitement factices (plan d'épargne, ticket 1).
@@ -49,6 +50,7 @@ describe("PaymentsService — plan d'épargne", () => {
       {} as AgenciesService,
       {} as NotificationsService,
       {} as PaymentProvider,
+      {} as RefundPolicyService,
     );
   });
 
