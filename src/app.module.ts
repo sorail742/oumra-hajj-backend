@@ -38,6 +38,9 @@ import { GuidePlanningModule } from './modules/guide-planning/guide-planning.mod
 import { OnCallModule } from './modules/on-call/on-call.module';
 import { CapacityModule } from './modules/capacity/capacity.module';
 import { ProfitabilityModule } from './modules/profitability/profitability.module';
+import { LoyaltyModule } from './modules/loyalty/loyalty.module';
+import { QuotesModule } from './modules/quotes/quotes.module';
+import { SeasonsModule } from './modules/seasons/seasons.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { EmergencyModule } from './modules/emergency/emergency.module';
 import { DirectoryModule } from './modules/directory/directory.module';
@@ -87,6 +90,9 @@ import { DirectoryModule } from './modules/directory/directory.module';
     OnCallModule,
     CapacityModule,
     ProfitabilityModule,
+    LoyaltyModule,
+    QuotesModule,
+    SeasonsModule,
   ],
   providers: [
     {

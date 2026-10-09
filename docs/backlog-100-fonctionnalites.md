@@ -78,6 +78,9 @@ Les 92 autres idées ne nécessitent aucune décision d'architecture préalable
 - ✅ **#63** Astreinte 24/7 pendant le voyage (`/on-call/shifts`, couverture `/on-call/coverage/:packageId`, vue pèlerin `/on-call/booking/:bookingId`)
 - ✅ **#68** Simulateur de capacité (`GET /capacity/simulation`)
 - ✅ **#48** Simulateur de rentabilité par forfait (`POST /profitability/simulation`)
+- ✅ **#47** Programme de fidélité pèlerins (`/loyalty`)
+- ✅ **#49** Devis personnalisé groupes/entreprises (`/quotes`, lien client `/quotes/shared/:token`)
+- ✅ **#65** Archivage comparatif inter-saisons (`GET /seasons/comparison`)
 
 ## Priorité suggérée pour la suite
 

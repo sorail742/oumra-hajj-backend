@@ -285,6 +285,14 @@ annulée) : `agencyName`, `agencyPhone` (dernier recours), `current[]`
 `endsAt`), `next?` (prochain créneau). À afficher en accès direct pendant
 le voyage, avec appel en un geste.
 
+## Fidélité (`/loyalty`) — idée #47
+
+`GET /loyalty/mine` (pèlerin) : par agence avec laquelle il a voyagé,
+`trips`, `tier?` (`label`, `benefit`) et `nextTier?` (`tripsToGo`).
+`GET /loyalty/program/agency/:agencyId` (public) : paliers d'une agence,
+à montrer avant la réservation. Avantages accordés par l'agence, jamais
+une remise automatique.
+
 ## Ce qui n'est PAS encore branché (ne pas construire l'UI en le supposant fonctionnel)
 
 - **SMS/OTP réel** : aucun fournisseur SMS choisi (ADR 0006 `proposé`) — en
